@@ -13,5 +13,10 @@ export default <RouterConfig>{
       path: '/landing',
       component: () => import('~/presentation/landing/view/index.vue'),
     },
+    {
+      name: 'dashboard',
+      path: '/dashboard',
+      component: () => import('~/presentation/dashboard/view/index.vue'),
+    },
   ],
 }
