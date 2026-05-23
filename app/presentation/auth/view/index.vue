@@ -1,9 +1,9 @@
 <template>
-  <main class="flex min-h-screen w-full bg-deep-navy font-body-md text-on-surface selection:bg-primary-container selection:text-white overflow-x-hidden">
-    <section class="hidden h-full lg:block lg:w-7/12 relative">
+  <main class="flex min-h-screen lg:h-screen w-full bg-deep-navy font-body-md text-on-surface selection:bg-primary-container selection:text-white overflow-x-hidden">
+    <section class="hidden lg:block lg:h-screen lg:w-7/12 relative self-stretch">
       <div class="absolute inset-0 z-0">
         <img
-          class="w-full h-full object-cover"
+          class="block w-full h-full object-cover"
           data-alt="A dramatic low-key industrial photograph of a high-precision cardboard cutting machine in a modern factory. The lighting is focused and moody, highlighting the metallic textures and geometric precision of the equipment. A dark blue color palette dominates the scene, evoking a sense of reliability and advanced manufacturing technology. Deep shadows and subtle reflections create a sophisticated, high-end corporate atmosphere."
           src="https://lh3.googleusercontent.com/aida/ADBb0uj0GJ0InBl9HcheG5djeV1tkUvsjpv8ysLBSfrYEt1MYqoWS9cPZA148HI5PWNfS_kWOp_nokmPXN-S1zNJR1l4hkJsUSQhDywTu-DxfhHCjnyUFbKEFp0CDZSLzLHuyVn4wSocZgl9SuH258DxAHTZ_IJ_So9h087LCRJuMi2HDX8LwMoqhlDUW5E79hUFPH92TPjc9opRDkVq1kwvrsjZZBRAzORsdsL5g7XWryBaT8EbHUXLSYxCmLw"
           alt="A dramatic low-key industrial photograph"
@@ -125,16 +125,6 @@ useHead({
   bodyAttrs: {
     class: 'bg-deep-navy font-body-md text-on-surface selection:bg-primary-container selection:text-white overflow-x-hidden',
   },
-  link: [
-    {
-      rel: 'stylesheet',
-      href: 'https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Metropolis:wght@400;500;700&family=JetBrains+Mono:wght@500&display=swap',
-    },
-    {
-      rel: 'stylesheet',
-      href: 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap',
-    },
-  ],
 })
 
 let submitTimeoutId: number | null = null
@@ -227,18 +217,18 @@ onUnmounted(() => {
 .font-body-sm,
 .font-body-md,
 .font-body-lg {
-  font-family: 'Metropolis', sans-serif;
+  font-family: var(--app-font-sans);
 }
 
 .font-headline-lg,
 .font-headline-md,
 .font-display-lg,
 .font-label-caps {
-  font-family: 'Montserrat', sans-serif;
+  font-family: var(--app-font-sans);
 }
 
 .font-data-mono {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--app-font-mono);
 }
 
 .industrial-overlay {

@@ -240,16 +240,6 @@ useHead(() => ({
   bodyAttrs: {
     class: `font-body-md overflow-hidden ${isDarkMode.value ? 'bg-deep-navy text-on-surface-variant' : 'bg-background text-on-background'}`,
   },
-  link: [
-    {
-      rel: 'stylesheet',
-      href: 'https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Metropolis:wght@400;500&family=JetBrains+Mono:wght@500&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap',
-    },
-    {
-      rel: 'stylesheet',
-      href: 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap',
-    },
-  ],
 }))
 
 const navClickHandlers = new Map<HTMLAnchorElement, (event: Event) => void>()
@@ -408,18 +398,18 @@ onUnmounted(() => {
 .font-body-sm,
 .font-body-md,
 .font-body-lg {
-  font-family: 'Metropolis', sans-serif;
+  font-family: var(--app-font-sans);
 }
 
 .font-headline-lg,
 .font-headline-md,
 .font-display-lg,
 .font-label-caps {
-  font-family: 'Montserrat', sans-serif;
+  font-family: var(--app-font-sans);
 }
 
 .font-data-mono {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--app-font-mono);
 }
 
 .dashboard-scroll::-webkit-scrollbar {
