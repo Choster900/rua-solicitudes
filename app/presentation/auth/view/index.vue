@@ -1,5 +1,5 @@
 <template>
-  <main class="flex h-screen w-full bg-deep-navy font-body-md text-on-surface selection:bg-primary-container selection:text-white overflow-hidden">
+  <main class="flex min-h-screen w-full bg-deep-navy font-body-md text-on-surface selection:bg-primary-container selection:text-white overflow-x-hidden">
     <section class="hidden h-full lg:block lg:w-7/12 relative">
       <div class="absolute inset-0 z-0">
         <img
@@ -22,131 +22,82 @@
       </div>
     </section>
     <section
-      class="w-full lg:w-5/12 flex flex-col justify-center items-center px-container-padding bg-deep-navy border-l border-outline/10 z-30"
+      class="w-full lg:w-5/12 flex flex-col justify-center items-center px-5 sm:px-8 lg:px-container-padding py-8 sm:py-10 bg-deep-navy lg:border-l border-outline/10 z-30"
     >
-      <div class="w-full max-w-md flex flex-col items-center">
-        <div class="mb-stack-lg animate-fade-in">
+      <div class="w-full max-w-sm sm:max-w-md lg:max-w-sm flex flex-col items-center">
+        <div class="mb-6 animate-fade-in">
           <img
             alt="RUASA Logo"
-            class="h-16 w-auto object-contain brightness-0 invert opacity-90"
+            class="h-12 w-auto object-contain brightness-0 invert opacity-90"
             src="https://lh3.googleusercontent.com/aida/ADBb0ujiXx9N50DdfTe9CfsLyYlpeSMdQBeJ4edwvqQHduYKretEy9UGjRUgBUvuM-ZF69AH2oixZbYNwCBqGrFl1ob-apaw0fpIBU_SE-RBpEk-mdcZjCdDp1zpWl7OBELMyvXbGBehb0pwHrE6PHbRsdBiyvdSqWrx37WjPVhLU4TPPorf2yfIO0HauZa76jOR0KmeXYi4JZUuLwDlfjup7DP5xw5zc5ATh1GAPiF5kb37UfcX_eNV_y9MdQ"
           >
         </div>
-        <div class="w-full text-center mb-stack-lg">
-          <h2 class="font-headline-md text-headline-md text-white mb-2">
+        <div class="w-full text-center mb-6">
+          <h2 class="font-headline-md text-[1.3rem] text-white mb-1">
             Acceso al Portal de Producción
           </h2>
-          <p class="font-body-sm text-body-sm text-outline-variant">
+          <p class="font-body-sm text-[0.8rem] text-outline-variant">
             Ingrese sus credenciales corporativas para continuar
           </p>
         </div>
         <form
           id="loginForm"
-          class="w-full space-y-stack-md"
+          class="w-full space-y-4"
         >
           <div class="group glow-effect transition-all duration-300">
-            <label class="font-label-caps text-label-caps text-secondary-container mb-2 block uppercase">
+            <label class="font-label-caps text-[0.65rem] text-secondary-container mb-1.5 block uppercase">
               Usuario de Red
             </label>
             <div class="relative">
-              <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline">
+              <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[20px]">
                 person
               </span>
               <input
-                class="w-full bg-surface-container-lowest/5 border border-outline/30 rounded-xl py-4 pl-12 pr-4 text-white focus:ring-2 focus:ring-primary focus:border-primary transition-all outline-none"
+                class="w-full bg-surface-container-lowest/5 border border-outline/30 rounded-lg py-2.5 pl-10 pr-3 text-sm text-white focus:ring-2 focus:ring-primary focus:border-primary transition-all outline-none"
                 placeholder="usuario@ruasa.com.sv"
                 type="text"
               >
             </div>
           </div>
           <div class="group glow-effect transition-all duration-300">
-            <label class="font-label-caps text-label-caps text-secondary-container mb-2 block uppercase">
+            <label class="font-label-caps text-[0.65rem] text-secondary-container mb-1.5 block uppercase">
               Contraseña
             </label>
             <div class="relative">
-              <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline">
+              <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[20px]">
                 lock
               </span>
               <input
-                class="w-full bg-surface-container-lowest/5 border border-outline/30 rounded-xl py-4 pl-12 pr-4 text-white focus:ring-2 focus:ring-primary focus:border-primary transition-all outline-none"
+                class="w-full bg-surface-container-lowest/5 border border-outline/30 rounded-lg py-2.5 pl-10 pr-3 text-sm text-white focus:ring-2 focus:ring-primary focus:border-primary transition-all outline-none"
                 placeholder="••••••••"
                 type="password"
               >
             </div>
           </div>
-          <div class="flex items-center justify-between text-body-sm py-2">
-            <label class="flex items-center gap-2 cursor-pointer group">
+          <div class="flex flex-wrap items-center justify-between gap-2 text-[0.8rem] py-1">
+            <label class="flex items-center gap-2 cursor-pointer group shrink-0">
               <input
-                class="w-5 h-5 rounded border-outline/30 bg-transparent text-primary focus:ring-primary transition-all"
+                class="w-4 h-4 rounded border-outline/30 bg-transparent text-primary focus:ring-primary transition-all"
                 type="checkbox"
               >
               <span class="text-outline-variant group-hover:text-white transition-colors">Recordarme</span>
             </label>
             <a
-              class="text-primary-fixed-dim hover:text-white font-bold transition-colors"
+              class="text-primary-fixed-dim hover:text-white font-bold transition-colors text-right"
               href="#"
             >
               ¿Olvidó su contraseña?
             </a>
           </div>
           <button
-            class="w-full bg-primary hover:bg-primary-container text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/20 transform active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-4"
+            class="w-full bg-primary hover:bg-primary-container text-white font-bold py-2.5 rounded-lg shadow-lg shadow-primary/20 transform active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-2"
             type="submit"
           >
-            <span class="text-body-md font-headline-md">Ingresar al Sistema</span>
+            <span class="text-sm font-headline-md">Ingresar al Sistema</span>
             <span class="material-symbols-outlined">login</span>
           </button>
         </form>
-        <div class="w-full mt-stack-lg">
-          <div class="relative flex items-center justify-center mb-8">
-            <div class="absolute inset-0 flex items-center">
-              <div class="w-full border-t border-outline/10" />
-            </div>
-            <span class="relative bg-deep-navy px-4 text-label-caps text-outline uppercase">O continuar con</span>
-          </div>
-          <div class="flex gap-stack-md">
-            <button
-              class="flex-1 bg-surface-container-lowest/5 border border-outline/20 hover:border-primary/50 hover:bg-primary/10 py-3 rounded-xl transition-all group flex flex-col items-center gap-2"
-            >
-              <span
-                class="material-symbols-outlined text-outline group-hover:text-primary-fixed-dim"
-                style="font-variation-settings: 'FILL' 0;"
-              >
-                fingerprint
-              </span>
-              <span class="text-[10px] font-label-caps text-outline group-hover:text-white uppercase">
-                Huella Digital
-              </span>
-            </button>
-            <button
-              class="flex-1 bg-surface-container-lowest/5 border border-outline/20 hover:border-primary/50 hover:bg-primary/10 py-3 rounded-xl transition-all group flex flex-col items-center gap-2"
-            >
-              <span
-                class="material-symbols-outlined text-outline group-hover:text-primary-fixed-dim"
-                style="font-variation-settings: 'FILL' 0;"
-              >
-                face
-              </span>
-              <span class="text-[10px] font-label-caps text-outline group-hover:text-white uppercase">
-                Face ID
-              </span>
-            </button>
-            <button
-              class="flex-1 bg-surface-container-lowest/5 border border-outline/20 hover:border-primary/50 hover:bg-primary/10 py-3 rounded-xl transition-all group flex flex-col items-center gap-2"
-            >
-              <span
-                class="material-symbols-outlined text-outline group-hover:text-primary-fixed-dim"
-                style="font-variation-settings: 'FILL' 0;"
-              >
-                qr_code_2
-              </span>
-              <span class="text-[10px] font-label-caps text-outline group-hover:text-white uppercase">
-                Token QR
-              </span>
-            </button>
-          </div>
-        </div>
-        <footer class="mt-20 text-center">
+        <footer class="mt-8 sm:mt-10 text-center">
           <p class="text-[10px] font-label-caps text-outline/50 uppercase tracking-widest">
             © 2024 RUASA Enterprise Resource Planning<br>
             Seguridad de Grado Industrial • v2.4.0
@@ -172,16 +123,12 @@ useHead({
     lang: 'es',
   },
   bodyAttrs: {
-    class: 'bg-deep-navy font-body-md text-on-surface selection:bg-primary-container selection:text-white overflow-hidden',
+    class: 'bg-deep-navy font-body-md text-on-surface selection:bg-primary-container selection:text-white overflow-x-hidden',
   },
   link: [
     {
       rel: 'stylesheet',
       href: 'https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Metropolis:wght@400;500;700&family=JetBrains+Mono:wght@500&display=swap',
-    },
-    {
-      rel: 'stylesheet',
-      href: 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap',
     },
     {
       rel: 'stylesheet',
@@ -248,7 +195,7 @@ onMounted(() => {
     image.style.transform = `scale(1.05) translate(${x}px, ${y}px)`
   }
 
-  if (mouseMoveHandler) {
+  if (mouseMoveHandler && window.matchMedia('(min-width: 1024px)').matches) {
     document.addEventListener('mousemove', mouseMoveHandler)
   }
 })
