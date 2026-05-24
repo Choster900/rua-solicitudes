@@ -118,6 +118,7 @@
           <AppSelect
             v-model="pageSize"
             :clearable="false"
+            dropdown-direction="up"
             :options="pageSizeSelectOptions"
             :searchable="false"
             input-class="!w-[86px] !py-1.5 !text-xs"
