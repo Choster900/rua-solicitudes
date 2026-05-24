@@ -3,8 +3,8 @@
     <div :class="['mb-stack-lg flex items-center justify-center', isCollapsed ? 'px-3' : 'px-6']">
       <img
         alt="RUASA Logo"
-        :class="['w-auto object-contain brightness-0 invert opacity-90 transition-all', isCollapsed ? 'h-9' : 'h-12']"
-        src="https://lh3.googleusercontent.com/aida/ADBb0ujiXx9N50DdfTe9CfsLyYlpeSMdQBeJ4edwvqQHduYKretEy9UGjRUgBUvuM-ZF69AH2oixZbYNwCBqGrFl1ob-apaw0fpIBU_SE-RBpEk-mdcZjCdDp1zpWl7OBELMyvXbGBehb0pwHrE6PHbRsdBiyvdSqWrx37WjPVhLU4TPPorf2yfIO0HauZa76jOR0KmeXYi4JZUuLwDlfjup7DP5xw5zc5ATh1GAPiF5kb37UfcX_eNV_y9MdQ"
+        :class="['w-auto object-contain opacity-90 transition-all', isCollapsed ? 'h-9' : 'h-12']"
+        :src="sidebarLogoSrc"
       >
     </div>
 
@@ -53,6 +53,8 @@
 <script setup lang="ts">
 import { computed, onBeforeMount, onMounted } from 'vue'
 import { useThemeMode } from '~/presentation/shared/composables/useThemeMode'
+import logoModoClaro from '~/assets/logos/rua_logo_modo_claro_transparente.png'
+import logoModoOscuro from '~/assets/logos/rua_logo_modo_oscuro_transparente.png'
 
 interface AppShellNavItem {
   key: string
@@ -74,6 +76,8 @@ defineOptions({
 
 const props = defineProps<AppShellSidebarProps>()
 const { mode, setMode, initializeMode } = useThemeMode()
+
+const sidebarLogoSrc = computed(() => (mode.value === 'light' ? logoModoClaro : logoModoOscuro))
 const navigationItems: AppShellNavItem[] = [
   { key: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
   { key: 'vendedores', label: 'Vendedores', icon: 'group' },

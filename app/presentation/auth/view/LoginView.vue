@@ -28,8 +28,8 @@
         <div class="mb-6 animate-fade-in">
           <img
             alt="RUASA Logo"
-            class="h-12 w-auto object-contain brightness-0 invert opacity-90"
-            src="https://lh3.googleusercontent.com/aida/ADBb0ujiXx9N50DdfTe9CfsLyYlpeSMdQBeJ4edwvqQHduYKretEy9UGjRUgBUvuM-ZF69AH2oixZbYNwCBqGrFl1ob-apaw0fpIBU_SE-RBpEk-mdcZjCdDp1zpWl7OBELMyvXbGBehb0pwHrE6PHbRsdBiyvdSqWrx37WjPVhLU4TPPorf2yfIO0HauZa76jOR0KmeXYi4JZUuLwDlfjup7DP5xw5zc5ATh1GAPiF5kb37UfcX_eNV_y9MdQ"
+            class="h-12 w-auto object-contain opacity-90"
+            :src="loginLogoSrc"
           >
         </div>
         <div class="w-full text-center mb-6">
@@ -135,12 +135,14 @@
 
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from 'vue'
+import logoModoOscuro from '~/assets/logos/rua_logo_modo_oscuro_transparente.png'
 
 defineOptions({
   name: 'LoginView',
 })
 
 const router = useRouter()
+const loginLogoSrc = logoModoOscuro
 const networkUser = ref('')
 const password = ref('')
 const rememberMe = ref(false)
