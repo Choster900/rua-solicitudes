@@ -1,5 +1,5 @@
 <template>
-  <AppShellLayout>
+  <AppShellLayout screen-title="Dashboard">
     <section class="flex min-h-[calc(100vh-112px)] items-center justify-center">
       <h1 class="text-5xl font-display-lg font-bold text-white">
         Hola mundo

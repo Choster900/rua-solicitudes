@@ -27,18 +27,21 @@
           v-if="item.imageSrc"
           :src="item.imageSrc"
           :alt="item.label"
-          class="h-6 w-6 object-contain filter grayscale brightness-90 opacity-90"
+          class="h-6 w-6 object-contain sidebar-icon-orange"
         >
         <span
           v-else
           class="material-symbols-outlined"
-          :class="item.key === activeItemKey ? 'fill-icon' : ''"
+          :class="[
+            item.key === activeItemKey ? 'fill-icon' : '',
+            'sidebar-icon-orange',
+          ]"
         >
           {{ item.icon }}
         </span>
         <span
           v-if="!isCollapsed"
-          class="font-label-caps text-label-caps"
+          class="font-label-caps text-label-caps text-white"
         >
           {{ item.label }}
         </span>
@@ -114,5 +117,10 @@ onMounted(() => {
 <style scoped>
 .fill-icon {
   font-variation-settings: 'FILL' 1;
+}
+
+.sidebar-icon-orange {
+  color: #f59e0b;
+  filter: brightness(0) saturate(100%) invert(66%) sepia(79%) saturate(1063%) hue-rotate(358deg) brightness(101%) contrast(96%);
 }
 </style>

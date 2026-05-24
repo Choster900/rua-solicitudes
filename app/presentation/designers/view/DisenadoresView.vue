@@ -1,5 +1,5 @@
 <template>
-  <AppShellLayout>
+  <AppShellLayout screen-title="Diseñadores">
     <section class="flex min-h-[calc(100vh-112px)] items-center justify-center">
       <h1 class="text-center text-5xl font-display-lg font-bold text-white">
         Hola, soy la pantalla de diseñadores

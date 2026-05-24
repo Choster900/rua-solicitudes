@@ -18,6 +18,7 @@
       :left-offset="contentLeftOffset"
       :sidebar-toggle-icon="sidebarToggleIcon"
       :sidebar-toggle-title="sidebarToggleTitle"
+      :screen-title="screenTitle"
       @toggle-sidebar="toggleSidebar"
     />
 
@@ -37,6 +38,12 @@ import AppShellWorkspace from '~/presentation/shared/components/layout/AppShellW
 defineOptions({
   name: 'AppShellLayout',
 })
+
+interface AppShellLayoutProps {
+  screenTitle: string
+}
+
+defineProps<AppShellLayoutProps>()
 
 const desktopBreakpoint = 1024
 const sidebarExpandedWidth = 280

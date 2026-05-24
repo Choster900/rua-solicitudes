@@ -5,15 +5,15 @@
   >
     <div class="flex items-center gap-3">
       <button
-        class="p-2 text-outline-variant hover:bg-surface-container-low/10 rounded-full transition-colors"
+        class="inline-flex h-10 w-10 items-center justify-center rounded-full p-0 text-outline-variant transition-colors hover:bg-surface-container-low/10"
         type="button"
         :title="sidebarToggleTitle"
         @click="$emit('toggleSidebar')"
       >
-        <span class="material-symbols-outlined">{{ sidebarToggleIcon }}</span>
+        <span class="material-symbols-outlined block leading-none">{{ sidebarToggleIcon }}</span>
       </button>
       <p class="hidden sm:block text-body-sm font-bold text-white">
-        Dashboard
+        {{ screenTitle }}
       </p>
     </div>
 
@@ -64,6 +64,7 @@ interface AppShellHeaderProps {
   leftOffset: number
   sidebarToggleIcon: string
   sidebarToggleTitle: string
+  screenTitle: string
 }
 
 defineOptions({
