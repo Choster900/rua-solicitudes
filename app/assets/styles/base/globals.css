@@ -16,6 +16,8 @@
         Arial,
         sans-serif;
     --app-font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    --app-bg: 2 6 23;
+    --app-fg: 226 232 240;
 }
 
 html,
@@ -31,45 +33,137 @@ body {
     font-family: var(--app-font-sans);
 }
 
-html.light .app-shell-root .bg-deep-navy,
-html.light .app-shell-root aside,
-html.light .app-shell-root header,
+html.light .app-shell-root {
+    --shell-canvas: #f2f6fc;
+    --shell-surface: #ffffff;
+    --shell-surface-soft: #f7faff;
+    --shell-surface-muted: #edf3fb;
+    --shell-border-strong: rgba(120, 136, 161, 0.42);
+    --shell-border: rgba(120, 136, 161, 0.3);
+    --shell-border-soft: rgba(120, 136, 161, 0.2);
+    --shell-border-faint: rgba(120, 136, 161, 0.14);
+    --shell-text: #132033;
+    --shell-text-muted: #4d5e79;
+    --shell-hover: rgba(31, 103, 177, 0.12);
+    --shell-hover-strong: rgba(31, 103, 177, 0.2);
+    --shell-scroll-track: #e5edf8;
+    --shell-scroll-thumb: #9eb0c8;
+}
+
+html.light .app-shell-root,
 html.light .app-shell-root main {
-    background-color: #f8f9ff !important;
+    background-color: var(--shell-canvas) !important;
 }
 
-html.light .app-shell-root .text-white {
-    color: #0b1c30 !important;
+html.light .app-shell-root .bg-deep-navy {
+    background-color: var(--shell-surface) !important;
 }
 
-html.light .app-shell-root .text-outline-variant {
-    color: #5f6670 !important;
+html.light .app-shell-root main.bg-deep-navy,
+html.light .app-shell-root .dashboard-scroll.bg-deep-navy {
+    background-color: var(--shell-canvas) !important;
 }
 
-html.light .app-shell-root .hover\:bg-surface-container-low\/10:hover {
-    background-color: rgba(211, 228, 254, 0.78) !important;
+html.light .app-shell-root aside {
+    background: linear-gradient(180deg, #ffffff 0%, #f6f9ff 100%) !important;
+    border-color: var(--shell-border) !important;
+}
+
+html.light .app-shell-root header {
+    background-color: rgba(255, 255, 255, 0.92) !important;
+    backdrop-filter: blur(8px);
+    border-color: var(--shell-border) !important;
+}
+
+html.light body.bg-deep-navy {
+    background-color: var(--shell-canvas) !important;
+}
+
+html.light .app-shell-root .bg-surface-container-lowest\/5,
+html.light .app-shell-root .bg-surface-container-lowest\/10 {
+    background-color: var(--shell-surface) !important;
+}
+
+html.light .app-shell-root .bg-surface-container-low\/5,
+html.light .app-shell-root .bg-surface-container-low\/10 {
+    background-color: var(--shell-surface-soft) !important;
+}
+
+html.light .app-shell-root .bg-surface-container-low\/15,
+html.light .app-shell-root .bg-surface-container-low\/20 {
+    background-color: var(--shell-surface-muted) !important;
 }
 
 html.light .app-shell-root .border-outline {
-    border-color: rgba(114, 119, 129, 0.45) !important;
+    border-color: var(--shell-border-strong) !important;
 }
 
 html.light .app-shell-root .border-outline\/10 {
-    border-color: rgba(114, 119, 129, 0.16) !important;
+    border-color: var(--shell-border-faint) !important;
 }
 
 html.light .app-shell-root .border-outline\/20 {
-    border-color: rgba(114, 119, 129, 0.24) !important;
+    border-color: var(--shell-border-soft) !important;
 }
 
 html.light .app-shell-root .border-outline\/30 {
-    border-color: rgba(114, 119, 129, 0.3) !important;
+    border-color: var(--shell-border) !important;
+}
+
+html.light .app-shell-root .text-white {
+    color: var(--shell-text) !important;
+}
+
+html.light .app-shell-root .text-outline,
+html.light .app-shell-root .text-outline-variant {
+    color: var(--shell-text-muted) !important;
+}
+
+html.light .app-shell-root input,
+html.light .app-shell-root textarea,
+html.light .app-shell-root select {
+    color: var(--shell-text) !important;
+}
+
+html.light .app-shell-root input::placeholder,
+html.light .app-shell-root textarea::placeholder {
+    color: #6a7a93 !important;
+}
+
+html.light .app-shell-root .hover\:bg-surface-container-low\/10:hover,
+html.light .app-shell-root .hover\:bg-surface-container-low\/40:hover,
+html.light .app-shell-root .hover\:bg-surface-container-low\/60:hover {
+    background-color: var(--shell-hover) !important;
+}
+
+html.light .app-shell-root .hover\:text-white:hover {
+    color: var(--shell-text) !important;
+}
+
+html.light .app-shell-root .bg-primary.text-white,
+html.light .app-shell-root .bg-secondary.text-white,
+html.light .app-shell-root .bg-status-error.text-white {
+    color: #ffffff !important;
+}
+
+html.light .app-shell-root .bg-primary-container.text-on-primary-container {
+    color: #ffffff !important;
+    background: linear-gradient(135deg, #0b63ce 0%, #0958b4 100%) !important;
+}
+
+html.light .app-shell-root .shadow-sm {
+    box-shadow: 0 8px 18px -16px rgba(15, 23, 42, 0.35) !important;
+}
+
+html.light .app-shell-root .shadow-xl,
+html.light .app-shell-root .shadow-2xl {
+    box-shadow: 0 20px 36px -30px rgba(15, 23, 42, 0.42) !important;
 }
 
 html.light .app-shell-root .dashboard-scroll::-webkit-scrollbar-track {
-    background: #f1f5f9;
+    background: var(--shell-scroll-track);
 }
 
 html.light .app-shell-root .dashboard-scroll::-webkit-scrollbar-thumb {
-    background: #94a3b8;
+    background: var(--shell-scroll-thumb);
 }

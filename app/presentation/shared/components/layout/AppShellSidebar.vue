@@ -73,7 +73,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeMount, onMounted } from 'vue'
+import { computed } from 'vue'
 import { useThemeMode } from '~/presentation/shared/composables/useThemeMode'
 import logoModoClaro from '~/assets/logos/rua_logo_modo_claro_transparente.png'
 import logoModoOscuro from '~/assets/logos/rua_logo_modo_oscuro_transparente.png'
@@ -97,7 +97,7 @@ defineOptions({
 })
 
 const props = defineProps<AppShellSidebarProps>()
-const { mode, setMode, initializeMode } = useThemeMode()
+const { mode } = useThemeMode()
 
 const sidebarLogoSrc = computed(() => (mode.value === 'light' ? logoModoClaro : logoModoOscuro))
 const navigationItems: AppShellNavItem[] = [
@@ -128,17 +128,6 @@ const sidebarClass = computed(() => {
     widthClass,
     translateClass,
   ]
-})
-
-onBeforeMount(() => {
-  setMode('dark')
-})
-
-onMounted(() => {
-  initializeMode()
-  if (mode.value !== 'dark') {
-    setMode('dark')
-  }
 })
 </script>
 

@@ -273,7 +273,7 @@ const clearSelection = () => {
             option.disabled
               ? 'cursor-not-allowed opacity-50'
               : isSelected(option.value)
-                ? 'bg-primary/15 text-primary-fixed-dim'
+                ? 'bg-primary/15 text-primary'
                 : 'hover:bg-surface-container-low/40'
           "
           :disabled="option.disabled"

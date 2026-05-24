@@ -1,5 +1,5 @@
-:root {
+.light {
     color-scheme: light;
-    --app-bg: 248 250 252;
+    --app-bg: 242 246 252;
     --app-fg: 15 23 42;
 }
