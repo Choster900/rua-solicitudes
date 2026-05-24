@@ -59,28 +59,16 @@
           <label class="block text-[0.65rem] font-label-caps uppercase text-secondary-container">
             Tipo de usuario <span class="text-status-error">*</span>
           </label>
-          <select
+          <AppSelect
             v-model="formModel.userType"
-            class="w-full rounded-lg border bg-surface-container-lowest/5 px-3 py-2.5 text-sm text-white outline-none transition-all"
-            :class="getFieldError('userType')
-              ? 'border-status-error focus:border-status-error focus:ring-2 focus:ring-status-error/40'
-              : 'border-outline/30 focus:border-primary focus:ring-2 focus:ring-primary/40'"
+            icon="manage_accounts"
+            :input-class="getFieldError('userType')
+              ? 'border-status-error focus:ring-status-error/40'
+              : ''"
+            :options="userTypeSelectOptions"
+            placeholder="Selecciona el tipo de usuario"
             @blur="handleFieldBlur('userType')"
-          >
-            <option
-              disabled
-              value=""
-            >
-              Selecciona el tipo de usuario
-            </option>
-            <option
-              v-for="userType in userTypeOptions"
-              :key="userType"
-              :value="userType"
-            >
-              {{ userType }}
-            </option>
-          </select>
+          />
           <p
             v-if="getFieldError('userType')"
             class="text-xs text-status-error"
@@ -103,22 +91,17 @@
           <label class="block text-[0.65rem] font-label-caps uppercase text-secondary-container">
             Estado de usuario <span class="text-status-error">*</span>
           </label>
-          <select
+          <AppSelect
             v-model="formModel.status"
-            class="w-full rounded-lg border bg-surface-container-lowest/5 px-3 py-2.5 text-sm text-white outline-none transition-all"
-            :class="getFieldError('status')
-              ? 'border-status-error focus:border-status-error focus:ring-2 focus:ring-status-error/40'
-              : 'border-outline/30 focus:border-primary focus:ring-2 focus:ring-primary/40'"
+            :clearable="false"
+            :input-class="getFieldError('status')
+              ? 'border-status-error focus:ring-status-error/40'
+              : ''"
+            icon="verified"
+            :options="userStatusSelectOptions"
+            :searchable="false"
             @blur="handleFieldBlur('status')"
-          >
-            <option
-              v-for="status in userStatusOptions"
-              :key="status"
-              :value="status"
-            >
-              {{ status }}
-            </option>
-          </select>
+          />
           <p
             v-if="getFieldError('status')"
             class="text-xs text-status-error"
@@ -152,6 +135,7 @@
 <script setup lang="ts">
 import { computed, reactive, watch } from 'vue'
 import AppButton from '~/presentation/shared/components/ui/AppButton.vue'
+import AppSelect from '~/presentation/shared/components/ui/AppSelect.vue'
 import AppTextField from '~/presentation/shared/components/ui/AppTextField.vue'
 import { useFormValidation, validationRules, type ValidationSchema } from '~/presentation/shared/composables/forms/useFormValidation'
 import type { UserFormModel } from '~/presentation/users/interfaces/user-form.interface'
@@ -177,6 +161,8 @@ const emit = defineEmits<{
 
 const userTypeOptions: UserType[] = ['Vendedor', 'Diseñador', 'Calidad', 'Administrativo', 'Gerencia']
 const userStatusOptions: UserStatus[] = ['Activo', 'Pendiente', 'Bloqueado']
+const userTypeSelectOptions = userTypeOptions.map(userType => ({ label: userType, value: userType }))
+const userStatusSelectOptions = userStatusOptions.map(status => ({ label: status, value: status }))
 const formModel = reactive<UserFormModel>({
   employeeCode: '',
   fullName: '',

@@ -113,22 +113,16 @@
       <div class="flex flex-wrap items-center gap-3 text-xs text-outline-variant">
         <label
           class="inline-flex items-center gap-2"
-          for="datatable-page-size"
         >
           <span>Filas por página</span>
-          <select
-            id="datatable-page-size"
-            v-model.number="pageSize"
-            class="rounded-lg border border-outline/30 bg-transparent px-2 py-1.5 text-xs text-white outline-none transition-colors focus:border-primary"
-          >
-            <option
-              v-for="size in pageSizeOptions"
-              :key="size"
-              :value="size"
-            >
-              {{ size }}
-            </option>
-          </select>
+          <AppSelect
+            v-model="pageSize"
+            :clearable="false"
+            :options="pageSizeSelectOptions"
+            :searchable="false"
+            input-class="!w-[86px] !py-1.5 !text-xs"
+            placeholder="Tamaño"
+          />
         </label>
 
         <span>
@@ -194,6 +188,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import AppSelect from '~/presentation/shared/components/ui/AppSelect.vue'
 import type { AppDataTableColumn, AppDataTableRow } from '~/presentation/shared/interfaces/ui/app-data-table.interface'
 
 interface AppDataTableProps {
@@ -333,6 +328,13 @@ const visiblePageNumbers = computed(() => {
   }
 
   return pages
+})
+
+const pageSizeSelectOptions = computed(() => {
+  return props.pageSizeOptions.map(size => ({
+    label: size.toString(),
+    value: size,
+  }))
 })
 
 const formatCellValue = (value: unknown) => {
