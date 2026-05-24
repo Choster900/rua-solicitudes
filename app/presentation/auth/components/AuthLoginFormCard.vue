@@ -106,8 +106,8 @@ const emit = defineEmits<{
 }>()
 
 const formValues = reactive<AuthLoginFormValues>({
-  networkUser: '',
-  password: '',
+  networkUser: 'admin@ruasa.com.sv',
+  password: '12345678',
   rememberMe: false,
 })
 

@@ -12,6 +12,7 @@
       :is-mobile-sidebar-open="isMobileSidebarOpen"
       :is-collapsed="isDesktopSidebarCollapsed"
       @select-item="handleNavigationItemSelect"
+      @logout="handleLogout"
     />
 
     <AppShellHeader
@@ -52,29 +53,42 @@ const sidebarCollapsedWidth = 88
 const router = useRouter()
 const route = useRoute()
 const isMobileViewport = ref(false)
-const isSidebarCollapsed = ref(false)
+const isSidebarCollapsed = useState<boolean>('app-shell-sidebar-collapsed', () => false)
 const isMobileSidebarOpen = ref(false)
 const navigationRouteByItemKey: Record<string, string> = {
-  dashboard: '/dashboard',
-  usuarios: '/usuarios',
-  vendedores: '/vendedores',
-  clientes: '/clientes',
-  diseno: '/disenadores',
-  calidad: '/calidad',
+  'dashboard': '/dashboard',
+  'solicitudes': '/solicitudes',
+  'bandeja-diseno': '/requests/design',
+  'bandeja-calidad': '/requests/quality',
+  'usuarios': '/usuarios',
+  'vendedores': '/vendedores',
+  'clientes': '/clientes',
 }
 const activeNavigationItem = computed(() => {
   const routePath = route.path
 
-  if (routePath.startsWith('/usuarios')) {
-    return 'usuarios'
+  if (routePath.startsWith('/requests/design') || routePath.startsWith('/requests/workflow')) {
+    return 'bandeja-diseno'
+  }
+
+  if (routePath.startsWith('/requests/quality')) {
+    return 'bandeja-calidad'
   }
 
   if (routePath.startsWith('/disenadores')) {
-    return 'diseno'
+    return 'bandeja-diseno'
   }
 
   if (routePath.startsWith('/calidad')) {
-    return 'calidad'
+    return 'bandeja-calidad'
+  }
+
+  if (routePath.startsWith('/solicitudes')) {
+    return 'solicitudes'
+  }
+
+  if (routePath.startsWith('/usuarios')) {
+    return 'usuarios'
   }
 
   if (routePath.startsWith('/vendedores')) {
@@ -148,6 +162,11 @@ const handleNavigationItemSelect = (itemKey: string) => {
   if (isMobileViewport.value) {
     closeMobileSidebar()
   }
+}
+
+const handleLogout = () => {
+  closeMobileSidebar()
+  void router.push('/login')
 }
 
 onMounted(() => {

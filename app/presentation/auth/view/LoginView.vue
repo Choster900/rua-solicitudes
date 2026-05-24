@@ -81,9 +81,19 @@
                 class="w-full bg-surface-container-lowest/5 border rounded-lg py-2.5 pl-10 pr-3 text-sm text-white focus:ring-2 focus:ring-primary transition-all outline-none"
                 :class="passwordError ? 'border-status-error focus:border-status-error focus:ring-status-error/40' : 'border-outline/30 focus:border-primary'"
                 placeholder="••••••••"
-                type="password"
+                :type="showPassword ? 'text' : 'password'"
                 @input="passwordError = ''"
               >
+              <button
+                class="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1.5 text-outline transition-colors hover:bg-surface-container-low/10 hover:text-white"
+                type="button"
+                :title="showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+                @click="showPassword = !showPassword"
+              >
+                <span class="material-symbols-outlined text-[20px]">
+                  {{ showPassword ? 'visibility_off' : 'visibility' }}
+                </span>
+              </button>
             </div>
             <p
               v-if="passwordError"
@@ -117,7 +127,10 @@
             <span class="text-sm font-headline-md">
               {{ isSubmitSuccess ? 'Acceso Concedido' : isSubmitting ? 'Validando...' : 'Ingresar al Sistema' }}
             </span>
-            <span class="material-symbols-outlined">
+            <span
+              class="material-symbols-outlined"
+              :class="{ 'login-spinner': isSubmitting }"
+            >
               {{ isSubmitting ? 'progress_activity' : isSubmitSuccess ? 'check_circle' : 'login' }}
             </span>
           </button>
@@ -143,11 +156,12 @@ defineOptions({
 
 const router = useRouter()
 const loginLogoSrc = logoModoOscuro
-const networkUser = ref('')
-const password = ref('')
+const networkUser = ref('admin@ruasa.com.sv')
+const password = ref('12345678')
 const rememberMe = ref(false)
 const networkUserError = ref('')
 const passwordError = ref('')
+const showPassword = ref(false)
 const isSubmitting = ref(false)
 const isSubmitSuccess = ref(false)
 
@@ -232,6 +246,21 @@ onUnmounted(() => {
 <style scoped>
 .material-symbols-outlined {
   font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+.login-spinner {
+  display: inline-flex;
+  animation: login-spin 0.85s linear infinite;
+}
+
+@keyframes login-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .font-body-sm,

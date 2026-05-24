@@ -1,0 +1,380 @@
+[
+  {
+    "id": "req-101",
+    "requestCode": "SOL-2026-101",
+    "clientName": "Alimentos Nova",
+    "productName": "Empaque Snack 45g",
+    "requestType": "Arte de empaque flexible",
+    "requestedBy": "Mariana Gomez",
+    "vendorName": "Kevin Ruiz",
+    "priority": "HIGH",
+    "stage": "NEW",
+    "requiredDate": "2026-05-29",
+    "createdAt": "2026-05-20T09:05:00.000Z",
+    "updatedAt": "2026-05-20T09:05:00.000Z",
+    "slaHours": 36,
+    "checklist": {
+      "briefValidated": false,
+      "technicalSpecsValidated": false,
+      "assetsValidated": false,
+      "legalValidated": false
+    },
+    "evidenceFiles": [
+      {
+        "id": "e-101-1",
+        "name": "brief-snack-v3.pdf",
+        "extension": "pdf",
+        "sizeKb": 842
+      }
+    ],
+    "observations": [],
+    "auditTrail": [
+      {
+        "id": "a-101-1",
+        "requestId": "req-101",
+        "actorName": "Sistema",
+        "actorRole": "Sistema",
+        "action": "Solicitud registrada",
+        "fromStage": null,
+        "toStage": "NEW",
+        "comment": "Ingreso inicial de solicitud.",
+        "createdAt": "2026-05-20T09:05:00.000Z"
+      }
+    ]
+  },
+  {
+    "id": "req-102",
+    "requestCode": "SOL-2026-102",
+    "clientName": "Laboratorios Zen",
+    "productName": "Etiqueta Jarabe 120ml",
+    "requestType": "Etiqueta autoadhesiva",
+    "requestedBy": "Rosa Mendez",
+    "vendorName": "Erick Lara",
+    "priority": "MEDIUM",
+    "stage": "DESIGN_IN_PROGRESS",
+    "requiredDate": "2026-05-31",
+    "createdAt": "2026-05-18T14:35:00.000Z",
+    "updatedAt": "2026-05-22T12:10:00.000Z",
+    "slaHours": 52,
+    "checklist": {
+      "briefValidated": true,
+      "technicalSpecsValidated": true,
+      "assetsValidated": false,
+      "legalValidated": false
+    },
+    "evidenceFiles": [
+      {
+        "id": "e-102-1",
+        "name": "etiqueta-jarabe.ai",
+        "extension": "ai",
+        "sizeKb": 1834
+      },
+      {
+        "id": "e-102-2",
+        "name": "lineamientos-color.pdf",
+        "extension": "pdf",
+        "sizeKb": 420
+      }
+    ],
+    "observations": [
+      "Falta confirmacion legal del texto nutricional."
+    ],
+    "auditTrail": [
+      {
+        "id": "a-102-1",
+        "requestId": "req-102",
+        "actorName": "Sistema",
+        "actorRole": "Sistema",
+        "action": "Solicitud registrada",
+        "fromStage": null,
+        "toStage": "NEW",
+        "comment": "Ingreso inicial de solicitud.",
+        "createdAt": "2026-05-18T14:35:00.000Z"
+      },
+      {
+        "id": "a-102-2",
+        "requestId": "req-102",
+        "actorName": "Daniela Flores",
+        "actorRole": "Disenador",
+        "action": "Diseño tomado",
+        "fromStage": "NEW",
+        "toStage": "DESIGN_IN_PROGRESS",
+        "comment": "Inicio de preproduccion y revision tecnica.",
+        "createdAt": "2026-05-19T08:18:00.000Z"
+      }
+    ]
+  },
+  {
+    "id": "req-103",
+    "requestCode": "SOL-2026-103",
+    "clientName": "Cafes Aurora",
+    "productName": "Caja Master 24 unidades",
+    "requestType": "Caja corrugada",
+    "requestedBy": "Mario Mejia",
+    "vendorName": "Andrea Campos",
+    "priority": "LOW",
+    "stage": "READY_FOR_QUALITY",
+    "requiredDate": "2026-06-03",
+    "createdAt": "2026-05-17T16:00:00.000Z",
+    "updatedAt": "2026-05-23T10:50:00.000Z",
+    "slaHours": 20,
+    "checklist": {
+      "briefValidated": true,
+      "technicalSpecsValidated": true,
+      "assetsValidated": true,
+      "legalValidated": true
+    },
+    "evidenceFiles": [
+      {
+        "id": "e-103-1",
+        "name": "master-box-v2.ai",
+        "extension": "ai",
+        "sizeKb": 2901
+      }
+    ],
+    "observations": [],
+    "auditTrail": [
+      {
+        "id": "a-103-1",
+        "requestId": "req-103",
+        "actorName": "Sistema",
+        "actorRole": "Sistema",
+        "action": "Solicitud registrada",
+        "fromStage": null,
+        "toStage": "NEW",
+        "comment": "Ingreso inicial de solicitud.",
+        "createdAt": "2026-05-17T16:00:00.000Z"
+      },
+      {
+        "id": "a-103-2",
+        "requestId": "req-103",
+        "actorName": "Jorge Quintanilla",
+        "actorRole": "Disenador",
+        "action": "Diseño tomado",
+        "fromStage": "NEW",
+        "toStage": "DESIGN_IN_PROGRESS",
+        "comment": "Se valida troquel y areas de seguridad.",
+        "createdAt": "2026-05-18T11:30:00.000Z"
+      },
+      {
+        "id": "a-103-3",
+        "requestId": "req-103",
+        "actorName": "Jorge Quintanilla",
+        "actorRole": "Disenador",
+        "action": "Enviado a calidad",
+        "decision": "SUBMIT_TO_QUALITY",
+        "fromStage": "DESIGN_IN_PROGRESS",
+        "toStage": "READY_FOR_QUALITY",
+        "comment": "Checklist completo y arte listo para validacion.",
+        "createdAt": "2026-05-23T10:50:00.000Z"
+      }
+    ]
+  },
+  {
+    "id": "req-104",
+    "requestCode": "SOL-2026-104",
+    "clientName": "Bebidas Polar",
+    "productName": "Etiqueta PET 1L",
+    "requestType": "Etiqueta wrap",
+    "requestedBy": "Karen Rosales",
+    "vendorName": "Luis Pena",
+    "priority": "HIGH",
+    "stage": "QUALITY_IN_REVIEW",
+    "requiredDate": "2026-05-27",
+    "createdAt": "2026-05-15T07:15:00.000Z",
+    "updatedAt": "2026-05-24T08:30:00.000Z",
+    "slaHours": 8,
+    "checklist": {
+      "briefValidated": true,
+      "technicalSpecsValidated": true,
+      "assetsValidated": true,
+      "legalValidated": true
+    },
+    "evidenceFiles": [
+      {
+        "id": "e-104-1",
+        "name": "etiqueta-pet-final.ai",
+        "extension": "ai",
+        "sizeKb": 2110
+      },
+      {
+        "id": "e-104-2",
+        "name": "mockup-frontal.png",
+        "extension": "png",
+        "sizeKb": 654
+      }
+    ],
+    "observations": [],
+    "auditTrail": [
+      {
+        "id": "a-104-1",
+        "requestId": "req-104",
+        "actorName": "Sistema",
+        "actorRole": "Sistema",
+        "action": "Solicitud registrada",
+        "fromStage": null,
+        "toStage": "NEW",
+        "comment": "Ingreso inicial de solicitud.",
+        "createdAt": "2026-05-15T07:15:00.000Z"
+      },
+      {
+        "id": "a-104-2",
+        "requestId": "req-104",
+        "actorName": "Nadia Castro",
+        "actorRole": "Disenador",
+        "action": "Diseño tomado",
+        "fromStage": "NEW",
+        "toStage": "DESIGN_IN_PROGRESS",
+        "comment": "Arranque de produccion grafica.",
+        "createdAt": "2026-05-15T11:10:00.000Z"
+      },
+      {
+        "id": "a-104-3",
+        "requestId": "req-104",
+        "actorName": "Nadia Castro",
+        "actorRole": "Disenador",
+        "action": "Enviado a calidad",
+        "decision": "SUBMIT_TO_QUALITY",
+        "fromStage": "DESIGN_IN_PROGRESS",
+        "toStage": "READY_FOR_QUALITY",
+        "comment": "Arte final y especificaciones cerradas.",
+        "createdAt": "2026-05-24T07:50:00.000Z"
+      },
+      {
+        "id": "a-104-4",
+        "requestId": "req-104",
+        "actorName": "Sofia Morales",
+        "actorRole": "Calidad",
+        "action": "Calidad en revision",
+        "fromStage": "READY_FOR_QUALITY",
+        "toStage": "QUALITY_IN_REVIEW",
+        "comment": "Se inicia control final de preprensa.",
+        "createdAt": "2026-05-24T08:30:00.000Z"
+      }
+    ]
+  },
+  {
+    "id": "req-105",
+    "requestCode": "SOL-2026-105",
+    "clientName": "Farmacia Union",
+    "productName": "Caja Vitamina C",
+    "requestType": "Caja folding carton",
+    "requestedBy": "Daniel Herrera",
+    "vendorName": "Melissa Bonilla",
+    "priority": "MEDIUM",
+    "stage": "REJECTED_BY_QUALITY",
+    "requiredDate": "2026-05-30",
+    "createdAt": "2026-05-16T09:40:00.000Z",
+    "updatedAt": "2026-05-23T15:10:00.000Z",
+    "slaHours": 12,
+    "checklist": {
+      "briefValidated": true,
+      "technicalSpecsValidated": true,
+      "assetsValidated": true,
+      "legalValidated": true
+    },
+    "evidenceFiles": [
+      {
+        "id": "e-105-1",
+        "name": "vitamina-c-preprensa.ai",
+        "extension": "ai",
+        "sizeKb": 1650
+      }
+    ],
+    "observations": [
+      "Corregir codigo de barras: contraste insuficiente para lectura."
+    ],
+    "auditTrail": [
+      {
+        "id": "a-105-1",
+        "requestId": "req-105",
+        "actorName": "Sistema",
+        "actorRole": "Sistema",
+        "action": "Solicitud registrada",
+        "fromStage": null,
+        "toStage": "NEW",
+        "comment": "Ingreso inicial de solicitud.",
+        "createdAt": "2026-05-16T09:40:00.000Z"
+      },
+      {
+        "id": "a-105-2",
+        "requestId": "req-105",
+        "actorName": "Carla Diaz",
+        "actorRole": "Disenador",
+        "action": "Enviado a calidad",
+        "decision": "SUBMIT_TO_QUALITY",
+        "fromStage": "DESIGN_IN_PROGRESS",
+        "toStage": "READY_FOR_QUALITY",
+        "comment": "Revision interna completada.",
+        "createdAt": "2026-05-22T09:02:00.000Z"
+      },
+      {
+        "id": "a-105-3",
+        "requestId": "req-105",
+        "actorName": "Elena Orellana",
+        "actorRole": "Calidad",
+        "action": "Rechazado en calidad",
+        "decision": "REJECT",
+        "fromStage": "QUALITY_IN_REVIEW",
+        "toStage": "REJECTED_BY_QUALITY",
+        "comment": "Corregir codigo de barras: contraste insuficiente para lectura.",
+        "createdAt": "2026-05-23T15:10:00.000Z"
+      }
+    ]
+  },
+  {
+    "id": "req-106",
+    "requestCode": "SOL-2026-106",
+    "clientName": "Distribuidora Atlas",
+    "productName": "Etiqueta Aceite 500ml",
+    "requestType": "Etiqueta adhesiva",
+    "requestedBy": "Oscar Pineda",
+    "vendorName": "Gabriela Nunez",
+    "priority": "LOW",
+    "stage": "APPROVED",
+    "requiredDate": "2026-05-21",
+    "createdAt": "2026-05-11T10:20:00.000Z",
+    "updatedAt": "2026-05-20T18:25:00.000Z",
+    "slaHours": 0,
+    "checklist": {
+      "briefValidated": true,
+      "technicalSpecsValidated": true,
+      "assetsValidated": true,
+      "legalValidated": true
+    },
+    "evidenceFiles": [
+      {
+        "id": "e-106-1",
+        "name": "aceite-500ml-final.ai",
+        "extension": "ai",
+        "sizeKb": 1240
+      }
+    ],
+    "observations": [],
+    "auditTrail": [
+      {
+        "id": "a-106-1",
+        "requestId": "req-106",
+        "actorName": "Sistema",
+        "actorRole": "Sistema",
+        "action": "Solicitud registrada",
+        "fromStage": null,
+        "toStage": "NEW",
+        "comment": "Ingreso inicial de solicitud.",
+        "createdAt": "2026-05-11T10:20:00.000Z"
+      },
+      {
+        "id": "a-106-2",
+        "requestId": "req-106",
+        "actorName": "Javier Valle",
+        "actorRole": "Calidad",
+        "action": "Aprobado en calidad",
+        "decision": "APPROVE",
+        "fromStage": "QUALITY_IN_REVIEW",
+        "toStage": "APPROVED",
+        "comment": "Solicitud aprobada para produccion.",
+        "createdAt": "2026-05-20T18:25:00.000Z"
+      }
+    ]
+  }
+]

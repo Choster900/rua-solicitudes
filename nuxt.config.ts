@@ -29,6 +29,7 @@ export default defineNuxtConfig({
     '~/assets/styles/themes/light/theme.css',
     '~/assets/styles/themes/dark/theme.css',
     'vue-sonner/style.css',
+    '@vuepic/vue-datepicker/dist/main.css',
     '~/assets/styles/tailwind/main.css',
   ],
   runtimeConfig: {

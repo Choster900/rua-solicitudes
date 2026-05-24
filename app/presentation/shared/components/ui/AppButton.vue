@@ -6,20 +6,20 @@
     @click="$emit('click', $event)"
   >
     <span
-      v-if="loading && !icon"
-      class="material-symbols-outlined animate-spin text-[18px]"
+      v-if="loading"
+      class="material-symbols-outlined app-button-spinner text-[18px]"
     >
       progress_activity
     </span>
     <span
-      v-if="icon && iconPosition === 'left'"
+      v-else-if="icon && iconPosition === 'left'"
       class="material-symbols-outlined text-[20px]"
     >
       {{ icon }}
     </span>
     <slot />
     <span
-      v-if="icon && iconPosition === 'right'"
+      v-if="!loading && icon && iconPosition === 'right'"
       class="material-symbols-outlined text-[20px]"
     >
       {{ icon }}
@@ -92,3 +92,20 @@ const buttonClass = computed(() => {
   ]
 })
 </script>
+
+<style scoped>
+.app-button-spinner {
+  display: inline-flex;
+  animation: app-button-spin 0.85s linear infinite;
+}
+
+@keyframes app-button-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+</style>

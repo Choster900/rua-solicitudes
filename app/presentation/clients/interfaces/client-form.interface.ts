@@ -1,7 +1,6 @@
-export type ClientStatus = 'Activo' | 'Prospecto' | 'Inactivo'
+import type { ClientStatus } from '~/presentation/clients/interfaces/client.interface'
 
-export interface Client {
-  id: string
+export interface ClientFormModel {
   code: string
   name: string
   taxId: string

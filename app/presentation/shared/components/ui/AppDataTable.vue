@@ -84,6 +84,13 @@
             v-else
             :key="getRowKey(row, paginationStartIndex + rowIndex)"
             class="transition-colors hover:bg-surface-container-low/10"
+            :class="[
+              rowClickable ? 'cursor-pointer' : '',
+              selectedRowKey !== '' && String(getRowKey(row, paginationStartIndex + rowIndex)) === selectedRowKey
+                ? 'bg-surface-container-low/15'
+                : '',
+            ]"
+            @click="handleRowClick($event, row, paginationStartIndex + rowIndex)"
           >
             <td
               v-for="column in columns"
@@ -196,6 +203,8 @@ interface AppDataTableProps {
   columns: AppDataTableColumn[]
   rows: AppDataTableRow[]
   rowKey?: string
+  selectedRowKey?: string
+  rowClickable?: boolean
   loading?: boolean
   showColumnFilters?: boolean
   showPagination?: boolean
@@ -211,6 +220,8 @@ defineOptions({
 
 const props = withDefaults(defineProps<AppDataTableProps>(), {
   rowKey: 'id',
+  selectedRowKey: '',
+  rowClickable: false,
   loading: false,
   showColumnFilters: true,
   showPagination: true,
@@ -219,6 +230,10 @@ const props = withDefaults(defineProps<AppDataTableProps>(), {
   emptyTitle: 'No hay resultados',
   emptyDescription: 'Ajusta tus filtros para continuar.',
 })
+
+const emit = defineEmits<{
+  rowClick: [payload: { row: AppDataTableRow, rowKeyValue: string | number }]
+}>()
 
 const alignClassMap: Record<'left' | 'center' | 'right', string> = {
   left: 'text-left',
@@ -402,6 +417,23 @@ const goToPage = (page: number) => {
   }
 
   currentPage.value = page
+}
+
+const handleRowClick = (event: MouseEvent, row: AppDataTableRow, rowIndex: number) => {
+  if (!props.rowClickable) {
+    return
+  }
+
+  const targetElement = event.target as HTMLElement | null
+
+  if (targetElement?.closest('button, a, input, select, textarea, [role="button"]')) {
+    return
+  }
+
+  emit('rowClick', {
+    row,
+    rowKeyValue: getRowKey(row, rowIndex),
+  })
 }
 
 watch(

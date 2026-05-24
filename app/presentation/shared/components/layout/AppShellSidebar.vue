@@ -47,6 +47,28 @@
         </span>
       </button>
     </nav>
+
+    <div :class="['mt-stack-md border-t border-outline/20 pt-stack-md', isCollapsed ? 'px-2' : 'px-4']">
+      <button
+        :class="[
+          'w-full flex items-center rounded-xl transition-all text-outline-variant hover:bg-surface-container-low/10',
+          isCollapsed ? 'justify-center px-2 py-3' : 'gap-stack-md px-4 py-3',
+        ]"
+        type="button"
+        title="Cerrar sesión"
+        @click="$emit('logout')"
+      >
+        <span class="material-symbols-outlined sidebar-icon-orange">
+          logout
+        </span>
+        <span
+          v-if="!isCollapsed"
+          class="font-label-caps text-label-caps text-white"
+        >
+          Cerrar sesión
+        </span>
+      </button>
+    </div>
   </aside>
 </template>
 
@@ -80,15 +102,16 @@ const { mode, setMode, initializeMode } = useThemeMode()
 const sidebarLogoSrc = computed(() => (mode.value === 'light' ? logoModoClaro : logoModoOscuro))
 const navigationItems: AppShellNavItem[] = [
   { key: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
+  { key: 'solicitudes', label: 'Solicitudes', icon: 'assignment_add' },
+  { key: 'bandeja-diseno', label: 'Bandeja Diseño', icon: 'design_services' },
+  { key: 'bandeja-calidad', label: 'Bandeja Calidad', icon: 'rule' },
   { key: 'usuarios', label: 'Usuarios', icon: 'manage_accounts' },
-  { key: 'vendedores', label: 'Vendedores', icon: 'group' },
   { key: 'clientes', label: 'Clientes', icon: 'badge' },
-  { key: 'diseno', label: 'Diseño', icon: 'brush' },
-  { key: 'calidad', label: 'Calidad', icon: 'verified' },
 ]
 
 defineEmits<{
   selectItem: [itemKey: string]
+  logout: []
 }>()
 
 const sidebarClass = computed(() => {
