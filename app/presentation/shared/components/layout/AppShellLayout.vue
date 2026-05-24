@@ -56,6 +56,7 @@ const isSidebarCollapsed = ref(false)
 const isMobileSidebarOpen = ref(false)
 const navigationRouteByItemKey: Record<string, string> = {
   dashboard: '/dashboard',
+  usuarios: '/usuarios',
   vendedores: '/vendedores',
   clientes: '/clientes',
   diseno: '/disenadores',
@@ -63,6 +64,10 @@ const navigationRouteByItemKey: Record<string, string> = {
 }
 const activeNavigationItem = computed(() => {
   const routePath = route.path
+
+  if (routePath.startsWith('/usuarios')) {
+    return 'usuarios'
+  }
 
   if (routePath.startsWith('/disenadores')) {
     return 'diseno'

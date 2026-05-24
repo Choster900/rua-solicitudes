@@ -5,6 +5,7 @@ import { dashboardRoutes } from '~/presentation/dashboard/routes/dashboard.route
 import { designersRoutes } from '~/presentation/designers/routes/designers.routes'
 import { landingRoutes } from '~/presentation/landing/routes/landing.routes'
 import { qualityRoutes } from '~/presentation/quality/routes/quality.routes'
+import { usersRoutes } from '~/presentation/users/routes/users.routes'
 import { vendorsRoutes } from '~/presentation/vendors/routes/vendors.routes'
 
 export default <RouterConfig>{
@@ -16,5 +17,6 @@ export default <RouterConfig>{
     ...designersRoutes,
     ...qualityRoutes,
     ...vendorsRoutes,
+    ...usersRoutes,
   ],
 }

@@ -80,6 +80,7 @@ const { mode, setMode, initializeMode } = useThemeMode()
 const sidebarLogoSrc = computed(() => (mode.value === 'light' ? logoModoClaro : logoModoOscuro))
 const navigationItems: AppShellNavItem[] = [
   { key: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
+  { key: 'usuarios', label: 'Usuarios', icon: 'manage_accounts' },
   { key: 'vendedores', label: 'Vendedores', icon: 'group' },
   { key: 'clientes', label: 'Clientes', icon: 'badge' },
   { key: 'diseno', label: 'Diseño', icon: 'brush' },
