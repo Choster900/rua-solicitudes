@@ -5,7 +5,7 @@
         <img
           class="block w-full h-full object-cover"
           data-alt="A dramatic low-key industrial photograph of a high-precision cardboard cutting machine in a modern factory. The lighting is focused and moody, highlighting the metallic textures and geometric precision of the equipment. A dark blue color palette dominates the scene, evoking a sense of reliability and advanced manufacturing technology. Deep shadows and subtle reflections create a sophisticated, high-end corporate atmosphere."
-          src="https://lh3.googleusercontent.com/aida/ADBb0uj0GJ0InBl9HcheG5djeV1tkUvsjpv8ysLBSfrYEt1MYqoWS9cPZA148HI5PWNfS_kWOp_nokmPXN-S1zNJR1l4hkJsUSQhDywTu-DxfhHCjnyUFbKEFp0CDZSLzLHuyVn4wSocZgl9SuH258DxAHTZ_IJ_So9h087LCRJuMi2HDX8LwMoqhlDUW5E79hUFPH92TPjc9opRDkVq1kwvrsjZZBRAzORsdsL5g7XWryBaT8EbHUXLSYxCmLw"
+          src="../../../assets/images/banner-login.jpg"
           alt="A dramatic low-key industrial photograph"
         >
         <div class="absolute inset-0 industrial-overlay z-10" />
@@ -41,8 +41,8 @@
           </p>
         </div>
         <form
-          id="loginForm"
           class="w-full space-y-4"
+          @submit.prevent="handleSubmit"
         >
           <div class="group glow-effect transition-all duration-300">
             <label class="font-label-caps text-[0.65rem] text-secondary-container mb-1.5 block uppercase">
@@ -53,11 +53,20 @@
                 person
               </span>
               <input
-                class="w-full bg-surface-container-lowest/5 border border-outline/30 rounded-lg py-2.5 pl-10 pr-3 text-sm text-white focus:ring-2 focus:ring-primary focus:border-primary transition-all outline-none"
+                v-model="networkUser"
+                class="w-full bg-surface-container-lowest/5 border rounded-lg py-2.5 pl-10 pr-3 text-sm text-white focus:ring-2 focus:ring-primary transition-all outline-none"
+                :class="networkUserError ? 'border-status-error focus:border-status-error focus:ring-status-error/40' : 'border-outline/30 focus:border-primary'"
                 placeholder="usuario@ruasa.com.sv"
                 type="text"
+                @input="networkUserError = ''"
               >
             </div>
+            <p
+              v-if="networkUserError"
+              class="mt-1 text-xs text-status-error"
+            >
+              {{ networkUserError }}
+            </p>
           </div>
           <div class="group glow-effect transition-all duration-300">
             <label class="font-label-caps text-[0.65rem] text-secondary-container mb-1.5 block uppercase">
@@ -68,15 +77,25 @@
                 lock
               </span>
               <input
-                class="w-full bg-surface-container-lowest/5 border border-outline/30 rounded-lg py-2.5 pl-10 pr-3 text-sm text-white focus:ring-2 focus:ring-primary focus:border-primary transition-all outline-none"
+                v-model="password"
+                class="w-full bg-surface-container-lowest/5 border rounded-lg py-2.5 pl-10 pr-3 text-sm text-white focus:ring-2 focus:ring-primary transition-all outline-none"
+                :class="passwordError ? 'border-status-error focus:border-status-error focus:ring-status-error/40' : 'border-outline/30 focus:border-primary'"
                 placeholder="••••••••"
                 type="password"
+                @input="passwordError = ''"
               >
             </div>
+            <p
+              v-if="passwordError"
+              class="mt-1 text-xs text-status-error"
+            >
+              {{ passwordError }}
+            </p>
           </div>
           <div class="flex flex-wrap items-center justify-between gap-2 text-[0.8rem] py-1">
             <label class="flex items-center gap-2 cursor-pointer group shrink-0">
               <input
+                v-model="rememberMe"
                 class="w-4 h-4 rounded border-outline/30 bg-transparent text-primary focus:ring-primary transition-all"
                 type="checkbox"
               >
@@ -92,9 +111,15 @@
           <button
             class="w-full bg-primary hover:bg-primary-container text-white font-bold py-2.5 rounded-lg shadow-lg shadow-primary/20 transform active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-2"
             type="submit"
+            :disabled="isSubmitting"
+            :class="isSubmitting ? 'opacity-80 cursor-not-allowed' : ''"
           >
-            <span class="text-sm font-headline-md">Ingresar al Sistema</span>
-            <span class="material-symbols-outlined">login</span>
+            <span class="text-sm font-headline-md">
+              {{ isSubmitSuccess ? 'Acceso Concedido' : isSubmitting ? 'Validando...' : 'Ingresar al Sistema' }}
+            </span>
+            <span class="material-symbols-outlined">
+              {{ isSubmitting ? 'progress_activity' : isSubmitSuccess ? 'check_circle' : 'login' }}
+            </span>
           </button>
         </form>
         <footer class="mt-8 sm:mt-10 text-center">
@@ -109,13 +134,20 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 
 defineOptions({
-  name: 'AuthLoginPage',
+  name: 'LoginView',
 })
 
 const router = useRouter()
+const networkUser = ref('')
+const password = ref('')
+const rememberMe = ref(false)
+const networkUserError = ref('')
+const passwordError = ref('')
+const isSubmitting = ref(false)
+const isSubmitSuccess = ref(false)
 
 useHead({
   htmlAttrs: {
@@ -129,50 +161,40 @@ useHead({
 
 let submitTimeoutId: number | null = null
 let redirectTimeoutId: number | null = null
-let formElement: HTMLFormElement | null = null
-let submitHandler: ((event: Event) => void) | null = null
 let mouseMoveHandler: ((event: MouseEvent) => void) | null = null
 
+const validateRequiredFields = () => {
+  networkUserError.value = networkUser.value.trim() ? '' : 'Este campo es requerido.'
+  passwordError.value = password.value.trim() ? '' : 'Este campo es requerido.'
+
+  return !networkUserError.value && !passwordError.value
+}
+
+const handleSubmit = () => {
+  if (isSubmitting.value) {
+    return
+  }
+
+  isSubmitSuccess.value = false
+  const hasValidFields = validateRequiredFields()
+
+  if (!hasValidFields) {
+    return
+  }
+
+  isSubmitting.value = true
+
+  submitTimeoutId = window.setTimeout(() => {
+    isSubmitting.value = false
+    isSubmitSuccess.value = true
+
+    redirectTimeoutId = window.setTimeout(() => {
+      void router.push('/dashboard')
+    }, 1000)
+  }, 1800)
+}
+
 onMounted(() => {
-  formElement = document.getElementById('loginForm') as HTMLFormElement | null
-
-  submitHandler = (event: Event) => {
-    event.preventDefault()
-
-    const currentForm = event.currentTarget as HTMLFormElement | null
-    const button = currentForm?.querySelector('button[type="submit"]') as HTMLButtonElement | null
-    const usernameInput = currentForm?.querySelector('input[type="text"]') as HTMLInputElement | null
-    const passwordInput = currentForm?.querySelector('input[type="password"]') as HTMLInputElement | null
-
-    if (!button) {
-      return
-    }
-
-    const hasValidCredentials = Boolean(usernameInput?.value.trim()) && Boolean(passwordInput?.value.trim())
-
-    if (!hasValidCredentials) {
-      return
-    }
-
-    button.innerHTML = '<span class="material-symbols-outlined animate-spin">progress_activity</span> Validando...'
-    button.disabled = true
-    button.classList.add('opacity-80', 'cursor-not-allowed')
-
-    submitTimeoutId = window.setTimeout(() => {
-      button.innerHTML = '<span class="material-symbols-outlined">check_circle</span> Acceso Concedido'
-      button.classList.remove('bg-primary')
-      button.classList.add('bg-status-success')
-
-      redirectTimeoutId = window.setTimeout(() => {
-        void router.push('/dashboard')
-      }, 1000)
-    }, 1800)
-  }
-
-  if (formElement && submitHandler) {
-    formElement.addEventListener('submit', submitHandler)
-  }
-
   mouseMoveHandler = (event: MouseEvent) => {
     const image = document.querySelector('img[data-alt]') as HTMLImageElement | null
 
@@ -197,10 +219,6 @@ onUnmounted(() => {
 
   if (redirectTimeoutId !== null) {
     window.clearTimeout(redirectTimeoutId)
-  }
-
-  if (formElement && submitHandler) {
-    formElement.removeEventListener('submit', submitHandler)
   }
 
   if (mouseMoveHandler) {

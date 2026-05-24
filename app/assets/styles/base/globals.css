@@ -30,3 +30,46 @@ body {
     color: rgb(var(--app-fg));
     font-family: var(--app-font-sans);
 }
+
+html.light .app-shell-root .bg-deep-navy,
+html.light .app-shell-root aside,
+html.light .app-shell-root header,
+html.light .app-shell-root main {
+    background-color: #f8f9ff !important;
+}
+
+html.light .app-shell-root .text-white {
+    color: #0b1c30 !important;
+}
+
+html.light .app-shell-root .text-outline-variant {
+    color: #5f6670 !important;
+}
+
+html.light .app-shell-root .hover\:bg-surface-container-low\/10:hover {
+    background-color: rgba(211, 228, 254, 0.78) !important;
+}
+
+html.light .app-shell-root .border-outline {
+    border-color: rgba(114, 119, 129, 0.45) !important;
+}
+
+html.light .app-shell-root .border-outline\/10 {
+    border-color: rgba(114, 119, 129, 0.16) !important;
+}
+
+html.light .app-shell-root .border-outline\/20 {
+    border-color: rgba(114, 119, 129, 0.24) !important;
+}
+
+html.light .app-shell-root .border-outline\/30 {
+    border-color: rgba(114, 119, 129, 0.3) !important;
+}
+
+html.light .app-shell-root .dashboard-scroll::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+
+html.light .app-shell-root .dashboard-scroll::-webkit-scrollbar-thumb {
+    background: #94a3b8;
+}
