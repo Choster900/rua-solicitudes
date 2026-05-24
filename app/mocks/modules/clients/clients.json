@@ -1,0 +1,66 @@
+[
+  {
+    "id": "client-001",
+    "code": "CLI-001",
+    "name": "Empaques Delta S.A. de C.V.",
+    "segment": "Corrugado Industrial",
+    "city": "San Salvador",
+    "status": "Activo"
+  },
+  {
+    "id": "client-002",
+    "code": "CLI-002",
+    "name": "Impresiones Maya",
+    "segment": "Packaging Retail",
+    "city": "Santa Ana",
+    "status": "Activo"
+  },
+  {
+    "id": "client-003",
+    "code": "CLI-003",
+    "name": "Cartones del Pacífico",
+    "segment": "Exportación",
+    "city": "La Libertad",
+    "status": "Prospecto"
+  },
+  {
+    "id": "client-004",
+    "code": "CLI-004",
+    "name": "Artes Gráficas Prisma",
+    "segment": "Etiquetas Premium",
+    "city": "San Miguel",
+    "status": "Activo"
+  },
+  {
+    "id": "client-005",
+    "code": "CLI-005",
+    "name": "Distribuidora KiloPack",
+    "segment": "Logística",
+    "city": "Sonsonate",
+    "status": "Inactivo"
+  },
+  {
+    "id": "client-006",
+    "code": "CLI-006",
+    "name": "FoodWrap Centroamérica",
+    "segment": "Alimentos",
+    "city": "San Salvador",
+    "status": "Activo"
+  },
+  {
+    "id": "client-007",
+    "code": "CLI-007",
+    "name": "BioBox Solutions",
+    "segment": "Sustentable",
+    "city": "Ahuachapán",
+    "status": "Prospecto"
+  },
+  {
+    "id": "client-008",
+    "code": "CLI-008",
+    "name": "FlexoPrint Labs",
+    "segment": "Impresión Técnica",
+    "city": "Usulután",
+    "status": "Activo"
+  }
+]
