@@ -1,14 +1,15 @@
 import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
+import dayjs from 'dayjs'
 import { useAppToast } from '~/presentation/shared/composables/useAppToast'
-import type { AppStatusBadgeTone } from '~/presentation/request-workflow/interfaces/workflow-ui.type'
+import type { AppStatusBadgeTone } from '~/presentation/interfaces/request-workflow/workflow-ui.type'
 import type {
   WorkflowChecklistState,
   WorkflowPriority,
   WorkflowRequest,
   WorkflowStage,
-} from '~/presentation/request-workflow/interfaces/workflow-request.interface'
-import type { WorkflowQueueRow } from '~/presentation/request-workflow/interfaces/workflow-queue-row.interface'
+} from '~/presentation/interfaces/request-workflow/workflow-request.interface'
+import type { WorkflowQueueRow } from '~/presentation/interfaces/request-workflow/workflow-queue-row.interface'
 import { useRequestWorkflowStore } from '~/presentation/request-workflow/stores/useRequestWorkflowStore'
 
 const priorityLabelMap: Record<WorkflowPriority, string> = {
@@ -53,15 +54,15 @@ const formatDate = (sourceDate: string) => {
     return 'Sin fecha'
   }
 
-  const parsedDate = new Date(sourceDate)
+  const parsedDate = dayjs(sourceDate)
 
-  if (Number.isNaN(parsedDate.getTime())) {
+  if (!parsedDate.isValid()) {
     return 'Fecha inválida'
   }
 
   return new Intl.DateTimeFormat('es-SV', {
     dateStyle: 'medium',
-  }).format(parsedDate)
+  }).format(parsedDate.toDate())
 }
 
 const toSlaLabel = (slaHours: number) => {

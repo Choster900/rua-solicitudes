@@ -1,5 +1,5 @@
 import type { InternalAxiosRequestConfig } from 'axios'
-import { AUTHORIZATION_HEADER, BEARER_PREFIX } from '~/constants/http/http.constants'
+import { AUTHORIZATION_HEADER, BEARER_PREFIX } from '~/presentation/constants/http/http.constants'
 
 interface AuthTokenInterceptorOptions {
     getAuthToken?: () => string | null | undefined

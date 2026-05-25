@@ -4,6 +4,8 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
@@ -75,4 +77,109 @@ model RolePermission {
   @@unique([roleId, permissionId])
   @@index([permissionId])
   @@index([grantedBy])
+}
+
+model AuthUser {
+  id                 String   @id @default(cuid())
+  employeeCode       String   @unique
+  fullName           String
+  email              String   @unique
+  phone              String   @default("")
+  userType           String
+  department         String
+  status             String
+  password           String
+  mustChangePassword Boolean  @default(true)
+  lastAccessAt       DateTime?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([status])
+}
+
+model Client {
+  id               String   @id @default(cuid())
+  code             String   @unique
+  name             String
+  taxId            String
+  segment          String
+  contactName      String
+  contactEmail     String
+  contactPhone     String
+  country          String
+  department       String
+  city             String
+  addressLine      String
+  addressReference String   @default("")
+  website          String   @default("")
+  googleMapsUrl    String   @default("")
+  notes            String   @default("")
+  status           String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([status])
+}
+
+model Vendor {
+  id                  String   @id @default(cuid())
+  code                String   @unique
+  fullName            String
+  zone                String
+  phone               String
+  email               String
+  assignedClientCodes Json
+  monthlySalesUsd     Int
+  status              String
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([status])
+}
+
+model DesignRequest {
+  id                String           @id @default(cuid())
+  requestCode       String           @unique
+  clientName        String
+  brandName         String
+  productName       String
+  requestedBy       String
+  vendorName        String
+  materialType      String
+  materialWeight    String
+  printTechnique    String
+  colorMode         String
+  pantoneReferences String           @default("")
+  finishingOptions  Json
+  deliverables      Json
+  dimensions        String
+  quantity          Int
+  requiredDate      DateTime
+  priority          String
+  status            String
+  designInstructions String          @default("")
+  visualReferences  String           @default("")
+  requireDieCut     Boolean          @default(false)
+  requireMockup     Boolean          @default(false)
+  attachments       Json
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  workflow          RequestWorkflow?
+
+  @@index([status])
+  @@index([priority])
+}
+
+model RequestWorkflow {
+  id          String        @id @default(cuid())
+  requestId   String        @unique
+  stage       String
+  checklist   Json
+  observations Json
+  auditTrail  Json
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  request     DesignRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@index([stage])
 }

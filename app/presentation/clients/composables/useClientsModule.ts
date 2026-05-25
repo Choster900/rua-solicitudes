@@ -1,10 +1,11 @@
 import { useState } from '#imports'
 import { computed, ref } from 'vue'
-import { clientsMockData } from '~/mocks/modules/clients'
+import { useApiClient } from '~/presentation/shared/composables/useApiClient'
 import { useAppToast } from '~/presentation/shared/composables/useAppToast'
-import type { ClientFormModel } from '~/presentation/clients/interfaces/client-form.interface'
-import type { Client, ClientStatus } from '~/presentation/clients/interfaces/client.interface'
-import type { ClientTableRow } from '~/presentation/clients/interfaces/client-table-row.interface'
+import type { HttpClientError } from '~/presentation/interfaces/shared/http/http-client-error.interface'
+import type { ClientFormModel } from '~/presentation/interfaces/clients/client-form.interface'
+import type { Client, ClientStatus } from '~/presentation/interfaces/clients/client.interface'
+import type { ClientTableRow } from '~/presentation/interfaces/clients/client-table-row.interface'
 import { downloadCsvFile } from '~/utils/csv/download-csv.util'
 
 const requiredImportHeaders = [
@@ -108,8 +109,7 @@ const parseCsvLine = (line: string): string[] => {
   return values
 }
 
-const toClientFromForm = (formModel: ClientFormModel, id: string): Client => ({
-  id,
+const toClientPayload = (formModel: ClientFormModel) => ({
   code: formModel.code.trim().toUpperCase(),
   name: formModel.name.trim(),
   taxId: formModel.taxId.trim(),
@@ -128,22 +128,40 @@ const toClientFromForm = (formModel: ClientFormModel, id: string): Client => ({
   status: formModel.status,
 })
 
-const createClientId = () => {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return `client-${crypto.randomUUID()}`
-  }
-
-  return `client-${Date.now()}-${Math.floor(Math.random() * 1000)}`
-}
-
 const hasValidEmail = (value: string) => emailExpression.test(value.trim())
 
+let hydratePromise: Promise<void> | null = null
+
 export const useClientsModule = () => {
+  const apiClient = useApiClient()
   const toast = useAppToast()
-  const clients = useState<Client[]>('clients-module-list', () => {
-    return clientsMockData.map(client => ({ ...client }))
-  })
+  const clients = useState<Client[]>('clients-module-list', () => [])
+  const isHydrated = useState<boolean>('clients-module-hydrated', () => false)
   const importInputRef = ref<HTMLInputElement | null>(null)
+
+  const hydrateClients = async (force = false) => {
+    if (isHydrated.value && !force) {
+      return
+    }
+
+    if (hydratePromise && !force) {
+      await hydratePromise
+      return
+    }
+
+    hydratePromise = (async () => {
+      const response = await apiClient.get<Client[]>('/clients')
+      clients.value = response.data
+      isHydrated.value = true
+    })()
+
+    try {
+      await hydratePromise
+    }
+    finally {
+      hydratePromise = null
+    }
+  }
 
   const totalClients = computed(() => clients.value.length)
   const activeClients = computed(() => clients.value.filter(client => client.status === 'Activo').length)
@@ -178,7 +196,7 @@ export const useClientsModule = () => {
     return toClientFormModel(client)
   }
 
-  const createClient = (formModel: ClientFormModel) => {
+  const createClient = async (formModel: ClientFormModel) => {
     const normalizedCode = formModel.code.trim().toUpperCase()
     const duplicatedCode = clients.value.some(client => client.code.toUpperCase() === normalizedCode)
 
@@ -187,14 +205,21 @@ export const useClientsModule = () => {
       return false
     }
 
-    const nextClient = toClientFromForm(formModel, createClientId())
-    clients.value = [nextClient, ...clients.value]
-    toast.success(`Cliente creado: ${nextClient.name}`)
-
-    return true
+    try {
+      const response = await apiClient.post<Client>('/clients', toClientPayload(formModel))
+      clients.value = [response.data, ...clients.value]
+      toast.success(`Cliente creado: ${response.data.name}`)
+      return true
+    }
+    catch (error) {
+      const httpError = error as HttpClientError
+      const statusMessage = (httpError.details as { statusMessage?: string } | null)?.statusMessage
+      toast.error(statusMessage || 'No se pudo crear el cliente.')
+      return false
+    }
   }
 
-  const updateClient = (clientId: string, formModel: ClientFormModel) => {
+  const updateClient = async (clientId: string, formModel: ClientFormModel) => {
     const sourceClient = findClientById(clientId)
 
     if (!sourceClient) {
@@ -210,14 +235,21 @@ export const useClientsModule = () => {
       return false
     }
 
-    const updatedClient = toClientFromForm(formModel, sourceClient.id)
-    clients.value = clients.value.map(client => (client.id === clientId ? updatedClient : client))
-    toast.success(`Cliente actualizado: ${updatedClient.name}`)
-
-    return true
+    try {
+      const response = await apiClient.put<Client>(`/clients/${clientId}`, toClientPayload(formModel))
+      clients.value = clients.value.map(client => (client.id === clientId ? response.data : client))
+      toast.success(`Cliente actualizado: ${response.data.name}`)
+      return true
+    }
+    catch (error) {
+      const httpError = error as HttpClientError
+      const statusMessage = (httpError.details as { statusMessage?: string } | null)?.statusMessage
+      toast.error(statusMessage || 'No se pudo actualizar el cliente.')
+      return false
+    }
   }
 
-  const deleteClient = (clientId: string) => {
+  const deleteClient = async (clientId: string) => {
     const client = findClientById(clientId)
 
     if (!client) {
@@ -231,8 +263,16 @@ export const useClientsModule = () => {
       return
     }
 
-    clients.value = clients.value.filter(item => item.id !== clientId)
-    toast.success(`Cliente eliminado: ${client.name}`)
+    try {
+      await apiClient.delete(`/clients/${clientId}`)
+      clients.value = clients.value.filter(item => item.id !== clientId)
+      toast.success(`Cliente eliminado: ${client.name}`)
+    }
+    catch (error) {
+      const httpError = error as HttpClientError
+      const statusMessage = (httpError.details as { statusMessage?: string } | null)?.statusMessage
+      toast.error(statusMessage || 'No se pudo eliminar el cliente.')
+    }
   }
 
   const triggerImport = () => {
@@ -296,11 +336,8 @@ export const useClientsModule = () => {
       return accumulator
     }, {})
 
-    let importedCount = 0
+    const nextRows: ClientFormModel[] = []
     let skippedCount = 0
-    let updatedCount = 0
-
-    const nextClients = [...clients.value]
 
     for (let lineIndex = 1; lineIndex < lines.length; lineIndex += 1) {
       const row = parseCsvLine(lines[lineIndex])
@@ -321,30 +358,12 @@ export const useClientsModule = () => {
       const statusValue = row[columnIndexMap.status]?.trim() ?? ''
       const notes = row[columnIndexMap.notes]?.trim() ?? ''
 
-      if (
-        !code
-        || !name
-        || !segment
-        || !contactName
-        || !contactEmail
-        || !contactPhone
-        || !country
-        || !department
-        || !city
-        || !addressLine
-        || !statusValue
-      ) {
+      if (!code || !name || !segment || !contactName || !contactEmail || !contactPhone || !country || !department || !city || !addressLine || !statusValue || !hasValidEmail(contactEmail)) {
         skippedCount += 1
         continue
       }
 
-      if (!hasValidEmail(contactEmail)) {
-        skippedCount += 1
-        continue
-      }
-
-      const normalizedStatus = normalizeClientStatus(statusValue)
-      const nextClientPayload: Omit<Client, 'id'> = {
+      nextRows.push({
         code,
         name,
         taxId,
@@ -360,31 +379,14 @@ export const useClientsModule = () => {
         website,
         googleMapsUrl,
         notes,
-        status: normalizedStatus,
-      }
-      const existingIndex = nextClients.findIndex(client => client.code.toUpperCase() === code)
-
-      if (existingIndex >= 0) {
-        nextClients[existingIndex] = {
-          ...nextClients[existingIndex],
-          ...nextClientPayload,
-        }
-        updatedCount += 1
-        continue
-      }
-
-      nextClients.unshift({
-        id: createClientId(),
-        ...nextClientPayload,
+        status: normalizeClientStatus(statusValue),
       })
-      importedCount += 1
     }
-
-    clients.value = nextClients
 
     return {
       success: true,
-      message: `Importación completada. Nuevos: ${importedCount}, actualizados: ${updatedCount}, omitidos: ${skippedCount}.`,
+      rows: nextRows,
+      skippedCount,
     }
   }
 
@@ -405,13 +407,36 @@ export const useClientsModule = () => {
     const fileContent = await selectedFile.text()
     const importResult = parseImportFileContent(fileContent)
 
-    if (importResult.success) {
-      toast.success(importResult.message)
-    }
-    else {
+    if (!importResult.success || !('rows' in importResult)) {
       toast.error(importResult.message)
+      target.value = ''
+      return
     }
 
+    let created = 0
+    let updated = 0
+
+    for (const row of importResult.rows) {
+      const existingClient = clients.value.find(client => client.code.toUpperCase() === row.code.toUpperCase())
+
+      if (existingClient) {
+        const success = await updateClient(existingClient.id, row)
+
+        if (success) {
+          updated += 1
+        }
+
+        continue
+      }
+
+      const success = await createClient(row)
+
+      if (success) {
+        created += 1
+      }
+    }
+
+    toast.success(`Importación completada. Nuevos: ${created}, actualizados: ${updated}, omitidos: ${importResult.skippedCount}.`)
     target.value = ''
   }
 
@@ -464,5 +489,6 @@ export const useClientsModule = () => {
     exportClients,
     downloadImportTemplate,
     clientStatusOptions,
+    hydrateClients,
   }
 }

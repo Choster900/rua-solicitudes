@@ -59,6 +59,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
+import dayjs from 'dayjs'
 import AppShellLayout from '~/presentation/shared/components/layout/AppShellLayout.vue'
 import WorkflowDetailPanel from '~/presentation/request-workflow/components/WorkflowDetailPanel.vue'
 import { useRequestWorkflowModule } from '~/presentation/request-workflow/composables/useRequestWorkflowModule'
@@ -115,16 +116,16 @@ const goBack = () => {
 }
 
 const formatDate = (sourceDate: string) => {
-  const parsedDate = new Date(sourceDate)
+  const parsedDate = dayjs(sourceDate)
 
-  if (Number.isNaN(parsedDate.getTime())) {
+  if (!parsedDate.isValid()) {
     return 'Fecha inválida'
   }
 
   return new Intl.DateTimeFormat('es-SV', {
     dateStyle: 'medium',
     timeStyle: 'short',
-  }).format(parsedDate)
+  }).format(parsedDate.toDate())
 }
 
 onMounted(async () => {

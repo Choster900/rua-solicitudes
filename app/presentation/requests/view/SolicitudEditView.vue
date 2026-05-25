@@ -37,7 +37,7 @@
 import AppShellLayout from '~/presentation/shared/components/layout/AppShellLayout.vue'
 import RequestFormCard from '~/presentation/requests/components/RequestFormCard.vue'
 import { useRequestsModule } from '~/presentation/requests/composables/useRequestsModule'
-import type { DesignRequestFormModel } from '~/presentation/requests/interfaces/request-form.interface'
+import type { DesignRequestFormModel } from '~/presentation/interfaces/requests/request-form.interface'
 
 defineOptions({
   name: 'SolicitudEditView',

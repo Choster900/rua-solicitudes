@@ -23,8 +23,9 @@
           icon="badge"
           label="Código de empleado"
           :error="getFieldError('employeeCode')"
-          placeholder="EMP-1008"
+          placeholder="ADM-0001"
           required
+          @update:model-value="handleEmployeeCodeInput"
           @blur="handleFieldBlur('employeeCode')"
         />
         <AppTextField
@@ -135,19 +136,20 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import AppButton from '~/presentation/shared/components/ui/AppButton.vue'
 import AppSelect from '~/presentation/shared/components/ui/AppSelect.vue'
 import AppTextField from '~/presentation/shared/components/ui/AppTextField.vue'
 import { useFormValidation, validationRules, type ValidationSchema } from '~/presentation/shared/composables/forms/useFormValidation'
-import type { UserFormModel } from '~/presentation/users/interfaces/user-form.interface'
-import type { UserStatus, UserType } from '~/presentation/users/interfaces/user.interface'
+import type { UserFormModel } from '~/presentation/interfaces/users/user-form.interface'
+import type { UserStatus, UserType } from '~/presentation/interfaces/users/user.interface'
 
 type UserFormMode = 'create' | 'edit'
 
 interface UserFormCardProps {
   mode: UserFormMode
   model: UserFormModel
+  resolveEmployeeCode?: (userType: UserFormModel['userType']) => string
 }
 
 defineOptions({
@@ -161,10 +163,11 @@ const emit = defineEmits<{
   submit: [model: UserFormModel]
 }>()
 
-const userTypeOptions: UserType[] = ['Vendedor', 'Diseñador', 'Calidad', 'Administrativo', 'Gerencia']
+const userTypeOptions: UserType[] = ['Administrador', 'Vendedor', 'Diseñador', 'Calidad', 'Administrativo', 'Gerencia']
 const userStatusOptions: UserStatus[] = ['Activo', 'Pendiente', 'Bloqueado']
 const userTypeSelectOptions = userTypeOptions.map(userType => ({ label: userType, value: userType }))
 const userStatusSelectOptions = userStatusOptions.map(status => ({ label: status, value: status }))
+const isEmployeeCodeAutoManaged = ref(true)
 const formModel = reactive<UserFormModel>({
   employeeCode: '',
   fullName: '',
@@ -202,11 +205,23 @@ const cardTitle = computed(() => {
 
 const syncFormModel = () => {
   Object.assign(formModel, props.model)
+  isEmployeeCodeAutoManaged.value = props.mode === 'create'
 }
 
 const handleFieldBlur = (field: keyof UserFormModel) => {
   setFieldTouched(field)
   validateField(field)
+}
+
+const handleEmployeeCodeInput = (value: string) => {
+  if (props.mode !== 'create') {
+    return
+  }
+
+  const normalizedValue = value.trim().toUpperCase()
+  const suggestedCode = props.resolveEmployeeCode?.(formModel.userType).trim().toUpperCase() ?? ''
+
+  isEmployeeCodeAutoManaged.value = !normalizedValue || normalizedValue === suggestedCode
 }
 
 const handleSubmit = () => {
@@ -225,5 +240,16 @@ watch(
     clearValidation()
   },
   { immediate: true, deep: true },
+)
+
+watch(
+  () => formModel.userType,
+  (nextUserType) => {
+    if (props.mode !== 'create' || !isEmployeeCodeAutoManaged.value || !props.resolveEmployeeCode) {
+      return
+    }
+
+    formModel.employeeCode = props.resolveEmployeeCode(nextUserType)
+  },
 )
 </script>

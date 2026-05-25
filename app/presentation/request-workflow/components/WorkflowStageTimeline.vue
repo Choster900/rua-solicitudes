@@ -36,7 +36,8 @@
 </template>
 
 <script setup lang="ts">
-import type { WorkflowAuditEntry } from '~/presentation/request-workflow/interfaces/workflow-request.interface'
+import dayjs from 'dayjs'
+import type { WorkflowAuditEntry } from '~/presentation/interfaces/request-workflow/workflow-request.interface'
 
 interface WorkflowStageTimelineProps {
   auditTrail: WorkflowAuditEntry[]
@@ -49,15 +50,15 @@ defineOptions({
 defineProps<WorkflowStageTimelineProps>()
 
 const formatDateTime = (value: string) => {
-  const parsedDate = new Date(value)
+  const parsedDate = dayjs(value)
 
-  if (Number.isNaN(parsedDate.getTime())) {
+  if (!parsedDate.isValid()) {
     return 'Fecha inválida'
   }
 
   return new Intl.DateTimeFormat('es-SV', {
     dateStyle: 'medium',
     timeStyle: 'short',
-  }).format(parsedDate)
+  }).format(parsedDate.toDate())
 }
 </script>

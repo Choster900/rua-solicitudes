@@ -165,6 +165,8 @@ const handleNavigationItemSelect = (itemKey: string) => {
 }
 
 const handleLogout = () => {
+  const accessToken = useCookie<string | null>('access_token')
+  accessToken.value = null
   closeMobileSidebar()
   void router.push('/login')
 }

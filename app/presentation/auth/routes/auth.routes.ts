@@ -7,4 +7,9 @@ export const authRoutes: RouteRecordRaw[] = [
     alias: ['/login'],
     component: () => import('~/presentation/auth/view/LoginView.vue'),
   },
+  {
+    name: 'auth-change-password',
+    path: '/auth/change-password',
+    component: () => import('~/presentation/auth/view/ChangePasswordView.vue'),
+  },
 ]

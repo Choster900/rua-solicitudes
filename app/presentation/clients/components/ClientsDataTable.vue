@@ -57,8 +57,8 @@
 import { onMounted, onUnmounted, ref } from 'vue'
 import AppDataTable from '~/presentation/shared/components/ui/AppDataTable.vue'
 import AppStatusBadge from '~/presentation/shared/components/ui/AppStatusBadge.vue'
-import type { AppDataTableColumn } from '~/presentation/shared/interfaces/ui/app-data-table.interface'
-import type { ClientTableRow } from '~/presentation/clients/interfaces/client-table-row.interface'
+import type { AppDataTableColumn } from '~/presentation/interfaces/shared/ui/app-data-table.interface'
+import type { ClientTableRow } from '~/presentation/interfaces/clients/client-table-row.interface'
 
 interface ClientsDataTableProps {
   rows: ClientTableRow[]

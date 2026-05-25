@@ -94,7 +94,7 @@ import {
   useFormValidation,
   validationRules,
 } from '~/presentation/shared/composables/forms/useFormValidation'
-import type { AuthLoginFormValues } from '~/presentation/auth/interfaces/auth-login-form.interface'
+import type { AuthLoginFormValues } from '~/presentation/interfaces/auth/auth-login-form.interface'
 
 defineOptions({
   name: 'AuthLoginFormCard',

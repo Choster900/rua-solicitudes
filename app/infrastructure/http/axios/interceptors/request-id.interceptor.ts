@@ -1,5 +1,5 @@
 import type { InternalAxiosRequestConfig } from 'axios'
-import { REQUEST_ID_HEADER } from '~/constants/http/http.constants'
+import { REQUEST_ID_HEADER } from '~/presentation/constants/http/http.constants'
 import { createRequestId } from '~/utils/http/create-request-id.util'
 
 export function applyRequestIdInterceptor(config: InternalAxiosRequestConfig) {

@@ -115,7 +115,7 @@ import WorkflowDetailPanel from '~/presentation/request-workflow/components/Work
 import WorkflowQueueTable from '~/presentation/request-workflow/components/WorkflowQueueTable.vue'
 import WorkflowQueueToolbar from '~/presentation/request-workflow/components/WorkflowQueueToolbar.vue'
 import { useRequestWorkflowModule } from '~/presentation/request-workflow/composables/useRequestWorkflowModule'
-import type { WorkflowChecklistState } from '~/presentation/request-workflow/interfaces/workflow-request.interface'
+import type { WorkflowChecklistState } from '~/presentation/interfaces/request-workflow/workflow-request.interface'
 
 defineOptions({
   name: 'QualityQueueView',

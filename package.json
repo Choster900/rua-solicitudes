@@ -15,6 +15,9 @@
         "prisma:migrate": "prisma migrate dev",
         "prisma:seed": "prisma db seed",
         "prisma:studio": "prisma studio",
+        "db:migrate": "prisma migrate dev",
+        "db:seed": "prisma db seed",
+        "db:reset": "prisma migrate reset --force",
         "preview": "nuxt preview"
     },
     "lint-staged": {
@@ -28,6 +31,7 @@
         "@vuepic/vue-datepicker": "^12.1.0",
         "axios": "^1.16.1",
         "date-fns": "^4.3.0",
+        "dayjs": "^1.11.20",
         "joi": "^18.2.1",
         "nuxt": "^4.4.6",
         "pinia": "^3.0.4",

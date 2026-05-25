@@ -1,5 +1,5 @@
 export { createAxiosClient } from './create-axios-client'
-export { HTTP_TIMEOUT_MS } from '~/constants/http/http.constants'
-export type { HttpClientContext } from '~/presentation/shared/interfaces/http/http-client-context.interface'
-export type { HttpClientError } from '~/presentation/shared/interfaces/http/http-client-error.interface'
+export { HTTP_TIMEOUT_MS } from '~/presentation/constants/http/http.constants'
+export type { HttpClientContext } from '~/presentation/interfaces/shared/http/http-client-context.interface'
+export type { HttpClientError } from '~/presentation/interfaces/shared/http/http-client-error.interface'
 export { buildApiBaseUrl } from '~/utils/http/build-api-base-url.util'

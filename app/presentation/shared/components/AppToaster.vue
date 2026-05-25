@@ -15,7 +15,7 @@ import {
     APP_TOAST_DURATION_MS,
     APP_TOAST_POSITION,
     APP_TOAST_VISIBLE_COUNT,
-} from '~/constants/ui/toast.constants'
+} from '~/presentation/constants/ui/toast.constants'
 import { useThemeMode } from '~/presentation/shared/composables/useThemeMode'
 
 defineOptions({

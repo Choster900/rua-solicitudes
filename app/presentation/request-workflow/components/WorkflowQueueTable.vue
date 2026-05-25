@@ -50,10 +50,10 @@
 <script setup lang="ts">
 import AppDataTable from '~/presentation/shared/components/ui/AppDataTable.vue'
 import AppStatusBadge from '~/presentation/shared/components/ui/AppStatusBadge.vue'
-import type { AppDataTableColumn } from '~/presentation/shared/interfaces/ui/app-data-table.interface'
-import type { WorkflowQueueRow } from '~/presentation/request-workflow/interfaces/workflow-queue-row.interface'
-import type { AppStatusBadgeTone } from '~/presentation/request-workflow/interfaces/workflow-ui.type'
-import type { WorkflowPriority, WorkflowStage } from '~/presentation/request-workflow/interfaces/workflow-request.interface'
+import type { AppDataTableColumn } from '~/presentation/interfaces/shared/ui/app-data-table.interface'
+import type { WorkflowQueueRow } from '~/presentation/interfaces/request-workflow/workflow-queue-row.interface'
+import type { AppStatusBadgeTone } from '~/presentation/interfaces/request-workflow/workflow-ui.type'
+import type { WorkflowPriority, WorkflowStage } from '~/presentation/interfaces/request-workflow/workflow-request.interface'
 
 interface WorkflowQueueTableProps {
   rows: WorkflowQueueRow[]

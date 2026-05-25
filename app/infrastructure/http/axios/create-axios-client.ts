@@ -1,6 +1,6 @@
 import axios from 'axios'
-import { HTTP_TIMEOUT_MS } from '~/constants/http/http.constants'
-import type { HttpClientContext } from '~/presentation/shared/interfaces/http/http-client-context.interface'
+import { HTTP_TIMEOUT_MS } from '~/presentation/constants/http/http.constants'
+import type { HttpClientContext } from '~/presentation/interfaces/shared/http/http-client-context.interface'
 import { registerAxiosInterceptors } from './interceptors/register-axios-interceptors'
 
 export function createAxiosClient(context: HttpClientContext) {

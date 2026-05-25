@@ -1,9 +1,11 @@
+import { useState } from '#imports'
 import { computed, ref } from 'vue'
-import { clientsMockData } from '~/mocks/modules/clients'
-import { vendorsMockData } from '~/mocks/modules/vendors'
+import { useApiClient } from '~/presentation/shared/composables/useApiClient'
 import { useAppToast } from '~/presentation/shared/composables/useAppToast'
-import type { Vendor } from '~/presentation/vendors/interfaces/vendor.interface'
-import type { VendorTableRow } from '~/presentation/vendors/interfaces/vendor-table-row.interface'
+import type { HttpClientError } from '~/presentation/interfaces/shared/http/http-client-error.interface'
+import type { Client } from '~/presentation/interfaces/clients/client.interface'
+import type { Vendor } from '~/presentation/interfaces/vendors/vendor.interface'
+import type { VendorTableRow } from '~/presentation/interfaces/vendors/vendor-table-row.interface'
 import { downloadCsvFile } from '~/utils/csv/download-csv.util'
 
 const currencyFormatter = new Intl.NumberFormat('en-US', {
@@ -13,13 +15,47 @@ const currencyFormatter = new Intl.NumberFormat('en-US', {
   maximumFractionDigits: 0,
 })
 
+let hydratePromise: Promise<void> | null = null
+
 export const useVendorsModule = () => {
+  const apiClient = useApiClient()
   const toast = useAppToast()
-  const vendors = ref<Vendor[]>([...vendorsMockData])
+  const vendors = useState<Vendor[]>('vendors-module-list', () => [])
+  const clients = useState<Client[]>('vendors-module-clients', () => [])
+  const isHydrated = useState<boolean>('vendors-module-hydrated', () => false)
   const importInputRef = ref<HTMLInputElement | null>(null)
 
+  const hydrateVendors = async (force = false) => {
+    if (isHydrated.value && !force) {
+      return
+    }
+
+    if (hydratePromise && !force) {
+      await hydratePromise
+      return
+    }
+
+    hydratePromise = (async () => {
+      const [vendorsResponse, clientsResponse] = await Promise.all([
+        apiClient.get<Vendor[]>('/vendors'),
+        apiClient.get<Client[]>('/clients'),
+      ])
+
+      vendors.value = vendorsResponse.data
+      clients.value = clientsResponse.data
+      isHydrated.value = true
+    })()
+
+    try {
+      await hydratePromise
+    }
+    finally {
+      hydratePromise = null
+    }
+  }
+
   const clientsByCode = computed(() => {
-    return new Map(clientsMockData.map(client => [client.code, client.name]))
+    return new Map(clients.value.map(client => [client.code, client.name]))
   })
 
   const vendorTableRows = computed<VendorTableRow[]>(() => {
@@ -67,7 +103,7 @@ export const useVendorsModule = () => {
     toast.info(`Editar vendedor: ${vendor.fullName}`)
   }
 
-  const handleDeleteVendor = (vendorId: string) => {
+  const handleDeleteVendor = async (vendorId: string) => {
     const vendor = vendors.value.find(item => item.id === vendorId)
 
     if (!vendor) {
@@ -81,8 +117,16 @@ export const useVendorsModule = () => {
       return
     }
 
-    vendors.value = vendors.value.filter(item => item.id !== vendorId)
-    toast.success(`Vendedor eliminado: ${vendor.fullName}`)
+    try {
+      await apiClient.delete(`/vendors/${vendorId}`)
+      vendors.value = vendors.value.filter(item => item.id !== vendorId)
+      toast.success(`Vendedor eliminado: ${vendor.fullName}`)
+    }
+    catch (error) {
+      const httpError = error as HttpClientError
+      const statusMessage = (httpError.details as { statusMessage?: string } | null)?.statusMessage
+      toast.error(statusMessage || 'No se pudo eliminar el vendedor.')
+    }
   }
 
   const triggerImport = () => {
@@ -139,5 +183,6 @@ export const useVendorsModule = () => {
     triggerImport,
     handleImportSelection,
     handleExportVendors,
+    hydrateVendors,
   }
 }

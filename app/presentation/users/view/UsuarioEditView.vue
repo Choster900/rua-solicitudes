@@ -37,7 +37,7 @@
 import AppShellLayout from '~/presentation/shared/components/layout/AppShellLayout.vue'
 import UserFormCard from '~/presentation/users/components/UserFormCard.vue'
 import { useUsersModule } from '~/presentation/users/composables/useUsersModule'
-import type { UserFormModel } from '~/presentation/users/interfaces/user-form.interface'
+import type { UserFormModel } from '~/presentation/interfaces/users/user-form.interface'
 
 defineOptions({
   name: 'UsuarioEditView',

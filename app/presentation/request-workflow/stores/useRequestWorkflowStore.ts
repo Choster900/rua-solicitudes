@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
-import type { DesignRequest } from '~/presentation/requests/interfaces/request.interface'
-import { requestWorkflowMockAdapter } from '~/presentation/request-workflow/adapters/request-workflow.mock.adapter'
+import dayjs from 'dayjs'
+import type { DesignRequest } from '~/presentation/interfaces/requests/request.interface'
 import type {
   WorkflowActionResult,
   WorkflowAuditEntry,
@@ -9,7 +9,7 @@ import type {
   WorkflowPriority,
   WorkflowRequest,
   WorkflowStage,
-} from '~/presentation/request-workflow/interfaces/workflow-request.interface'
+} from '~/presentation/interfaces/request-workflow/workflow-request.interface'
 
 interface QueueFilters {
   query: string
@@ -62,15 +62,15 @@ const toSlaHours = (requiredDate: string) => {
     return 0
   }
 
-  const due = new Date(requiredDate)
+  const due = dayjs(requiredDate)
 
-  if (Number.isNaN(due.getTime())) {
+  if (!due.isValid()) {
     return 0
   }
 
-  const diffInMs = due.getTime() - Date.now()
+  const diffInHours = due.diff(dayjs(), 'hour')
 
-  return Math.max(0, Math.floor(diffInMs / (1000 * 60 * 60)))
+  return Math.max(0, diffInHours)
 }
 
 const includesQuery = (request: WorkflowRequest, query: string) => {
@@ -148,13 +148,13 @@ export const useRequestWorkflowStore = defineStore('request-workflow', {
           return false
         }
 
-        const dueDate = new Date(request.requiredDate)
+        const dueDate = dayjs(request.requiredDate)
 
-        if (Number.isNaN(dueDate.getTime())) {
+        if (!dueDate.isValid()) {
           return false
         }
 
-        return dueDate.getTime() < Date.now()
+        return dueDate.isBefore(dayjs())
       }).length
 
       return {
@@ -173,19 +173,10 @@ export const useRequestWorkflowStore = defineStore('request-workflow', {
         return
       }
 
-      const seed = await requestWorkflowMockAdapter.loadRequests()
-      const normalizedSeed = seed.map(request => ({
-        ...request,
-        slaHours: toSlaHours(request.requiredDate),
-      }))
+      const designRequests = await $fetch<DesignRequest[]>('/api/requests')
 
       if (!this.requests.length) {
-        this.requests = normalizedSeed
-      }
-      else {
-        const existingIds = new Set(this.requests.map(request => request.id))
-        const missingSeedRequests = normalizedSeed.filter(request => !existingIds.has(request.id))
-        this.requests = [...this.requests, ...missingSeedRequests]
+        designRequests.forEach(request => this.upsertFromDesignRequest(request))
       }
 
       this.hydrated = true
@@ -212,7 +203,7 @@ export const useRequestWorkflowStore = defineStore('request-workflow', {
 
     upsertFromDesignRequest(request: DesignRequest) {
       const existingRequest = this.requests.find(item => item.id === request.id)
-      const nowIso = new Date().toISOString()
+      const nowIso = dayjs().toISOString()
       const sharedPayload = {
         requestCode: request.requestCode,
         clientName: request.clientName,
@@ -438,7 +429,7 @@ export const useRequestWorkflowStore = defineStore('request-workflow', {
       const cleanObservation = observation.trim()
       target.observations = [cleanObservation, ...target.observations]
 
-      const nowIso = new Date().toISOString()
+      const nowIso = dayjs().toISOString()
       const auditEntry: WorkflowAuditEntry = {
         id: generateId('audit'),
         requestId,
@@ -486,7 +477,7 @@ export const useRequestWorkflowStore = defineStore('request-workflow', {
         }
       }
 
-      const nowIso = new Date().toISOString()
+      const nowIso = dayjs().toISOString()
       const previousStage = target.stage
       const updatedRequest: WorkflowRequest = {
         ...target,

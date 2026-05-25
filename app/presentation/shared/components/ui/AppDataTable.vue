@@ -198,7 +198,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import AppSelect from '~/presentation/shared/components/ui/AppSelect.vue'
-import type { AppDataTableColumn, AppDataTableRow } from '~/presentation/shared/interfaces/ui/app-data-table.interface'
+import type { AppDataTableColumn, AppDataTableRow } from '~/presentation/interfaces/shared/ui/app-data-table.interface'
 
 interface AppDataTableProps {
   columns: AppDataTableColumn[]

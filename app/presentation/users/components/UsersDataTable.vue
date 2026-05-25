@@ -65,8 +65,8 @@
 import { onMounted, onUnmounted, ref } from 'vue'
 import AppDataTable from '~/presentation/shared/components/ui/AppDataTable.vue'
 import AppStatusBadge from '~/presentation/shared/components/ui/AppStatusBadge.vue'
-import type { AppDataTableColumn } from '~/presentation/shared/interfaces/ui/app-data-table.interface'
-import type { UserTableRow } from '~/presentation/users/interfaces/user-table-row.interface'
+import type { AppDataTableColumn } from '~/presentation/interfaces/shared/ui/app-data-table.interface'
+import type { UserTableRow } from '~/presentation/interfaces/users/user-table-row.interface'
 
 interface UsersDataTableProps {
   rows: UserTableRow[]

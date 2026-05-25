@@ -1,11 +1,13 @@
 import { useState } from '#imports'
 import { computed, ref } from 'vue'
-import { requestsMockData } from '~/mocks/modules/requests'
+import dayjs from 'dayjs'
+import { useApiClient } from '~/presentation/shared/composables/useApiClient'
 import { useRequestWorkflowStore } from '~/presentation/request-workflow/stores/useRequestWorkflowStore'
 import { useAppToast } from '~/presentation/shared/composables/useAppToast'
-import type { DesignRequestFormModel } from '~/presentation/requests/interfaces/request-form.interface'
-import type { DesignRequest, RequestAttachment, RequestStatus } from '~/presentation/requests/interfaces/request.interface'
-import type { DesignRequestTableRow } from '~/presentation/requests/interfaces/request-table-row.interface'
+import type { HttpClientError } from '~/presentation/interfaces/shared/http/http-client-error.interface'
+import type { DesignRequestFormModel } from '~/presentation/interfaces/requests/request-form.interface'
+import type { DesignRequest, RequestAttachment, RequestStatus } from '~/presentation/interfaces/requests/request.interface'
+import type { DesignRequestTableRow } from '~/presentation/interfaces/requests/request-table-row.interface'
 import { downloadCsvFile } from '~/utils/csv/download-csv.util'
 
 const formatDateLabel = (dateValue: string) => {
@@ -13,17 +15,17 @@ const formatDateLabel = (dateValue: string) => {
     return 'Sin fecha'
   }
 
-  const parsedDate = new Date(dateValue)
+  const parsedDate = dayjs(dateValue)
 
-  if (Number.isNaN(parsedDate.getTime())) {
+  if (!parsedDate.isValid()) {
     return 'Fecha inválida'
   }
 
-  return new Intl.DateTimeFormat('es-SV', { dateStyle: 'medium' }).format(parsedDate)
+  return new Intl.DateTimeFormat('es-SV', { dateStyle: 'medium' }).format(parsedDate.toDate())
 }
 
 const toRequestCode = (sequence: number) => {
-  const year = new Date().getFullYear()
+  const year = dayjs().year()
   const paddedSequence = sequence.toString().padStart(3, '0')
 
   return `SOL-${year}-${paddedSequence}`
@@ -89,13 +91,7 @@ const toRequestFormModel = (request: DesignRequest): DesignRequestFormModel => (
   attachments: [...request.attachments],
 })
 
-const toRequestRecord = (
-  sourceModel: DesignRequestFormModel,
-  requestCode: string,
-  id: string,
-  createdAt: string,
-): DesignRequest => ({
-  id,
+const toRequestPayload = (sourceModel: DesignRequestFormModel, requestCode: string) => ({
   requestCode,
   clientName: sourceModel.clientName.trim(),
   brandName: sourceModel.brandName.trim(),
@@ -119,7 +115,6 @@ const toRequestRecord = (
   requireDieCut: sourceModel.requireDieCut,
   requireMockup: sourceModel.requireMockup,
   attachments: [...sourceModel.attachments],
-  createdAt,
 })
 
 const getAttachmentId = () => {
@@ -142,17 +137,42 @@ export const toRequestAttachmentFromFile = (file: File): RequestAttachment => {
   }
 }
 
+let hydratePromise: Promise<void> | null = null
+
 export const useRequestsModule = () => {
+  const apiClient = useApiClient()
   const toast = useAppToast()
   const workflowStore = useRequestWorkflowStore()
-  const requests = useState<DesignRequest[]>('requests-module-list', () => {
-    return requestsMockData.map(request => ({ ...request }))
-  })
+  const requests = useState<DesignRequest[]>('requests-module-list', () => [])
+  const isHydrated = useState<boolean>('requests-module-hydrated', () => false)
   const importInputRef = ref<HTMLInputElement | null>(null)
 
-  requests.value.forEach((request) => {
-    workflowStore.upsertFromDesignRequest(request)
-  })
+  const hydrateRequests = async (force = false) => {
+    if (isHydrated.value && !force) {
+      return
+    }
+
+    if (hydratePromise && !force) {
+      await hydratePromise
+      return
+    }
+
+    hydratePromise = (async () => {
+      const response = await apiClient.get<DesignRequest[]>('/requests')
+      requests.value = response.data
+      workflowStore.requests = []
+      response.data.forEach(request => workflowStore.upsertFromDesignRequest(request))
+      workflowStore.hydrated = true
+      isHydrated.value = true
+    })()
+
+    try {
+      await hydratePromise
+    }
+    finally {
+      hydratePromise = null
+    }
+  }
 
   const totalRequests = computed(() => requests.value.length)
   const draftRequests = computed(() => requests.value.filter(request => request.status === 'Borrador').length)
@@ -189,21 +209,26 @@ export const useRequestsModule = () => {
     return toRequestFormModel(request)
   }
 
-  const createRequest = (formModel: DesignRequestFormModel) => {
+  const createRequest = async (formModel: DesignRequestFormModel) => {
     const nextSequence = requests.value.length + 1
     const nextCode = toRequestCode(nextSequence)
-    const nowIso = new Date().toISOString()
-    const nextId = typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
-      ? `req-${crypto.randomUUID()}`
-      : `req-${Date.now()}`
-    const nextRequest = toRequestRecord(formModel, nextCode, nextId, nowIso)
 
-    requests.value = [nextRequest, ...requests.value]
-    workflowStore.upsertFromDesignRequest(nextRequest)
-    toast.success(`Solicitud creada: ${nextCode}`)
+    try {
+      const response = await apiClient.post<DesignRequest>('/requests', toRequestPayload(formModel, nextCode))
+      requests.value = [response.data, ...requests.value]
+      workflowStore.upsertFromDesignRequest(response.data)
+      toast.success(`Solicitud creada: ${response.data.requestCode}`)
+      return true
+    }
+    catch (error) {
+      const httpError = error as HttpClientError
+      const statusMessage = (httpError.details as { statusMessage?: string } | null)?.statusMessage
+      toast.error(statusMessage || 'No se pudo crear la solicitud.')
+      return false
+    }
   }
 
-  const updateRequest = (requestId: string, formModel: DesignRequestFormModel) => {
+  const updateRequest = async (requestId: string, formModel: DesignRequestFormModel) => {
     const existingRequest = findRequestById(requestId)
 
     if (!existingRequest) {
@@ -211,27 +236,33 @@ export const useRequestsModule = () => {
       return false
     }
 
-    const updatedRequest = toRequestRecord(
-      formModel,
-      existingRequest.requestCode,
-      existingRequest.id,
-      existingRequest.createdAt,
-    )
+    try {
+      const response = await apiClient.put<DesignRequest>(
+        `/requests/${requestId}`,
+        toRequestPayload(formModel, existingRequest.requestCode),
+      )
 
-    requests.value = requests.value.map((request) => {
-      if (request.id !== requestId) {
-        return request
-      }
+      requests.value = requests.value.map((request) => {
+        if (request.id !== requestId) {
+          return request
+        }
 
-      return updatedRequest
-    })
-    workflowStore.upsertFromDesignRequest(updatedRequest)
+        return response.data
+      })
+      workflowStore.upsertFromDesignRequest(response.data)
 
-    toast.success(`Solicitud actualizada: ${existingRequest.requestCode}`)
-    return true
+      toast.success(`Solicitud actualizada: ${existingRequest.requestCode}`)
+      return true
+    }
+    catch (error) {
+      const httpError = error as HttpClientError
+      const statusMessage = (httpError.details as { statusMessage?: string } | null)?.statusMessage
+      toast.error(statusMessage || 'No se pudo actualizar la solicitud.')
+      return false
+    }
   }
 
-  const removeRequest = (requestId: string) => {
+  const removeRequest = async (requestId: string) => {
     const request = findRequestById(requestId)
 
     if (!request) {
@@ -245,12 +276,20 @@ export const useRequestsModule = () => {
       return
     }
 
-    requests.value = requests.value.filter(item => item.id !== requestId)
-    workflowStore.removeByRequestId(requestId)
-    toast.success(`Solicitud eliminada: ${request.requestCode}`)
+    try {
+      await apiClient.delete(`/requests/${requestId}`)
+      requests.value = requests.value.filter(item => item.id !== requestId)
+      workflowStore.removeByRequestId(requestId)
+      toast.success(`Solicitud eliminada: ${request.requestCode}`)
+    }
+    catch (error) {
+      const httpError = error as HttpClientError
+      const statusMessage = (httpError.details as { statusMessage?: string } | null)?.statusMessage
+      toast.error(statusMessage || 'No se pudo eliminar la solicitud.')
+    }
   }
 
-  const duplicateRequest = (requestId: string) => {
+  const duplicateRequest = async (requestId: string) => {
     const request = findRequestById(requestId)
 
     if (!request) {
@@ -259,24 +298,22 @@ export const useRequestsModule = () => {
     }
 
     const nextCode = toRequestCode(requests.value.length + 1)
-    const nowIso = new Date().toISOString()
-    const nextId = typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
-      ? `req-${crypto.randomUUID()}`
-      : `req-${Date.now()}`
-    const duplicatedRequest: DesignRequest = {
-      ...request,
-      id: nextId,
-      requestCode: nextCode,
+    const duplicatedPayload: DesignRequestFormModel = {
+      ...toRequestFormModel(request),
       status: 'Borrador',
-      createdAt: nowIso,
     }
 
-    requests.value = [duplicatedRequest, ...requests.value]
-    workflowStore.upsertFromDesignRequest(duplicatedRequest)
-    toast.success(`Solicitud duplicada como ${nextCode}`)
+    const created = await createRequest({
+      ...duplicatedPayload,
+      status: 'Borrador',
+    })
+
+    if (created) {
+      toast.success(`Solicitud duplicada como ${nextCode}`)
+    }
   }
 
-  const sendToDesign = (requestId: string) => {
+  const sendToDesign = async (requestId: string) => {
     const request = findRequestById(requestId)
 
     if (!request) {
@@ -284,18 +321,19 @@ export const useRequestsModule = () => {
       return
     }
 
-    requests.value = requests.value.map((item) => {
-      if (item.id !== requestId) {
-        return item
-      }
-
-      return {
-        ...item,
+    try {
+      const response = await apiClient.put<DesignRequest>(`/requests/${requestId}`, {
         status: 'En diseño' as RequestStatus,
-      }
-    })
-
-    toast.success(`Solicitud enviada a diseño: ${request.requestCode}`)
+      })
+      requests.value = requests.value.map(item => (item.id === requestId ? response.data : item))
+      workflowStore.upsertFromDesignRequest(response.data)
+      toast.success(`Solicitud enviada a diseño: ${request.requestCode}`)
+    }
+    catch (error) {
+      const httpError = error as HttpClientError
+      const statusMessage = (httpError.details as { statusMessage?: string } | null)?.statusMessage
+      toast.error(statusMessage || 'No se pudo enviar la solicitud a diseño.')
+    }
   }
 
   const triggerImport = () => {
@@ -357,5 +395,6 @@ export const useRequestsModule = () => {
     triggerImport,
     handleImportSelection,
     exportRequests,
+    hydrateRequests,
   }
 }

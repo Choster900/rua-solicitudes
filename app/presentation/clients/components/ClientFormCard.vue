@@ -307,8 +307,8 @@ import AppButton from '~/presentation/shared/components/ui/AppButton.vue'
 import AppSelect, { type AppSelectOption } from '~/presentation/shared/components/ui/AppSelect.vue'
 import AppTextField from '~/presentation/shared/components/ui/AppTextField.vue'
 import { useFormValidation, validationRules, type ValidationSchema } from '~/presentation/shared/composables/forms/useFormValidation'
-import type { ClientFormModel } from '~/presentation/clients/interfaces/client-form.interface'
-import type { ClientStatus } from '~/presentation/clients/interfaces/client.interface'
+import type { ClientFormModel } from '~/presentation/interfaces/clients/client-form.interface'
+import type { ClientStatus } from '~/presentation/interfaces/clients/client.interface'
 
 type ClientFormMode = 'create' | 'edit'
 

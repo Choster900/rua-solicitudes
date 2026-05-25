@@ -44,6 +44,18 @@
           class="w-full space-y-4"
           @submit.prevent="handleSubmit"
         >
+          <div
+            v-if="isDatabaseAvailable === false"
+            class="rounded-lg border border-status-error/40 bg-status-error/10 px-3 py-2 text-xs text-status-error"
+          >
+            No hay conexión a la base de datos. Intenta nuevamente cuando el servicio esté disponible.
+          </div>
+          <div
+            v-else-if="isDatabaseAvailable === null"
+            class="rounded-lg border border-outline/30 bg-surface-container-lowest/10 px-3 py-2 text-xs text-outline-variant"
+          >
+            Validando conexión con base de datos...
+          </div>
           <div class="group glow-effect transition-all duration-300">
             <label class="font-label-caps text-[0.65rem] text-secondary-container mb-1.5 block uppercase">
               Usuario de Red
@@ -121,8 +133,8 @@
           <button
             class="w-full bg-primary hover:bg-primary-container text-white font-bold py-2.5 rounded-lg shadow-lg shadow-primary/20 transform active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-2"
             type="submit"
-            :disabled="isSubmitting"
-            :class="isSubmitting ? 'opacity-80 cursor-not-allowed' : ''"
+            :disabled="isSubmitting || isDatabaseAvailable !== true"
+            :class="isSubmitting || isDatabaseAvailable !== true ? 'opacity-80 cursor-not-allowed' : ''"
           >
             <span class="text-sm font-headline-md">
               {{ isSubmitSuccess ? 'Acceso Concedido' : isSubmitting ? 'Validando...' : 'Ingresar al Sistema' }}
@@ -149,12 +161,18 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from 'vue'
 import logoModoOscuro from '~/assets/logos/rua_logo_modo_oscuro_transparente.png'
+import { useApiClient } from '~/presentation/shared/composables/useApiClient'
+import { useAppToast } from '~/presentation/shared/composables/useAppToast'
+import type { HttpClientError } from '~/presentation/interfaces/shared/http/http-client-error.interface'
 
 defineOptions({
   name: 'LoginView',
 })
 
 const router = useRouter()
+const route = useRoute()
+const apiClient = useApiClient()
+const toast = useAppToast()
 const loginLogoSrc = logoModoOscuro
 const networkUser = ref('admin@ruasa.com.sv')
 const password = ref('12345678')
@@ -164,6 +182,7 @@ const passwordError = ref('')
 const showPassword = ref(false)
 const isSubmitting = ref(false)
 const isSubmitSuccess = ref(false)
+const isDatabaseAvailable = ref<boolean | null>(null)
 
 useHead({
   htmlAttrs: {
@@ -175,8 +194,6 @@ useHead({
   },
 })
 
-let submitTimeoutId: number | null = null
-let redirectTimeoutId: number | null = null
 let mouseMoveHandler: ((event: MouseEvent) => void) | null = null
 
 const validateRequiredFields = () => {
@@ -186,8 +203,13 @@ const validateRequiredFields = () => {
   return !networkUserError.value && !passwordError.value
 }
 
-const handleSubmit = () => {
+const handleSubmit = async () => {
   if (isSubmitting.value) {
+    return
+  }
+
+  if (isDatabaseAvailable.value !== true) {
+    toast.error('No hay conexión a la base de datos.')
     return
   }
 
@@ -199,18 +221,74 @@ const handleSubmit = () => {
   }
 
   isSubmitting.value = true
+  try {
+    const response = await apiClient.post<{
+      accessToken: string
+      expiresInSeconds: number
+      tokenType: 'Bearer'
+      mustChangePassword: boolean
+    }>('/auth/login', {
+      networkUser: networkUser.value.trim(),
+      password: password.value.trim(),
+    })
 
-  submitTimeoutId = window.setTimeout(() => {
-    isSubmitting.value = false
+    const accessToken = useCookie<string | null>('access_token', {
+      sameSite: 'lax',
+      secure: false,
+    })
+
+    accessToken.value = response.data.accessToken
     isSubmitSuccess.value = true
+    toast.success('Acceso concedido.')
 
-    redirectTimeoutId = window.setTimeout(() => {
-      void router.push('/dashboard')
-    }, 1000)
-  }, 1800)
+    if (response.data.mustChangePassword) {
+      toast.warning('Debes cambiar tu contraseña para continuar.')
+      void router.push('/auth/change-password')
+      return
+    }
+
+    void router.push('/dashboard')
+  }
+  catch (error) {
+    const httpError = error as HttpClientError
+    const isUnauthorized = httpError.status === 401
+    const isDatabaseUnavailable = httpError.status === 503
+    const message = isUnauthorized
+      ? 'Credenciales inválidas.'
+      : isDatabaseUnavailable
+        ? 'No hay conexión a la base de datos.'
+      : 'No se pudo iniciar sesión en este momento.'
+
+    passwordError.value = isUnauthorized ? 'Usuario o contraseña incorrectos.' : ''
+    toast.error(message)
+    isSubmitSuccess.value = false
+  }
+  finally {
+    isSubmitting.value = false
+  }
+}
+
+const validateDatabaseConnection = async () => {
+  try {
+    const response = await apiClient.get<{ connected: boolean }>('/healthcheck/database')
+    isDatabaseAvailable.value = response.data.connected
+
+    if (!response.data.connected) {
+      toast.error('No hay conexión a la base de datos. El acceso al sistema está deshabilitado.')
+    }
+  }
+  catch {
+    isDatabaseAvailable.value = false
+    toast.error('No se pudo validar la conexión a la base de datos.')
+  }
 }
 
 onMounted(() => {
+  if (route.query.reason === 'session-expired') {
+    toast.warning('Tu sesión ha caducado. Inicia sesión nuevamente.')
+    void router.replace('/login')
+  }
+
   mouseMoveHandler = (event: MouseEvent) => {
     const image = document.querySelector('img[data-alt]') as HTMLImageElement | null
 
@@ -226,17 +304,11 @@ onMounted(() => {
   if (mouseMoveHandler && window.matchMedia('(min-width: 1024px)').matches) {
     document.addEventListener('mousemove', mouseMoveHandler)
   }
+
+  void validateDatabaseConnection()
 })
 
 onUnmounted(() => {
-  if (submitTimeoutId !== null) {
-    window.clearTimeout(submitTimeoutId)
-  }
-
-  if (redirectTimeoutId !== null) {
-    window.clearTimeout(redirectTimeoutId)
-  }
-
   if (mouseMoveHandler) {
     document.removeEventListener('mousemove', mouseMoveHandler)
   }

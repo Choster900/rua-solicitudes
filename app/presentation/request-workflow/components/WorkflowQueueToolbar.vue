@@ -73,7 +73,7 @@
 import AppSelect from '~/presentation/shared/components/ui/AppSelect.vue'
 import AppTextField from '~/presentation/shared/components/ui/AppTextField.vue'
 import WorkflowKpiCard from '~/presentation/request-workflow/components/WorkflowKpiCard.vue'
-import type { WorkflowPriority } from '~/presentation/request-workflow/interfaces/workflow-request.interface'
+import type { WorkflowPriority } from '~/presentation/interfaces/request-workflow/workflow-request.interface'
 
 interface WorkflowQueueToolbarProps {
   title: string

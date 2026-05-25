@@ -34,7 +34,7 @@
 <script setup lang="ts">
 import { computed, reactive, watch } from 'vue'
 import AppCheckbox from '~/presentation/shared/components/ui/AppCheckbox.vue'
-import type { WorkflowChecklistState } from '~/presentation/request-workflow/interfaces/workflow-request.interface'
+import type { WorkflowChecklistState } from '~/presentation/interfaces/request-workflow/workflow-request.interface'
 
 interface WorkflowChecklistPanelProps {
   checklist: WorkflowChecklistState

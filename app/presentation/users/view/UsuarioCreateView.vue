@@ -13,6 +13,7 @@
       <UserFormCard
         mode="create"
         :model="userFormModel"
+        :resolve-employee-code="generateNextEmployeeCode"
         @cancel="requestCancelConfirmation"
         @submit="requestCreateConfirmation"
       />
@@ -69,15 +70,15 @@ import AppShellLayout from '~/presentation/shared/components/layout/AppShellLayo
 import AppButton from '~/presentation/shared/components/ui/AppButton.vue'
 import UserFormCard from '~/presentation/users/components/UserFormCard.vue'
 import { useUsersModule } from '~/presentation/users/composables/useUsersModule'
-import type { UserFormModel } from '~/presentation/users/interfaces/user-form.interface'
+import type { UserFormModel } from '~/presentation/interfaces/users/user-form.interface'
 
 defineOptions({
   name: 'UsuarioCreateView',
 })
 
 const router = useRouter()
-const { createEmptyUserFormModel, createUser } = useUsersModule()
-const userFormModel = createEmptyUserFormModel()
+const { createEmptyUserFormModel, createUser, generateNextEmployeeCode } = useUsersModule()
+const userFormModel = createEmptyUserFormModel(generateNextEmployeeCode(''))
 
 type DialogActionType = 'cancel' | 'create'
 type DialogConfirmVariant = 'primary' | 'danger'
@@ -122,7 +123,7 @@ const closeConfirmationDialog = () => {
   confirmationDialog.value = null
 }
 
-const confirmDialogAction = () => {
+const confirmDialogAction = async () => {
   if (!confirmationDialog.value) {
     return
   }
@@ -134,9 +135,12 @@ const confirmDialogAction = () => {
   }
 
   if (confirmationDialog.value.actionType === 'create' && confirmationDialog.value.payload) {
-    createUser(confirmationDialog.value.payload)
-    closeConfirmationDialog()
-    goBackToUsers()
+    const created = await createUser(confirmationDialog.value.payload)
+
+    if (created) {
+      closeConfirmationDialog()
+      goBackToUsers()
+    }
   }
 }
 

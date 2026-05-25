@@ -24,7 +24,7 @@
 import AppShellLayout from '~/presentation/shared/components/layout/AppShellLayout.vue'
 import ClientFormCard from '~/presentation/clients/components/ClientFormCard.vue'
 import { useClientsModule } from '~/presentation/clients/composables/useClientsModule'
-import type { ClientFormModel } from '~/presentation/clients/interfaces/client-form.interface'
+import type { ClientFormModel } from '~/presentation/interfaces/clients/client-form.interface'
 
 defineOptions({
   name: 'ClienteCreateView',

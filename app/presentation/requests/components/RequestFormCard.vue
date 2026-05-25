@@ -400,7 +400,7 @@ import AppTextField from '~/presentation/shared/components/ui/AppTextField.vue'
 import { useFormValidation, validationRules, type ValidationSchema } from '~/presentation/shared/composables/forms/useFormValidation'
 import { useAppToast } from '~/presentation/shared/composables/useAppToast'
 import { toRequestAttachmentFromFile } from '~/presentation/requests/composables/useRequestsModule'
-import type { DesignRequestFormModel } from '~/presentation/requests/interfaces/request-form.interface'
+import type { DesignRequestFormModel } from '~/presentation/interfaces/requests/request-form.interface'
 
 type RequestFormMode = 'create' | 'edit'
 

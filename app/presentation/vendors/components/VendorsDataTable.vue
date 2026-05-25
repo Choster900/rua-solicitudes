@@ -32,8 +32,8 @@
 import { onMounted, onUnmounted, ref } from 'vue'
 import AppDataTable from '~/presentation/shared/components/ui/AppDataTable.vue'
 import AppStatusBadge from '~/presentation/shared/components/ui/AppStatusBadge.vue'
-import type { AppDataTableColumn } from '~/presentation/shared/interfaces/ui/app-data-table.interface'
-import type { VendorTableRow } from '~/presentation/vendors/interfaces/vendor-table-row.interface'
+import type { AppDataTableColumn } from '~/presentation/interfaces/shared/ui/app-data-table.interface'
+import type { VendorTableRow } from '~/presentation/interfaces/vendors/vendor-table-row.interface'
 
 interface VendorsDataTableProps {
     rows: VendorTableRow[]

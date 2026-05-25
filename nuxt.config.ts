@@ -35,6 +35,8 @@ export default defineNuxtConfig({
   runtimeConfig: {
     databaseUrl: env.DATABASE_URL,
     directUrl: env.DIRECT_URL,
+    authJwtSecret: env.AUTH_JWT_SECRET,
+    authAccessTokenExpiresInSeconds: env.AUTH_ACCESS_TOKEN_EXPIRES_IN_SECONDS,
     supabaseServiceRoleKey: env.SUPABASE_SERVICE_ROLE_KEY,
     public: {
       appName: env.NUXT_PUBLIC_APP_NAME,

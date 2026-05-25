@@ -108,9 +108,10 @@
 </template>
 
 <script setup lang="ts">
+import dayjs from 'dayjs'
 import AppStatusBadge from '~/presentation/shared/components/ui/AppStatusBadge.vue'
-import type { AppStatusBadgeTone } from '~/presentation/request-workflow/interfaces/workflow-ui.type'
-import type { WorkflowChecklistState, WorkflowRequest } from '~/presentation/request-workflow/interfaces/workflow-request.interface'
+import type { AppStatusBadgeTone } from '~/presentation/interfaces/request-workflow/workflow-ui.type'
+import type { WorkflowChecklistState, WorkflowRequest } from '~/presentation/interfaces/request-workflow/workflow-request.interface'
 import WorkflowChecklistPanel from '~/presentation/request-workflow/components/WorkflowChecklistPanel.vue'
 import WorkflowObservationsPanel from '~/presentation/request-workflow/components/WorkflowObservationsPanel.vue'
 import WorkflowStageTimeline from '~/presentation/request-workflow/components/WorkflowStageTimeline.vue'
@@ -142,12 +143,12 @@ const formatDate = (sourceDate: string) => {
     return 'Sin fecha'
   }
 
-  const parsedDate = new Date(sourceDate)
+  const parsedDate = dayjs(sourceDate)
 
-  if (Number.isNaN(parsedDate.getTime())) {
+  if (!parsedDate.isValid()) {
     return 'Fecha inválida'
   }
 
-  return new Intl.DateTimeFormat('es-SV', { dateStyle: 'medium' }).format(parsedDate)
+  return new Intl.DateTimeFormat('es-SV', { dateStyle: 'medium' }).format(parsedDate.toDate())
 }
 </script>
