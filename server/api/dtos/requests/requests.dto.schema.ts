@@ -1,0 +1,61 @@
+import Joi from 'joi'
+import type { CreateRequestDto, UpdateRequestDto } from '../../../interfaces/dtos/requests'
+
+const requestAttachmentSchema = Joi.object({
+    id: Joi.string().trim().required(),
+    name: Joi.string().trim().required(),
+    extension: Joi.string().trim().required(),
+    sizeKb: Joi.number().integer().min(0).required(),
+})
+
+export const createRequestDtoSchema = Joi.object<CreateRequestDto>({
+    requestCode: Joi.string().trim().optional(),
+    clientName: Joi.string().trim().optional(),
+    brandName: Joi.string().trim().allow('').optional(),
+    productName: Joi.string().trim().optional(),
+    requestedBy: Joi.string().trim().optional(),
+    vendorName: Joi.string().trim().optional(),
+    materialType: Joi.string().trim().optional(),
+    materialWeight: Joi.string().trim().allow('').optional(),
+    printTechnique: Joi.string().trim().optional(),
+    colorMode: Joi.string().trim().optional(),
+    pantoneReferences: Joi.string().trim().allow('').optional(),
+    finishingOptions: Joi.array().items(Joi.string().trim()).optional(),
+    deliverables: Joi.array().items(Joi.string().trim()).optional(),
+    dimensions: Joi.string().trim().optional(),
+    quantity: Joi.number().optional(),
+    requiredDate: Joi.string().trim().optional(),
+    priority: Joi.string().trim().optional(),
+    status: Joi.string().trim().optional(),
+    designInstructions: Joi.string().trim().allow('').optional(),
+    visualReferences: Joi.string().trim().allow('').optional(),
+    requireDieCut: Joi.boolean().optional(),
+    requireMockup: Joi.boolean().optional(),
+    attachments: Joi.array().items(requestAttachmentSchema).optional(),
+})
+
+export const updateRequestDtoSchema = Joi.object<UpdateRequestDto>({
+    requestCode: Joi.string().trim().optional(),
+    clientName: Joi.string().trim().optional(),
+    brandName: Joi.string().trim().allow('').optional(),
+    productName: Joi.string().trim().optional(),
+    requestedBy: Joi.string().trim().optional(),
+    vendorName: Joi.string().trim().optional(),
+    materialType: Joi.string().trim().optional(),
+    materialWeight: Joi.string().trim().allow('').optional(),
+    printTechnique: Joi.string().trim().optional(),
+    colorMode: Joi.string().trim().optional(),
+    pantoneReferences: Joi.string().trim().allow('').optional(),
+    finishingOptions: Joi.array().items(Joi.string().trim()).optional(),
+    deliverables: Joi.array().items(Joi.string().trim()).optional(),
+    dimensions: Joi.string().trim().optional(),
+    quantity: Joi.number().optional(),
+    requiredDate: Joi.string().trim().optional(),
+    priority: Joi.string().trim().optional(),
+    status: Joi.string().trim().optional(),
+    designInstructions: Joi.string().trim().allow('').optional(),
+    visualReferences: Joi.string().trim().allow('').optional(),
+    requireDieCut: Joi.boolean().optional(),
+    requireMockup: Joi.boolean().optional(),
+    attachments: Joi.array().items(requestAttachmentSchema).optional(),
+})

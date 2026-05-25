@@ -121,7 +121,6 @@ Crear `.env` desde `.env.example`:
 
 ```env
 DATABASE_URL=
-DIRECT_URL=
 SUPABASE_URL=
 SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
@@ -136,7 +135,7 @@ La validación está en `config/env.ts` (Joi). Si falta una variable crítica, N
 ## 10) Supabase + Prisma
 
 1. Crear proyecto en Supabase y obtener connection strings.
-2. Asignar `DATABASE_URL` y `DIRECT_URL` (pooling y direct).
+2. Asignar `DATABASE_URL`.
 3. Ejecutar:
 
 ```bash
@@ -214,7 +213,7 @@ npx prisma db seed
 - Centralizar errores y validadores en `server/validators`.
 - Implementar repositorios por agregado y tests por feature.
 - Evitar exponer secretos en `runtimeConfig.public`.
-- Usar `DIRECT_URL` para migraciones y `DATABASE_URL` para runtime.
+- Usar `DATABASE_URL` para migraciones y runtime.
 - Mantener imágenes Docker pequeñas y reproducibles con `npm ci`.
 
 ## 18) Swagger y healthcheck

@@ -1,15 +1,15 @@
-import type { VendorStatus } from '~/presentation/interfaces/vendors/vendor.interface'
+import type { VendorStatus } from '../domain/vendor.interface'
 
 export interface VendorRecord {
-  id: string
-  code: string
-  fullName: string
-  zone: string
-  phone: string
-  email: string
-  assignedClientCodes: string[]
-  monthlySalesUsd: number
-  status: VendorStatus
+    id: string
+    code: string
+    fullName: string
+    zone: string
+    phone: string
+    email: string
+    assignedClientCodes: string[]
+    monthlySalesUsd: number
+    status: VendorStatus
 }
 
 export type CreateVendorInput = Omit<VendorRecord, 'id'>

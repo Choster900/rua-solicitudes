@@ -1,23 +1,23 @@
-import type { UserType } from '~/presentation/interfaces/users/user.interface'
+import type { UserType } from '../domain/user.interface'
 
 export type AuthUserStatus = 'Activo' | 'Pendiente' | 'Bloqueado'
 
 export interface AuthUserRecord {
-  id: string
-  employeeCode: string
-  fullName: string
-  email: string
-  phone: string
-  userType: UserType
-  department: string
-  status: AuthUserStatus
-  password: string
-  mustChangePassword: boolean
-  lastAccessAt: string | null
-  createdAt: string
-  updatedAt: string
+    id: string
+    employeeCode: string
+    fullName: string
+    email: string
+    phone: string
+    userType: UserType
+    department: string
+    status: AuthUserStatus
+    password: string
+    mustChangePassword: boolean
+    lastAccessAt: string | null
+    createdAt: string
+    updatedAt: string
 }
 
 export interface AuthUsersStoreState {
-  users: AuthUserRecord[]
+    users: AuthUserRecord[]
 }

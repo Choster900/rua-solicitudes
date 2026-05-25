@@ -8,6 +8,8 @@ services:
             - '${PORT:-3000}:${PORT:-3000}'
         env_file:
             - .env
+        environment:
+            DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-app_db}?schema=public
         volumes:
             - ./:/app
             - /app/node_modules
@@ -16,18 +18,21 @@ services:
                 condition: service_healthy
 
     db:
-        image: postgres:16-alpine
+        build:
+            context: .
+            dockerfile: docker/db/Dockerfile
+        image: rua-solicitudes-postgres:16-alpine
         container_name: nuxt-enterprise-template-db
         environment:
-            POSTGRES_DB: app_db
-            POSTGRES_USER: postgres
-            POSTGRES_PASSWORD: postgres
+            POSTGRES_DB: ${POSTGRES_DB:-app_db}
+            POSTGRES_USER: ${POSTGRES_USER:-postgres}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
         ports:
-            - '5432:5432'
+            - '${POSTGRES_PORT:-5432}:5432'
         volumes:
             - postgres_data:/var/lib/postgresql/data
         healthcheck:
-            test: ['CMD-SHELL', 'pg_isready -U postgres -d app_db']
+            test: ['CMD-SHELL', 'pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB']
             interval: 5s
             timeout: 5s
             retries: 10
