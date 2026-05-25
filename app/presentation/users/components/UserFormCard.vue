@@ -61,10 +61,11 @@
           </label>
           <AppSelect
             v-model="formModel.userType"
+            compact
             icon="manage_accounts"
             :input-class="getFieldError('userType')
-              ? 'border-status-error focus:ring-status-error/40'
-              : ''"
+              ? '!py-1.5 border-status-error focus:ring-status-error/40'
+              : '!py-1.5'"
             :options="userTypeSelectOptions"
             placeholder="Selecciona el tipo de usuario"
             @blur="handleFieldBlur('userType')"
@@ -93,10 +94,11 @@
           </label>
           <AppSelect
             v-model="formModel.status"
+            compact
             :clearable="false"
             :input-class="getFieldError('status')
-              ? 'border-status-error focus:ring-status-error/40'
-              : ''"
+              ? '!py-1.5 border-status-error focus:ring-status-error/40'
+              : '!py-1.5'"
             icon="verified"
             :options="userStatusSelectOptions"
             :searchable="false"

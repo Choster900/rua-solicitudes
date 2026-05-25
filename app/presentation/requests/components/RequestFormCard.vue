@@ -90,9 +90,10 @@
             </label>
             <AppSelect
               v-model="formModel.materialType"
+              compact
               :clearable="false"
               icon="layers"
-              :input-class="getFieldError('materialType') ? 'border-status-error focus:ring-status-error/40' : ''"
+              :input-class="getFieldError('materialType') ? '!py-1.5 border-status-error focus:ring-status-error/40' : '!py-1.5'"
               :options="materialTypeOptions"
               @blur="handleFieldBlur('materialType')"
             />
@@ -119,9 +120,10 @@
             </label>
             <AppSelect
               v-model="formModel.printTechnique"
+              compact
               :clearable="false"
               icon="print"
-              :input-class="getFieldError('printTechnique') ? 'border-status-error focus:ring-status-error/40' : ''"
+              :input-class="getFieldError('printTechnique') ? '!py-1.5 border-status-error focus:ring-status-error/40' : '!py-1.5'"
               :options="printTechniqueOptions"
               @blur="handleFieldBlur('printTechnique')"
             />
@@ -139,9 +141,10 @@
             </label>
             <AppSelect
               v-model="formModel.colorMode"
+              compact
               :clearable="false"
               icon="palette"
-              :input-class="getFieldError('colorMode') ? 'border-status-error focus:ring-status-error/40' : ''"
+              :input-class="getFieldError('colorMode') ? '!py-1.5 border-status-error focus:ring-status-error/40' : '!py-1.5'"
               :options="colorModeOptions"
               @blur="handleFieldBlur('colorMode')"
             />
@@ -219,8 +222,9 @@
           </label>
           <AppSelect
             v-model="formModel.finishingOptions"
+            compact
             icon="auto_awesome"
-            :input-class="getFieldError('finishingOptions') ? 'border-status-error focus:ring-status-error/40' : ''"
+            :input-class="getFieldError('finishingOptions') ? '!py-1.5 border-status-error focus:ring-status-error/40' : '!py-1.5'"
             multiple
             :options="finishingOptions"
             placeholder="Selecciona uno o más acabados"
@@ -240,8 +244,9 @@
           </label>
           <AppSelect
             v-model="formModel.deliverables"
+            compact
             icon="fact_check"
-            :input-class="getFieldError('deliverables') ? 'border-status-error focus:ring-status-error/40' : ''"
+            :input-class="getFieldError('deliverables') ? '!py-1.5 border-status-error focus:ring-status-error/40' : '!py-1.5'"
             multiple
             :options="deliverableOptions"
             placeholder="Selecciona uno o más entregables"

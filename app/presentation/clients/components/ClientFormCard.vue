@@ -70,10 +70,11 @@
             </label>
             <AppSelect
               v-model="formModel.status"
+              compact
               :clearable="false"
               :input-class="getFieldError('status')
-                ? 'border-status-error focus:ring-status-error/40'
-                : ''"
+                ? '!py-1.5 border-status-error focus:ring-status-error/40'
+                : '!py-1.5'"
               icon="verified"
               :options="statusSelectOptions"
               :searchable="false"
@@ -149,11 +150,12 @@
             </label>
             <AppSelect
               v-model="formModel.country"
+              compact
               :clearable="false"
               icon="public"
               :input-class="getFieldError('country')
-                ? 'border-status-error focus:ring-status-error/40'
-                : ''"
+                ? '!py-1.5 border-status-error focus:ring-status-error/40'
+                : '!py-1.5'"
               :options="countrySelectOptions"
               :searchable="false"
               @blur="handleFieldBlur('country')"
@@ -172,11 +174,12 @@
             </label>
             <AppSelect
               v-model="formModel.department"
+              compact
               :clearable="false"
               icon="map"
               :input-class="getFieldError('department')
-                ? 'border-status-error focus:ring-status-error/40'
-                : ''"
+                ? '!py-1.5 border-status-error focus:ring-status-error/40'
+                : '!py-1.5'"
               :options="departmentSelectOptions"
               placeholder="Selecciona un departamento"
               :searchable="true"

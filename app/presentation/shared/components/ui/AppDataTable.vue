@@ -124,6 +124,7 @@
           <span>Filas por página</span>
           <AppSelect
             v-model="pageSize"
+            compact
             :clearable="false"
             dropdown-direction="up"
             :options="pageSizeSelectOptions"
