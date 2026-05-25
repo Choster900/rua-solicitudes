@@ -1,13 +1,13 @@
 <template>
     <AppShellLayout screen-title="Bandeja Calidad">
-        <section class="grid min-h-[calc(100vh-112px)] grid-cols-1 gap-4 xl:grid-cols-[70%_30%]">
-            <div class="space-y-4">
+        <section class="grid min-h-[calc(100vh-112px)] grid-cols-1 gap-3 xl:grid-cols-[70%_30%]">
+            <div class="space-y-3">
                 <header class="flex items-start justify-between gap-4">
                     <div>
-                        <h1 class="text-4xl font-semibold leading-tight text-white">
+                        <h1 class="text-3xl font-semibold leading-tight text-white">
                             Bandeja de Revisiones Técnicas
                         </h1>
-                        <p class="mt-1 max-w-xl text-2xl text-outline-variant">
+                        <p class="mt-1 max-w-xl text-lg text-outline-variant">
                             Validación de artes y especificaciones industriales.
                         </p>
                     </div>
@@ -26,7 +26,7 @@
                     class="overflow-hidden rounded-xl border border-outline/20 bg-surface-container-lowest/5"
                 >
                     <header
-                        class="grid grid-cols-[24%_32%_18%_26%] border-b border-outline/20 bg-surface-container-low/20 px-4 py-2 text-xs uppercase tracking-[0.12em] text-secondary-container"
+                        class="grid grid-cols-[24%_32%_18%_26%] border-b border-outline/20 bg-surface-container-low/20 px-3 py-1.5 text-[10px] uppercase tracking-[0.12em] text-secondary-container"
                     >
                         <p>ID Solicitud</p>
                         <p>Cliente / Producto</p>
@@ -37,7 +37,7 @@
                     <div v-if="displayRows.length" class="divide-y divide-outline/15">
                         <template v-for="row in displayRows" :key="row.id">
                             <button
-                                class="grid w-full grid-cols-[24%_32%_18%_26%] items-center px-4 py-4 text-left transition-colors hover:bg-surface-container-low/20"
+                                class="grid w-full grid-cols-[24%_32%_18%_26%] items-center px-3 py-2.5 text-left transition-colors hover:bg-surface-container-low/20"
                                 :class="
                                     selectedRequestId === row.id
                                         ? 'border-l-2 border-primary bg-primary/10'
@@ -46,20 +46,20 @@
                                 type="button"
                                 @click="openRequestDetail(row.id)"
                             >
-                                <p class="text-2xl font-semibold text-primary-fixed">
+                                <p class="text-lg font-semibold text-primary-fixed">
                                     {{ row.requestCode }}
                                 </p>
                                 <div>
-                                    <p class="text-4xl leading-tight text-white">
+                                    <p class="text-xl leading-tight text-white">
                                         {{ row.clientName }}
                                     </p>
-                                    <p class="text-3xl leading-tight text-outline-variant">
+                                    <p class="text-lg leading-tight text-outline-variant">
                                         {{ row.productName }}
                                     </p>
                                 </div>
                                 <div>
                                     <span
-                                        class="inline-flex rounded-md border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.08em]"
+                                        class="inline-flex rounded-md border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em]"
                                         :class="stageChipClass(row.id)"
                                     >
                                         {{ stageChipLabel(row.id) }}
@@ -76,24 +76,24 @@
 
                             <section
                                 v-if="expandedRowId === row.id && selectedRequest"
-                                class="grid gap-4 border-t border-outline/10 bg-surface-container-lowest/20 px-4 py-4 lg:grid-cols-[40%_60%]"
+                                class="grid gap-3 border-t border-outline/10 bg-surface-container-lowest/5 px-3 py-3 lg:grid-cols-[40%_60%]"
                             >
                                 <div>
                                     <h3
-                                        class="mb-3 text-xs uppercase tracking-[0.12em] text-secondary-container"
+                                        class="mb-2 text-[10px] uppercase tracking-[0.12em] text-secondary-container"
                                     >
                                         Checklist de validación
                                     </h3>
                                     <div
-                                        class="space-y-2 rounded-lg border border-outline/15 bg-surface-container-lowest/20 p-2.5"
+                                        class="space-y-1.5 rounded-lg border border-outline/15 bg-surface-container-lowest/5 p-2"
                                     >
                                         <article
                                             v-for="item in checklistRows"
                                             :key="item.label"
-                                            class="flex items-center justify-between rounded-md bg-surface-container-low/30 px-2.5 py-2"
+                                            class="flex items-center justify-between rounded-md bg-surface-container-low/30 px-2 py-1.5"
                                         >
                                             <p
-                                                class="inline-flex items-center gap-2 text-sm text-white"
+                                                class="inline-flex items-center gap-1.5 text-xs text-white"
                                             >
                                                 <span
                                                     class="inline-block h-2.5 w-2.5 rounded-full"
@@ -102,7 +102,7 @@
                                                 {{ item.label }}
                                             </p>
                                             <span
-                                                class="rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em]"
+                                                class="rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.08em]"
                                                 :class="item.statusClass"
                                             >
                                                 {{ item.status }}
@@ -113,17 +113,17 @@
 
                                 <div>
                                     <h3
-                                        class="mb-3 text-xs uppercase tracking-[0.12em] text-secondary-container"
+                                        class="mb-2 text-[10px] uppercase tracking-[0.12em] text-secondary-container"
                                     >
                                         Observaciones técnicas
                                     </h3>
                                     <textarea
                                         v-model="qualityObservation"
-                                        class="h-[130px] w-full rounded-lg border border-outline/25 bg-surface-container-low/35 px-3 py-2 text-sm text-white outline-none placeholder:text-outline-variant focus:border-primary/60"
+                                        class="h-[96px] w-full rounded-lg border border-outline/25 bg-surface-container-low/10 px-2.5 py-2 text-xs text-white outline-none placeholder:text-outline-variant focus:border-primary/60"
                                         placeholder="Añadir comentarios específicos para los puntos de validación..."
                                     />
 
-                                    <div class="mt-3 flex flex-wrap justify-end gap-2">
+                                    <div class="mt-2.5 flex flex-wrap justify-end gap-2">
                                         <AppButton
                                             v-if="selectedRequest.stage === 'QUALITY_IN_REVIEW'"
                                             icon="cancel"
@@ -159,23 +159,23 @@
                         </template>
                     </div>
 
-                    <div v-else class="px-4 py-8 text-center text-sm text-outline-variant">
+                    <div v-else class="px-3 py-6 text-center text-xs text-outline-variant">
                         No hay solicitudes en calidad con los filtros actuales.
                     </div>
                 </article>
             </div>
 
             <aside
-                class="flex h-full flex-col overflow-hidden rounded-xl border border-outline/20 bg-surface-container-low/35"
+                class="flex h-full flex-col overflow-hidden rounded-xl border border-outline/20 bg-surface-container-lowest/5"
             >
-                <header class="border-b border-outline/20 px-4 py-4">
-                    <h2 class="inline-flex items-center gap-2 text-3xl font-semibold text-white">
+                <header class="border-b border-outline/20 px-3 py-3">
+                    <h2 class="inline-flex items-center gap-2 text-xl font-semibold text-white">
                         <span class="material-symbols-outlined text-[18px] text-primary"
                             >confirmation_number</span
                         >
                         Centro de Casos Consultados
                     </h2>
-                    <p class="mt-1 text-sm text-outline-variant">
+                    <p class="mt-1 text-xs text-outline-variant">
                         Tickets de preventa y factibilidad técnica.
                     </p>
                 </header>
@@ -184,7 +184,7 @@
                     <article
                         v-for="(ticket, index) in consultedCases"
                         :key="ticket.code"
-                        class="border-l-2 px-4 py-4 transition-colors"
+                        class="border-l-2 px-3 py-3 transition-colors"
                         :class="
                             index === 0
                                 ? 'border-primary bg-primary/10'
@@ -192,21 +192,21 @@
                         "
                     >
                         <div class="flex items-start justify-between gap-2">
-                            <p class="text-sm font-semibold tracking-[0.04em] text-primary-fixed">
+                            <p class="text-xs font-semibold tracking-[0.04em] text-primary-fixed">
                                 {{ ticket.code }}
                             </p>
                             <span
-                                class="rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em]"
+                                class="rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.08em]"
                                 :class="ticket.statusClass"
                             >
                                 {{ ticket.status }}
                             </span>
                         </div>
-                        <p class="mt-2 text-4xl leading-tight text-white">
+                        <p class="mt-1.5 text-lg leading-tight text-white">
                             {{ ticket.title }}
                         </p>
                         <div
-                            class="mt-2 flex items-center justify-between text-xs text-outline-variant"
+                            class="mt-1.5 flex items-center justify-between text-[11px] text-outline-variant"
                         >
                             <p class="inline-flex items-center gap-1">
                                 <span class="material-symbols-outlined text-[14px]">person</span>
@@ -219,9 +219,9 @@
                     </article>
                 </div>
 
-                <footer class="border-t border-outline/20 p-4">
+                <footer class="border-t border-outline/20 p-3">
                     <button
-                        class="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-outline/25 bg-surface-container-lowest/20 px-4 py-2.5 text-sm text-white transition-colors hover:bg-surface-container-lowest/35"
+                        class="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-outline/25 bg-surface-container-lowest/20 px-3 py-2 text-xs text-white transition-colors hover:bg-surface-container-lowest/35"
                         type="button"
                     >
                         <span class="material-symbols-outlined text-[16px]">history</span>
