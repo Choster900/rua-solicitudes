@@ -149,17 +149,12 @@ export const useUsersModule = () => {
 
     if (!user) {
       toast.error('No se encontró el usuario seleccionado.')
-      return
-    }
-
-    const shouldDelete = window.confirm(`¿Deseas eliminar a ${user.fullName}?`)
-
-    if (!shouldDelete) {
-      return
+      return false
     }
 
     users.value = users.value.filter(item => item.id !== userId)
     toast.success(`Usuario eliminado: ${user.fullName}`)
+    return true
   }
 
   const sendTemporaryAccess = (userId: string) => {
