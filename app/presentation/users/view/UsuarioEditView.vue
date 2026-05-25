@@ -46,7 +46,7 @@ defineOptions({
 const route = useRoute()
 const router = useRouter()
 const userId = computed(() => String(route.params.id ?? ''))
-const { getUserFormModelById, updateUser } = useUsersModule()
+const { getUserFormModelById, updateUser, hydrateUsers } = useUsersModule()
 
 const userFormModel = computed(() => {
   if (!userId.value) {
@@ -60,17 +60,21 @@ const goBackToUsers = () => {
   void router.push('/usuarios')
 }
 
-const handleUpdateUser = (formModel: UserFormModel) => {
+const handleUpdateUser = async (formModel: UserFormModel) => {
   if (!userId.value) {
     return
   }
 
-  const updated = updateUser(userId.value, formModel)
+  const updated = await updateUser(userId.value, formModel)
 
   if (updated) {
     goBackToUsers()
   }
 }
+
+onMounted(() => {
+  void hydrateUsers()
+})
 
 useHead(() => ({
   title: 'RUASA ERP - Editar Usuario',

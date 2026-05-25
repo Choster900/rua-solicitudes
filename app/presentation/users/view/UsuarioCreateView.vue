@@ -77,7 +77,7 @@ defineOptions({
 })
 
 const router = useRouter()
-const { createEmptyUserFormModel, createUser, generateNextEmployeeCode } = useUsersModule()
+const { createEmptyUserFormModel, createUser, generateNextEmployeeCode, hydrateUsers } = useUsersModule()
 const userFormModel = createEmptyUserFormModel(generateNextEmployeeCode(''))
 
 type DialogActionType = 'cancel' | 'create'
@@ -162,6 +162,7 @@ const handleEscapeKey = (event: KeyboardEvent) => {
 
 onMounted(() => {
   document.addEventListener('keydown', handleEscapeKey)
+  void hydrateUsers()
 })
 
 onUnmounted(() => {

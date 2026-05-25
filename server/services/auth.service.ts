@@ -14,7 +14,7 @@ import { createJwtToken } from '../utils/auth-jwt.util'
 
 const normalizeNetworkUser = (value: string) => value.trim().toLowerCase()
 
-export const loginWithSeededUsers = (
+export const loginWithSystemUser = (
   input: AuthLoginInput,
   options: {
     jwtSecret: string

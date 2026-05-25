@@ -52,6 +52,7 @@ const {
   handleImportSelection,
   exportClients,
   downloadImportTemplate,
+  hydrateClients,
 } = useClientsModule()
 
 const goToCreateClient = () => {
@@ -61,6 +62,10 @@ const goToCreateClient = () => {
 const goToEditClient = (clientId: string) => {
   void router.push(`/clientes/${clientId}/editar`)
 }
+
+onMounted(() => {
+  void hydrateClients()
+})
 
 useHead(() => ({
   title: 'RUASA ERP - Clientes',

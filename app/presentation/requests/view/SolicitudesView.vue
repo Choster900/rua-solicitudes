@@ -54,6 +54,7 @@ const {
   triggerImport,
   handleImportSelection,
   exportRequests,
+  hydrateRequests,
 } = useRequestsModule()
 
 const goToCreateRequest = () => {
@@ -63,6 +64,10 @@ const goToCreateRequest = () => {
 const goToEditRequest = (requestId: string) => {
   void router.push(`/solicitudes/${requestId}/editar`)
 }
+
+onMounted(() => {
+  void hydrateRequests()
+})
 
 useHead(() => ({
   title: 'RUASA ERP - Solicitudes',

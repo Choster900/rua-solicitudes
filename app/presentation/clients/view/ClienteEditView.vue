@@ -46,7 +46,7 @@ defineOptions({
 const route = useRoute()
 const router = useRouter()
 const clientId = computed(() => String(route.params.id ?? ''))
-const { getClientFormModelById, updateClient } = useClientsModule()
+const { getClientFormModelById, updateClient, hydrateClients } = useClientsModule()
 
 const clientFormModel = computed(() => {
   if (!clientId.value) {
@@ -60,17 +60,21 @@ const goBackToClients = () => {
   void router.push('/clientes')
 }
 
-const handleUpdateClient = (formModel: ClientFormModel) => {
+const handleUpdateClient = async (formModel: ClientFormModel) => {
   if (!clientId.value) {
     return
   }
 
-  const updated = updateClient(clientId.value, formModel)
+  const updated = await updateClient(clientId.value, formModel)
 
   if (updated) {
     goBackToClients()
   }
 }
+
+onMounted(() => {
+  void hydrateClients()
+})
 
 useHead(() => ({
   title: 'RUASA ERP - Editar Cliente',

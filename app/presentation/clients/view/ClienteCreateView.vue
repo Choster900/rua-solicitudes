@@ -31,20 +31,24 @@ defineOptions({
 })
 
 const router = useRouter()
-const { createEmptyClientFormModel, createClient } = useClientsModule()
+const { createEmptyClientFormModel, createClient, hydrateClients } = useClientsModule()
 const clientFormModel = createEmptyClientFormModel()
 
 const goBackToClients = () => {
   void router.push('/clientes')
 }
 
-const handleCreateClient = (formModel: ClientFormModel) => {
-  const created = createClient(formModel)
+const handleCreateClient = async (formModel: ClientFormModel) => {
+  const created = await createClient(formModel)
 
   if (created) {
     goBackToClients()
   }
 }
+
+onMounted(() => {
+  void hydrateClients()
+})
 
 useHead(() => ({
   title: 'RUASA ERP - Nuevo Cliente',

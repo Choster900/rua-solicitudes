@@ -1,4 +1,4 @@
-import { loginWithSeededUsers } from '../../services/auth.service'
+import { loginWithSystemUser } from '../../services/auth.service'
 import { isDatabaseConnectionAvailable } from '../../repositories/database-health.repository'
 
 interface AuthLoginBody {
@@ -28,7 +28,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const authResponse = await loginWithSeededUsers(
+  const authResponse = await loginWithSystemUser(
     {
       networkUser,
       password,

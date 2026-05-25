@@ -46,7 +46,7 @@ defineOptions({
 const route = useRoute()
 const router = useRouter()
 const requestId = computed(() => String(route.params.id ?? ''))
-const { getFormModelById, updateRequest } = useRequestsModule()
+const { getFormModelById, updateRequest, hydrateRequests } = useRequestsModule()
 
 const requestFormModel = computed(() => {
   if (!requestId.value) {
@@ -60,17 +60,21 @@ const goBackToRequests = () => {
   void router.push('/solicitudes')
 }
 
-const handleUpdateRequest = (formModel: DesignRequestFormModel) => {
+const handleUpdateRequest = async (formModel: DesignRequestFormModel) => {
   if (!requestId.value) {
     return
   }
 
-  const updated = updateRequest(requestId.value, formModel)
+  const updated = await updateRequest(requestId.value, formModel)
 
   if (updated) {
     goBackToRequests()
   }
 }
+
+onMounted(() => {
+  void hydrateRequests()
+})
 
 useHead(() => ({
   title: 'RUASA ERP - Editar Solicitud',

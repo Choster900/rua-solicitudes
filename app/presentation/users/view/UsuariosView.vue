@@ -190,6 +190,7 @@ const {
   handleImportFile,
   handleExportUsers,
   downloadImportTemplate,
+  hydrateUsers,
 } = useUsersModule()
 
 const goToCreateUser = () => {
@@ -261,12 +262,12 @@ const closeDeleteDialog = () => {
   userToDelete.value = null
 }
 
-const confirmDelete = () => {
+const confirmDelete = async () => {
   if (!userToDelete.value) {
     return
   }
 
-  deleteUser(userToDelete.value.id)
+  await deleteUser(userToDelete.value.id)
   closeDeleteDialog()
 }
 
@@ -299,6 +300,7 @@ const handleEscapeKey = (event: KeyboardEvent) => {
 
 onMounted(() => {
   document.addEventListener('keydown', handleEscapeKey)
+  void hydrateUsers()
 })
 
 onUnmounted(() => {

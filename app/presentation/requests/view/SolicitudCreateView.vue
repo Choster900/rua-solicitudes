@@ -67,17 +67,24 @@ defineOptions({
 })
 
 const router = useRouter()
-const { createRequest } = useRequestsModule()
+const { createRequest, hydrateRequests } = useRequestsModule()
 const requestFormModel = createEmptyRequestFormModel()
 
 const goBackToRequests = () => {
   void router.push('/solicitudes')
 }
 
-const handleCreateRequest = (formModel: DesignRequestFormModel) => {
-  createRequest(formModel)
-  goBackToRequests()
+const handleCreateRequest = async (formModel: DesignRequestFormModel) => {
+  const created = await createRequest(formModel)
+
+  if (created) {
+    goBackToRequests()
+  }
 }
+
+onMounted(() => {
+  void hydrateRequests()
+})
 
 useHead(() => ({
   title: 'RUASA ERP - Nueva Solicitud',

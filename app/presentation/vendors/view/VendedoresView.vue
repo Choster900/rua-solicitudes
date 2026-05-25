@@ -51,7 +51,12 @@ const {
   triggerImport,
   handleImportSelection,
   handleExportVendors,
+  hydrateVendors,
 } = useVendorsModule()
+
+onMounted(() => {
+  void hydrateVendors()
+})
 
 useHead(() => ({
   title: 'RUASA ERP - Vendedores',
