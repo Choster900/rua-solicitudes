@@ -1,224 +1,356 @@
 <template>
     <AppShellLayout screen-title="Solicitudes">
-        <section class="h-full">
-            <div class="grid h-full gap-4 xl:grid-cols-[minmax(0,70%),minmax(0,30%)]">
-                <article class="min-h-0 border-r border-outline/20 pr-0 xl:pr-0">
-                    <header
-                        class="flex flex-wrap items-start justify-between gap-4 border-b border-outline/20 px-4 py-4"
-                    >
-                        <div>
-                            <h1 class="text-[1.8rem] font-headline-md font-semibold text-white">
-                                Historial General
-                            </h1>
-                            <p
-                                class="mt-2 text-xs uppercase tracking-[0.12em] text-secondary-container"
-                            >
-                                Listado de Solicitudes
-                            </p>
-                            <p class="text-sm text-outline-variant">
-                                {{ totalRequests }} registros encontrados en la base de datos.
-                            </p>
-                        </div>
+        <section class="space-y-5">
+            <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                <article
+                    class="rounded-xl border border-outline/20 bg-surface-container-lowest/5 px-4 py-3"
+                >
+                    <p class="text-xs uppercase tracking-[0.12em] text-outline-variant">Artes</p>
+                    <p class="mt-1 text-3xl font-semibold text-white">{{ artsCount }}</p>
+                </article>
+                <article
+                    class="rounded-xl border border-outline/20 bg-surface-container-lowest/5 px-4 py-3"
+                >
+                    <p class="text-xs uppercase tracking-[0.12em] text-outline-variant">Dummies</p>
+                    <p class="mt-1 text-3xl font-semibold text-white">{{ dummiesCount }}</p>
+                </article>
+                <article
+                    class="rounded-xl border border-outline/20 bg-surface-container-lowest/5 px-4 py-3"
+                >
+                    <p class="text-xs uppercase tracking-[0.12em] text-outline-variant">
+                        Mecánicos
+                    </p>
+                    <p class="mt-1 text-3xl font-semibold text-white">{{ mechanicsCount }}</p>
+                </article>
+                <article
+                    class="rounded-xl border border-outline/20 bg-surface-container-lowest/5 px-4 py-3"
+                >
+                    <p class="text-xs uppercase tracking-[0.12em] text-outline-variant">
+                        Pendientes Calidad
+                    </p>
+                    <p class="mt-1 text-3xl font-semibold text-white">{{ pendingQualityCount }}</p>
+                </article>
+            </div>
 
-                        <div class="flex items-center gap-2">
-                            <AppButton
-                                icon="print"
-                                icon-position="left"
-                                size="md"
-                                variant="primary"
-                                @click="exportRequests"
-                            >
-                                Imprimir Todo
-                            </AppButton>
-                            <AppButton
-                                icon="add"
-                                size="md"
-                                variant="secondary"
-                                @click="goToCreateRequest"
-                            >
-                                Nueva
-                            </AppButton>
-                        </div>
-                    </header>
+            <article
+                class="overflow-hidden rounded-xl border border-outline/20 bg-surface-container-lowest/5"
+            >
+                <header
+                    class="flex items-center justify-between border-b border-outline/20 px-4 py-3"
+                >
+                    <h2 class="text-xs uppercase tracking-[0.12em] text-secondary-container">
+                        Solicitudes en Proceso
+                    </h2>
+                    <AppButton size="sm" variant="ghost" @click="triggerImport">
+                        Filtros
+                    </AppButton>
+                </header>
 
-                    <div class="min-h-0 px-4 py-3">
-                        <RequestsDataTable
-                            :rows="tableRows"
-                            @delete-request="removeRequest"
-                            @duplicate-request="duplicateRequest"
-                            @edit-request="goToEditRequest"
-                            @send-to-design="sendToDesign"
+                <div class="overflow-x-auto">
+                    <table class="min-w-full">
+                        <thead>
+                            <tr
+                                class="border-b border-outline/20 text-left text-xs uppercase tracking-[0.08em] text-outline-variant"
+                            >
+                                <th class="px-4 py-3">Solicitud</th>
+                                <th class="px-4 py-3">Cliente</th>
+                                <th class="px-4 py-3">Producto</th>
+                                <th class="px-4 py-3 text-center">Arte</th>
+                                <th class="px-4 py-3 text-center">Dummie</th>
+                                <th class="px-4 py-3 text-center">Mecánico</th>
+                                <th class="px-4 py-3 text-center">Estado</th>
+                                <th class="px-4 py-3 text-center">Acciones</th>
+                                <th class="px-4 py-3 text-center">Print</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            <tr
+                                v-for="(row, index) in displayRows"
+                                :key="row.id"
+                                class="border-b border-outline/15 transition-colors hover:bg-surface-container-low/10"
+                                :class="selectedRequestId === row.id ? 'bg-primary/10' : ''"
+                                @click="selectedRequestId = row.id"
+                            >
+                                <td class="px-4 py-3 text-sm font-semibold text-white">
+                                    {{ row.requestCode }}
+                                </td>
+                                <td class="px-4 py-3 text-sm text-outline-variant">
+                                    {{ row.clientName }}
+                                </td>
+                                <td class="px-4 py-3 text-sm text-outline-variant">
+                                    {{ row.productName }}
+                                </td>
+                                <td class="px-4 py-3 text-center">
+                                    <span
+                                        class="inline-flex h-5 w-5 items-center justify-center rounded border border-outline/40"
+                                        :class="
+                                            isStepChecked(index, 0)
+                                                ? 'bg-primary text-white border-primary'
+                                                : ''
+                                        "
+                                        >{{ isStepChecked(index, 0) ? '✓' : '' }}</span
+                                    >
+                                </td>
+                                <td class="px-4 py-3 text-center">
+                                    <span
+                                        class="inline-flex h-5 w-5 items-center justify-center rounded border border-outline/40"
+                                        :class="
+                                            isStepChecked(index, 1)
+                                                ? 'bg-primary text-white border-primary'
+                                                : ''
+                                        "
+                                        >{{ isStepChecked(index, 1) ? '✓' : '' }}</span
+                                    >
+                                </td>
+                                <td class="px-4 py-3 text-center">
+                                    <span
+                                        class="inline-flex h-5 w-5 items-center justify-center rounded border border-outline/40"
+                                        :class="
+                                            isStepChecked(index, 2)
+                                                ? 'bg-primary text-white border-primary'
+                                                : ''
+                                        "
+                                        >{{ isStepChecked(index, 2) ? '✓' : '' }}</span
+                                    >
+                                </td>
+                                <td class="px-4 py-3 text-center">
+                                    <span
+                                        class="inline-flex rounded-md border px-3 py-1 text-xs font-semibold"
+                                        :class="resolveStatusClass(row.status)"
+                                        >{{ row.status }}</span
+                                    >
+                                </td>
+                                <td class="px-4 py-3 text-center">
+                                    <button
+                                        class="text-outline-variant hover:text-white"
+                                        type="button"
+                                        title="Ver"
+                                        @click.stop="goToEditRequest(row.id)"
+                                    >
+                                        <span class="material-symbols-outlined text-[18px]"
+                                            >visibility</span
+                                        >
+                                    </button>
+                                </td>
+                                <td class="px-4 py-3 text-center">
+                                    <button
+                                        class="text-primary hover:text-blue-200"
+                                        type="button"
+                                        title="Enviar"
+                                        @click.stop="sendToDesign(row.id)"
+                                    >
+                                        <span class="material-symbols-outlined text-[18px]"
+                                            >send</span
+                                        >
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </article>
+
+            <div class="flex items-center justify-between">
+                <h3 class="text-3xl font-semibold text-white">
+                    Expediente de Solicitud:
+                    <span class="text-amber-300">{{
+                        selectedRow?.requestCode || 'SOL-0000-000'
+                    }}</span>
+                </h3>
+                <AppButton
+                    icon="print"
+                    icon-position="left"
+                    size="md"
+                    variant="ghost"
+                    @click="exportRequests"
+                >
+                    Imprimir Expediente
+                </AppButton>
+            </div>
+
+            <section class="grid gap-4 xl:grid-cols-3">
+                <article
+                    class="rounded-xl border border-outline/20 bg-surface-container-lowest/5 p-4"
+                >
+                    <h4 class="mb-3 text-xs uppercase tracking-[0.12em] text-secondary-container">
+                        Historial de Comentarios
+                    </h4>
+                    <ol class="relative space-y-3 pl-5">
+                        <span
+                            class="pointer-events-none absolute bottom-2 left-[7px] top-2 w-px bg-white/70"
                         />
-                    </div>
+                        <li class="relative">
+                            <span
+                                class="absolute -left-5 top-2 h-3 w-3 rounded-full bg-primary ring-2 ring-deep-navy"
+                            />
+                            <article
+                                class="rounded-lg border border-outline/20 bg-surface-container-lowest/25 p-3 text-sm text-outline-variant"
+                            >
+                                <p class="font-semibold text-white">Ing. Carlos Ruiz</p>
+                                <p
+                                    class="text-[11px] uppercase tracking-[0.08em] text-primary-fixed-dim"
+                                >
+                                    24/05/2024 · 10:30 AM
+                                </p>
+                                <p class="mt-1">
+                                    Revisión de material aprobada. Proceder con el arte final.
+                                </p>
+                            </article>
+                        </li>
+                        <li class="relative">
+                            <span
+                                class="absolute -left-5 top-2 h-3 w-3 rounded-full bg-white/70 ring-2 ring-deep-navy"
+                            />
+                            <article
+                                class="rounded-lg border border-outline/20 bg-surface-container-lowest/25 p-3 text-sm text-outline-variant"
+                            >
+                                <p class="font-semibold text-white">Arq. Sofía Méndez</p>
+                                <p
+                                    class="text-[11px] uppercase tracking-[0.08em] text-primary-fixed-dim"
+                                >
+                                    23/05/2024 · 04:15 PM
+                                </p>
+                                <p class="mt-1">
+                                    Se requiere confirmación del acabado para impresión.
+                                </p>
+                            </article>
+                        </li>
+                    </ol>
                 </article>
 
-                <aside
-                    class="-mr-6 -my-6 flex h-[calc(100%+3rem)] flex-col self-stretch border-l border-outline/20 bg-surface-container-lowest/5"
+                <article
+                    class="rounded-xl border border-outline/20 bg-surface-container-lowest/5 p-4"
                 >
-                    <header class="border-b border-outline/20 px-4 py-4">
-                        <h2 class="text-xl font-semibold text-slate-200">Expediente Histórico</h2>
-                        <div class="mt-2 grid gap-1.5">
-                            <p
-                                class="inline-flex w-fit rounded bg-primary/10 px-2 py-0.5 font-mono text-xs text-primary-fixed-dim"
-                            >
-                                {{ selectedRow?.requestCode || 'SOL-0000-000' }}
-                            </p>
-                            <p class="text-base text-slate-300">
-                                {{ selectedRow?.clientName || 'Cliente sin seleccionar' }}
-                            </p>
-                        </div>
-                    </header>
-
-                    <div class="min-h-0 flex-1 space-y-4 overflow-auto px-4 py-4">
-                        <section>
-                            <h3
-                                class="mb-2 text-[11px] uppercase tracking-[0.12em] text-secondary-container"
-                            >
-                                Registro de Cambios
-                            </h3>
-                            <ol class="relative space-y-2.5">
-                                <span
-                                    class="pointer-events-none absolute bottom-1 left-[4px] top-1 w-px bg-white/70"
-                                />
-                                <li class="relative flex gap-2.5">
-                                    <span
-                                        class="relative z-10 mt-1 h-2.5 w-2.5 rounded-full bg-primary ring-2 ring-[#152A40]"
-                                    />
-                                    <div>
-                                        <p class="text-sm text-slate-200">Cierre de Solicitud</p>
-                                        <p class="text-xs text-outline-variant">
-                                            Por:
-                                            <span class="text-primary-fixed-dim">Admin_User</span>
-                                        </p>
-                                        <p
-                                            class="text-[10px] uppercase tracking-[0.08em] text-outline-variant"
-                                        >
-                                            20 NOV 2023 · 14:30
-                                        </p>
-                                    </div>
-                                </li>
-                                <li class="relative flex gap-2.5">
-                                    <span
-                                        class="relative z-10 mt-1 h-2.5 w-2.5 rounded-full bg-white/70 ring-2 ring-[#152A40]"
-                                    />
-                                    <div>
-                                        <p class="text-sm text-slate-300">
-                                            Aprobación de Control de Calidad
-                                        </p>
-                                        <p class="text-xs text-outline-variant">
-                                            Por:
-                                            <span class="text-primary-fixed-dim"
-                                                >C_Lead_Carlos</span
-                                            >
-                                        </p>
-                                    </div>
-                                </li>
-                                <li class="relative flex gap-2.5">
-                                    <span
-                                        class="relative z-10 mt-1 h-2.5 w-2.5 rounded-full bg-white/70 ring-2 ring-[#152A40]"
-                                    />
-                                    <div>
-                                        <p class="text-sm text-slate-300">
-                                            Actualización de Arte Final v2.1
-                                        </p>
-                                        <p class="text-xs text-outline-variant">
-                                            Por:
-                                            <span class="text-primary-fixed-dim"
-                                                >Design_Unit_04</span
-                                            >
-                                        </p>
-                                    </div>
-                                </li>
-                            </ol>
-                        </section>
-
-                        <section>
-                            <h3
-                                class="mb-2 text-[11px] uppercase tracking-[0.12em] text-secondary-container"
-                            >
-                                Verificación de Calidad
-                            </h3>
+                    <h4 class="mb-3 text-xs uppercase tracking-[0.12em] text-secondary-container">
+                        Verificaciones de Calidad
+                    </h4>
+                    <ol class="relative space-y-3 pl-5">
+                        <span
+                            class="pointer-events-none absolute bottom-2 left-[7px] top-2 w-px bg-white/70"
+                        />
+                        <li class="relative">
+                            <span
+                                class="absolute -left-5 top-2 h-3 w-3 rounded-full bg-emerald-300 ring-2 ring-deep-navy"
+                            />
                             <article
-                                class="mb-3 overflow-hidden rounded-lg border border-outline/25 bg-surface-container-lowest/25 p-2"
+                                class="flex items-center justify-between rounded-lg border border-emerald-500/35 bg-emerald-500/10 px-3.5 py-3 text-[0.95rem] text-emerald-200"
                             >
-                                <div
-                                    class="mb-1 text-[10px] uppercase tracking-[0.08em] text-outline-variant"
-                                >
-                                    ÚLTIMO ARTE REALIZADO
-                                </div>
-                                <div
-                                    class="flex h-28 items-center justify-center rounded-md border border-outline/20 bg-[#0D1E2E]/75"
-                                >
-                                    <span
-                                        class="material-symbols-outlined text-2xl text-outline-variant"
-                                        >image</span
+                                <span class="inline-flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-[18px]"
+                                        >straighten</span
                                     >
-                                </div>
+                                    <span>Validación de Medidas</span>
+                                </span>
+                                <span class="text-xs font-semibold uppercase tracking-[0.08em]"
+                                    >Aprobado</span
+                                >
                             </article>
-                            <div class="grid gap-1.5 text-xs">
-                                <p
-                                    class="flex items-center justify-between border-b border-outline/20 pb-1 text-outline-variant"
+                        </li>
+                        <li class="relative">
+                            <span
+                                class="absolute -left-5 top-2 h-3 w-3 rounded-full bg-emerald-300 ring-2 ring-deep-navy"
+                            />
+                            <article
+                                class="flex items-center justify-between rounded-lg border border-emerald-500/35 bg-emerald-500/10 px-3.5 py-3 text-[0.95rem] text-emerald-200"
+                            >
+                                <span class="inline-flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-[18px]"
+                                        >layers</span
+                                    >
+                                    <span>Gramaje de Sustrato</span>
+                                </span>
+                                <span class="text-xs font-semibold uppercase tracking-[0.08em]"
+                                    >Aprobado</span
                                 >
-                                    <span>Medidas</span>
-                                    <span class="text-emerald-300">✓</span>
-                                </p>
-                                <p
-                                    class="flex items-center justify-between border-b border-outline/20 pb-1 text-outline-variant"
+                            </article>
+                        </li>
+                        <li class="relative">
+                            <span
+                                class="absolute -left-5 top-2 h-3 w-3 rounded-full bg-amber-300 ring-2 ring-deep-navy"
+                            />
+                            <article
+                                class="flex items-center justify-between rounded-lg border border-amber-500/35 bg-amber-500/10 px-3.5 py-3 text-[0.95rem] text-amber-200"
+                            >
+                                <span class="inline-flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-[18px]"
+                                        >palette</span
+                                    >
+                                    <span>Prueba de Color CMYK</span>
+                                </span>
+                                <span class="text-xs font-semibold uppercase tracking-[0.08em]"
+                                    >Pendiente</span
                                 >
-                                    <span>Sustrato</span>
-                                    <span class="text-emerald-300">✓</span>
-                                </p>
-                                <p
-                                    class="flex items-center justify-between border-b border-outline/20 pb-1 text-outline-variant"
+                            </article>
+                        </li>
+                    </ol>
+                </article>
+
+                <article
+                    class="rounded-xl border border-outline/20 bg-surface-container-lowest/5 p-4"
+                >
+                    <h4 class="mb-3 text-xs uppercase tracking-[0.12em] text-secondary-container">
+                        Trazabilidad del Proceso
+                    </h4>
+                    <ol class="space-y-5">
+                        <li class="relative flex gap-3">
+                            <div class="relative flex w-10 shrink-0 justify-center">
+                                <span
+                                    class="z-10 inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm font-semibold text-white"
+                                    >1</span
                                 >
-                                    <span>Dummie</span>
-                                    <span class="text-emerald-300">✓</span>
+                                <span class="absolute top-8 h-[56px] w-px bg-primary/30" />
+                            </div>
+                            <div class="pt-0.5">
+                                <p class="font-semibold text-white">Solicitud Creada</p>
+                                <p class="text-xs text-outline-variant">
+                                    20/05/2024 - Sistema Central
                                 </p>
-                                <p class="flex items-center justify-between text-outline-variant">
-                                    <span>Mecánico</span>
-                                    <span class="text-emerald-300">✓</span>
+                                <p class="mt-1 text-sm text-outline-variant">
+                                    Ingreso manual por Depto. ventas.
                                 </p>
                             </div>
-                        </section>
+                        </li>
 
-                        <section>
-                            <h3
-                                class="mb-2 text-[11px] uppercase tracking-[0.12em] text-secondary-container"
-                            >
-                                Historial de Comentarios
-                            </h3>
-                            <article
-                                class="rounded-lg border border-outline/25 bg-surface-container-lowest/25 p-2.5"
-                            >
-                                <p
-                                    class="text-[10px] uppercase tracking-[0.08em] text-primary-fixed-dim"
+                        <li class="relative flex gap-3">
+                            <div class="relative flex w-10 shrink-0 justify-center">
+                                <span
+                                    class="z-10 inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm font-semibold text-white"
+                                    >2</span
                                 >
-                                    QC_Lead_Carlos · 19 NOV
+                                <span class="absolute top-8 h-[56px] w-px bg-primary/30" />
+                            </div>
+                            <div class="pt-0.5">
+                                <p class="font-semibold text-white">Asignación a Diseño</p>
+                                <p class="text-xs text-outline-variant">
+                                    21/05/2024 - Ing. Carlos Ruiz
                                 </p>
-                                <p class="mt-1 text-xs italic text-outline-variant">
-                                    Se validaron las dimensiones del panel frontal. Todo cumple con
-                                    la normativa ISO-9001.
+                                <p class="mt-1 text-sm text-outline-variant">
+                                    Asignado a Equipo de Artes Finales.
                                 </p>
-                            </article>
-                        </section>
-                    </div>
+                            </div>
+                        </li>
 
-                    <footer class="grid grid-cols-2 gap-2 border-t border-outline/20 px-4 py-3">
-                        <AppButton size="md" variant="ghost" @click="triggerImport">
-                            Ver Archivos
-                        </AppButton>
-                        <AppButton
-                            icon="download"
-                            icon-position="left"
-                            size="md"
-                            variant="primary"
-                            @click="exportRequests"
-                        >
-                            Exportar PDF
-                        </AppButton>
-                    </footer>
-                </aside>
-            </div>
+                        <li class="relative flex gap-3">
+                            <div class="relative flex w-10 shrink-0 justify-center">
+                                <span
+                                    class="z-10 inline-flex h-8 w-8 items-center justify-center rounded-full bg-amber-400 text-sm font-semibold text-white"
+                                    >3</span
+                                >
+                            </div>
+                            <div class="pt-0.5">
+                                <p class="font-semibold text-white">En Desarrollo</p>
+                                <p class="text-xs uppercase tracking-[0.08em] text-amber-300">
+                                    Proceso actual
+                                </p>
+                                <p class="mt-1 text-sm text-outline-variant">
+                                    Fase de maquetación y dummie físico.
+                                </p>
+                            </div>
+                        </li>
+                    </ol>
+                </article>
+            </section>
 
             <input
                 ref="importInputRef"
@@ -232,10 +364,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import AppShellLayout from '~/presentation/shared/components/layout/AppShellLayout.vue'
 import AppButton from '~/presentation/shared/components/ui/AppButton.vue'
-import RequestsDataTable from '~/presentation/requests/components/RequestsDataTable.vue'
 import { useRequestsModule } from '~/presentation/requests/composables/useRequestsModule'
 
 defineOptions({
@@ -246,9 +377,10 @@ const router = useRouter()
 const {
     importInputRef,
     totalRequests,
+    draftRequests,
+    inDesignRequests,
+    highPriorityRequests,
     tableRows,
-    removeRequest,
-    duplicateRequest,
     sendToDesign,
     triggerImport,
     handleImportSelection,
@@ -256,10 +388,33 @@ const {
     hydrateRequests,
 } = useRequestsModule()
 
-const selectedRow = computed(() => tableRows.value[0] ?? null)
+const selectedRequestId = ref('')
 
-const goToCreateRequest = () => {
-    void router.push('/solicitudes/nueva')
+const displayRows = computed(() => tableRows.value.slice(0, 7))
+const selectedRow = computed(() => {
+    const match = displayRows.value.find((row) => row.id === selectedRequestId.value)
+    return match ?? displayRows.value[0] ?? null
+})
+
+const artsCount = computed(() => inDesignRequests.value)
+const dummiesCount = computed(() => draftRequests.value)
+const mechanicsCount = computed(() => highPriorityRequests.value)
+const pendingQualityCount = computed(
+    () => tableRows.value.filter((row) => row.status !== 'Aprobada').length,
+)
+
+const isStepChecked = (rowIndex: number, step: number) => rowIndex % 3 === step
+
+const resolveStatusClass = (status: string) => {
+    if (status === 'Aprobada') {
+        return 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200'
+    }
+
+    if (status === 'En diseño') {
+        return 'border-amber-500/30 bg-amber-500/10 text-amber-200'
+    }
+
+    return 'border-outline/30 bg-surface-container-lowest/20 text-outline-variant'
 }
 
 const goToEditRequest = (requestId: string) => {
@@ -268,6 +423,11 @@ const goToEditRequest = (requestId: string) => {
 
 onMounted(() => {
     void hydrateRequests()
+
+    const first = tableRows.value[0]
+    if (first) {
+        selectedRequestId.value = first.id
+    }
 })
 
 useHead(() => ({
