@@ -28,6 +28,8 @@
             </label>
             <AppSelect
               :model-value="priority"
+              compact
+              input-class="!py-1.5 !text-sm"
               :options="priorityOptions"
               :searchable="false"
               @update:model-value="handlePriorityChange"

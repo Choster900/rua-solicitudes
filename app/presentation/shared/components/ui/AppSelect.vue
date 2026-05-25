@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useDropdownMenu } from '~/presentation/shared/composables/useDropdownMenu'
+import { useThemeMode } from '~/presentation/shared/composables/useThemeMode'
 
 type SelectValue = string | number
 
@@ -25,6 +26,7 @@ interface AppSelectProps {
   maxVisibleTags?: number
   inputClass?: string
   dropdownDirection?: 'down' | 'up'
+  compact?: boolean
 }
 
 defineOptions({
@@ -44,6 +46,7 @@ const props = withDefaults(defineProps<AppSelectProps>(), {
   maxVisibleTags: 2,
   inputClass: '',
   dropdownDirection: 'down',
+  compact: false,
 })
 
 const emit = defineEmits<{
@@ -54,6 +57,8 @@ const emit = defineEmits<{
 const searchTerm = ref('')
 const rootRef = ref<HTMLElement | null>(null)
 const searchInputRef = ref<HTMLInputElement | null>(null)
+const { mode } = useThemeMode()
+const isDarkMode = computed(() => mode.value === 'dark')
 
 const { isOpen, close: closeDropdown } = useDropdownMenu({
   rootRef,
@@ -171,7 +176,10 @@ const clearSelection = () => {
       :disabled="disabled"
       @click="toggleMenu"
     >
-      <div class="flex min-h-6.5 items-center justify-between gap-2">
+      <div
+        class="flex items-center justify-between gap-2"
+        :class="props.compact ? 'min-h-0' : 'min-h-6.5'"
+      >
         <div class="min-w-0 flex flex-1 items-center gap-2">
           <span
             v-if="icon"
@@ -276,6 +284,7 @@ const clearSelection = () => {
                 ? 'bg-primary/15 text-primary'
                 : 'hover:bg-surface-container-low/40'
           "
+          :style="{ color: isDarkMode ? '#ffffff' : undefined }"
           :disabled="option.disabled"
           @click="selectOption(option)"
         >
