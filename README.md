@@ -120,7 +120,8 @@ Cada módulo vive en `app/presentation/<feature-name>/` con:
 Crear `.env` desde `.env.example`:
 
 ```env
-SUPABASE_DB_URL=
+# Supavisor Session pooler (5432) para Prisma migrate + seed
+SUPABASE_DB_URL=postgresql://postgres.<project-ref>:<db-password-url-encoded>@aws-1-<region>.pooler.supabase.com:5432/postgres?sslmode=require&uselibpqcompat=true&schema=public
 SUPABASE_URL=
 SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
@@ -131,6 +132,13 @@ NODE_ENV=
 ```
 
 La validación está en `config/env.ts` (Joi). Si falta una variable crítica, Nuxt falla al arrancar/build con mensaje explícito.
+
+Notas importantes para `SUPABASE_DB_URL`:
+
+- Usar usuario `postgres.<project-ref>`.
+- No dejar placeholders como `[YOUR-PASSWORD]`.
+- Si la contraseña tiene caracteres especiales (`@`, `:`, `/`, `?`, `#`), usar URL encoding.
+- Mantener `sslmode=require&uselibpqcompat=true` para evitar errores TLS con `pg`/`@prisma/adapter-pg`.
 
 ## 10) Supabase + Prisma
 
@@ -210,6 +218,14 @@ npx prisma generate
 npx prisma db seed
 ```
 
+Orden recomendado inicial:
+
+```bash
+npm run nuxt:prepare
+npm run prisma:migrate
+npm run prisma:seed
+```
+
 ## 17) Recomendaciones para escalar
 
 - Crear feature por dominio de negocio, no por tipo técnico.
@@ -266,6 +282,25 @@ npm run prisma:migrate
 npm run prisma:seed
 npm run prisma:studio
 ```
+
+## Troubleshooting Prisma + Supabase
+
+`Error P1001: Can't reach database server`
+
+- Verificar que usas `aws-1-<region>.pooler.supabase.com:5432` (session pooler), no host directo `db.<project-ref>` si tu red no soporta IPv6.
+- Confirmar que `SUPABASE_DB_URL` en `.env` no tiene espacios ni placeholders.
+- Reintentar; conexiones de pooler pueden fallar de forma intermitente.
+
+`Error P1011: self-signed certificate in certificate chain`
+
+- Asegurar query params: `sslmode=require&uselibpqcompat=true`.
+- Si persiste en red corporativa/proxy SSL, usar `sslmode=verify-full` con el CA cert de Supabase.
+
+`Error P1000: Authentication failed`
+
+- Password de DB incorrecto o sin URL encoding.
+- Usuario inválido (debe ser `postgres.<project-ref>` en pooler).
+- Si cambiaste credenciales en Supabase, actualizar `.env` y reiniciar proceso.
 
 ## Husky para formateo
 
