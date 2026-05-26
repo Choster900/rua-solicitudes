@@ -100,8 +100,8 @@
                     <div class="mt-4">
                         <ClientsDataTable
                             :rows="filteredRows"
-                            @delete-client="deleteClient"
-                            @edit-client="goToEditClient"
+                            :selected-row-key="selectedClientId"
+                            @row-select="handleClientRowSelect"
                         />
                     </div>
                 </article>
@@ -287,7 +287,6 @@ const {
     activeClients,
     prospectClients,
     clientTableRows,
-    deleteClient,
     getClientFormModelById,
     handleImportSelection,
     exportClients,
@@ -360,7 +359,11 @@ const filteredRows = computed(() => {
 })
 
 const selectedClientRow = computed(() => {
-    return filteredRows.value[0] ?? null
+    return (
+        filteredRows.value.find((clientRow) => clientRow.id === selectedClientId.value) ??
+        filteredRows.value[0] ??
+        null
+    )
 })
 
 const selectedClientForm = computed(() => {
@@ -388,6 +391,10 @@ const goToCreateClient = () => {
 
 const goToEditClient = (clientId: string) => {
     void router.push(`/clientes/${clientId}/editar`)
+}
+
+const handleClientRowSelect = (clientId: string) => {
+    selectedClientId.value = clientId
 }
 
 const goToEditSelectedClient = () => {
