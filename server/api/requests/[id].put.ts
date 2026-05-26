@@ -38,6 +38,9 @@ export default defineEventHandler(async (event) => {
     const vendorName = body.vendorName?.trim() ?? sourceRequest.vendorName
     const materialType = body.materialType?.trim() ?? sourceRequest.materialType
     const materialWeight = body.materialWeight?.trim() ?? sourceRequest.materialWeight
+    const fluteDirection = body.fluteDirection?.trim() ?? sourceRequest.fluteDirection
+    const outerLiner = body.outerLiner?.trim() ?? sourceRequest.outerLiner
+    const innerLiner = body.innerLiner?.trim() ?? sourceRequest.innerLiner
     const printTechnique = body.printTechnique?.trim() ?? sourceRequest.printTechnique
     const colorMode = body.colorMode?.trim() ?? sourceRequest.colorMode
     const pantoneReferences = body.pantoneReferences?.trim() ?? sourceRequest.pantoneReferences
@@ -54,6 +57,8 @@ export default defineEventHandler(async (event) => {
     const status = body.status ?? sourceRequest.status
     const designInstructions = body.designInstructions?.trim() ?? sourceRequest.designInstructions
     const visualReferences = body.visualReferences?.trim() ?? sourceRequest.visualReferences
+    const requireArt =
+        typeof body.requireArt === 'boolean' ? body.requireArt : sourceRequest.requireArt
     const requireDieCut =
         typeof body.requireDieCut === 'boolean' ? body.requireDieCut : sourceRequest.requireDieCut
     const requireMockup =
@@ -113,6 +118,9 @@ export default defineEventHandler(async (event) => {
         vendorName,
         materialType,
         materialWeight,
+        fluteDirection,
+        outerLiner,
+        innerLiner,
         printTechnique,
         colorMode,
         pantoneReferences,
@@ -125,6 +133,7 @@ export default defineEventHandler(async (event) => {
         status,
         designInstructions,
         visualReferences,
+        requireArt,
         requireDieCut,
         requireMockup,
         attachments,

@@ -43,11 +43,18 @@
 
                     <div class="min-h-0 px-4 py-3">
                         <RequestsDataTable
+                            :can-assign-designer="isDesignLead()"
+                            :can-review-quality="isQuality()"
+                            :can-submit-to-quality="isDesigner() || isDesignLead()"
+                            :current-designer-id="sessionUser?.id ?? null"
                             :rows="tableRows"
+                            @approve-request="handleApprove"
+                            @assign-designer="openAssignModal"
                             @delete-request="removeRequest"
                             @duplicate-request="duplicateRequest"
                             @edit-request="goToEditRequest"
-                            @send-to-design="sendToDesign"
+                            @reject-request="openRejectModal"
+                            @submit-to-quality="handleSubmitToQuality"
                         />
                     </div>
                 </article>
@@ -227,16 +234,49 @@
                 type="file"
                 @change="handleImportSelection"
             />
+
+            <AssignDesignerModal
+                ref="assignModalRef"
+                :initial-designer-id="assignRequestSnapshot?.assignedDesignerId ?? null"
+                :open="isAssignModalOpen"
+                :request-code="assignRequestSnapshot?.requestCode ?? ''"
+                @close="closeAssignModal"
+                @confirm="confirmAssignment"
+            />
+
+            <WorkflowDecisionModal
+                confirm-label="Aprobar solicitud"
+                confirm-tone="primary"
+                :description="`Confirma la aprobación de calidad${reviewModalTitleSuffix}. Puedes agregar un comentario opcional.`"
+                :open="isApproveModalOpen"
+                title="Aprobar en calidad"
+                @close="closeApproveModal"
+                @confirm="confirmApprove"
+            />
+
+            <WorkflowDecisionModal
+                confirm-label="Rechazar y crear nueva versión"
+                confirm-tone="danger"
+                :description="`Indica el motivo de rechazo${reviewModalTitleSuffix}. Se creará una nueva versión y volverá al diseñador.`"
+                :open="isRejectModalOpen"
+                require-comment
+                title="Rechazar en calidad"
+                @close="closeRejectModal"
+                @confirm="confirmReject"
+            />
         </section>
     </AppShellLayout>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import AppShellLayout from '~/presentation/shared/components/layout/AppShellLayout.vue'
 import AppButton from '~/presentation/shared/components/ui/AppButton.vue'
 import RequestsDataTable from '~/presentation/requests/components/RequestsDataTable.vue'
+import AssignDesignerModal from '~/presentation/requests/components/AssignDesignerModal.vue'
+import WorkflowDecisionModal from '~/presentation/request-workflow/components/WorkflowDecisionModal.vue'
 import { useRequestsModule } from '~/presentation/requests/composables/useRequestsModule'
+import { useSessionUser } from '~/presentation/shared/composables/useSessionUser'
 
 defineOptions({
     name: 'SolicitudesView',
@@ -249,14 +289,37 @@ const {
     tableRows,
     removeRequest,
     duplicateRequest,
-    sendToDesign,
+    assignDesigner,
+    submitToQuality,
+    approveRequest,
+    rejectRequest,
+    findRequestById,
     triggerImport,
     handleImportSelection,
     exportRequests,
     hydrateRequests,
 } = useRequestsModule()
 
+const { sessionUser, hydrateSession, isDesignLead, isDesigner, isQuality } = useSessionUser()
+
 const selectedRow = computed(() => tableRows.value[0] ?? null)
+
+const assignModalRef = ref<InstanceType<typeof AssignDesignerModal> | null>(null)
+const isAssignModalOpen = ref(false)
+const assignRequestId = ref<string>('')
+const assignRequestSnapshot = computed(() =>
+    assignRequestId.value ? findRequestById(assignRequestId.value) : null,
+)
+
+const isApproveModalOpen = ref(false)
+const isRejectModalOpen = ref(false)
+const reviewRequestId = ref<string>('')
+const reviewRequestSnapshot = computed(() =>
+    reviewRequestId.value ? findRequestById(reviewRequestId.value) : null,
+)
+const reviewModalTitleSuffix = computed(() =>
+    reviewRequestSnapshot.value ? ` · ${reviewRequestSnapshot.value.requestCode}` : '',
+)
 
 const goToCreateRequest = () => {
     void router.push('/solicitudes/nueva')
@@ -266,7 +329,79 @@ const goToEditRequest = (requestId: string) => {
     void router.push(`/solicitudes/${requestId}/editar`)
 }
 
+const openAssignModal = (requestId: string) => {
+    assignRequestId.value = requestId
+    isAssignModalOpen.value = true
+}
+
+const closeAssignModal = () => {
+    isAssignModalOpen.value = false
+    assignRequestId.value = ''
+    assignModalRef.value?.resetSubmitting()
+}
+
+const confirmAssignment = async (designerId: string) => {
+    if (!assignRequestId.value) {
+        closeAssignModal()
+        return
+    }
+
+    const succeeded = await assignDesigner(assignRequestId.value, designerId)
+    assignModalRef.value?.resetSubmitting()
+
+    if (succeeded) {
+        closeAssignModal()
+    }
+}
+
+const handleSubmitToQuality = async (requestId: string) => {
+    await submitToQuality(requestId)
+}
+
+const handleApprove = (requestId: string) => {
+    reviewRequestId.value = requestId
+    isApproveModalOpen.value = true
+}
+
+const closeApproveModal = () => {
+    isApproveModalOpen.value = false
+    reviewRequestId.value = ''
+}
+
+const confirmApprove = async (comment: string) => {
+    if (!reviewRequestId.value) {
+        closeApproveModal()
+        return
+    }
+    const succeeded = await approveRequest(reviewRequestId.value, comment)
+    if (succeeded) {
+        closeApproveModal()
+    }
+}
+
+const openRejectModal = (requestId: string) => {
+    reviewRequestId.value = requestId
+    isRejectModalOpen.value = true
+}
+
+const closeRejectModal = () => {
+    isRejectModalOpen.value = false
+    reviewRequestId.value = ''
+}
+
+const confirmReject = async (comment: string) => {
+    if (!reviewRequestId.value) {
+        closeRejectModal()
+        return
+    }
+    const succeeded = await rejectRequest(reviewRequestId.value, comment, '')
+    if (succeeded) {
+        closeRejectModal()
+    }
+}
+
 onMounted(() => {
+    void hydrateSession()
     void hydrateRequests()
 })
 

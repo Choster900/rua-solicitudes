@@ -477,7 +477,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import AppButton from '~/presentation/shared/components/ui/AppButton.vue'
 import AppSelect, { type AppSelectOption } from '~/presentation/shared/components/ui/AppSelect.vue'
 import AppTextField from '~/presentation/shared/components/ui/AppTextField.vue'
@@ -486,8 +486,10 @@ import {
     validationRules,
     type ValidationSchema,
 } from '~/presentation/shared/composables/forms/useFormValidation'
+import { useApiClient } from '~/presentation/shared/composables/useApiClient'
 import { useAppToast } from '~/presentation/shared/composables/useAppToast'
 import { toRequestAttachmentFromFile } from '~/presentation/requests/composables/useRequestsModule'
+import type { Client } from '~/presentation/interfaces/clients/client.interface'
 import type { DesignRequestFormModel } from '~/presentation/interfaces/requests/request-form.interface'
 
 type RequestFormMode = 'create' | 'edit'
@@ -507,8 +509,10 @@ const emit = defineEmits<{
     submit: [model: DesignRequestFormModel]
 }>()
 
+const apiClient = useApiClient()
 const toast = useAppToast()
 const attachmentInputRef = ref<HTMLInputElement | null>(null)
+const currentEmployeeCode = ref('')
 
 const formModel = reactive<DesignRequestFormModel>({
     clientName: '',
@@ -518,6 +522,9 @@ const formModel = reactive<DesignRequestFormModel>({
     vendorName: '',
     materialType: '',
     materialWeight: '',
+    fluteDirection: 'Vertical',
+    outerLiner: '',
+    innerLiner: '',
     printTechnique: '',
     colorMode: '',
     pantoneReferences: '',
@@ -527,9 +534,10 @@ const formModel = reactive<DesignRequestFormModel>({
     quantity: '',
     requiredDate: '',
     priority: 'Media',
-    status: 'Borrador',
+    status: 'PENDING_ASSIGNMENT',
     designInstructions: '',
     visualReferences: '',
+    requireArt: true,
     requireDieCut: false,
     requireMockup: false,
     attachments: [],
@@ -551,17 +559,12 @@ const material = reactive({
 })
 
 const prototypeFlags = reactive({
-    requireArt: true,
+    requireArt: formModel.requireArt,
 })
 
 const closureType = ref('Tapa y Fondo')
 
-const clientOptions: AppSelectOption[] = [
-    { label: 'Seleccione Cliente...', value: '' },
-    { label: 'Global Logistics S.A.', value: 'Global Logistics S.A.' },
-    { label: 'FoodCorp Inc.', value: 'FoodCorp Inc.' },
-    { label: 'Aerospace Dynamics', value: 'Aerospace Dynamics' },
-]
+const clientOptions = ref<AppSelectOption[]>([{ label: 'Seleccione Cliente...', value: '' }])
 
 const closureTypeOptions: AppSelectOption[] = [
     { label: 'Tapa y Fondo', value: 'Tapa y Fondo' },
@@ -618,7 +621,21 @@ const syncDerivedFieldsFromModel = () => {
     material.ect = ect
     material.caliber = caliber
     material.flute = formModel.materialType || 'C'
+    material.fluteDirection = formModel.fluteDirection || 'Vertical'
+    material.outerLiner = formModel.outerLiner
+    material.innerLiner = formModel.innerLiner
     closureType.value = formModel.printTechnique || 'Tapa y Fondo'
+    prototypeFlags.requireArt = formModel.requireArt
+}
+
+const applyRequestedByDefault = () => {
+    if (props.mode !== 'create') {
+        return
+    }
+
+    if (!formModel.requestedBy.trim() && currentEmployeeCode.value) {
+        formModel.requestedBy = currentEmployeeCode.value
+    }
 }
 
 const syncFormModel = () => {
@@ -629,6 +646,32 @@ const syncFormModel = () => {
         attachments: [...props.model.attachments],
     })
     syncDerivedFieldsFromModel()
+    applyRequestedByDefault()
+}
+
+const hydrateClients = async () => {
+    try {
+        const response = await apiClient.get<Client[]>('/clients')
+        const nextOptions = response.data
+            .map((client) => client.name.trim())
+            .filter(Boolean)
+            .sort((left, right) => left.localeCompare(right, 'es'))
+            .map((name) => ({ label: name, value: name }))
+
+        clientOptions.value = [{ label: 'Seleccione Cliente...', value: '' }, ...nextOptions]
+    } catch {
+        toast.warning('No fue posible cargar los clientes guardados.')
+    }
+}
+
+const hydrateCurrentUser = async () => {
+    try {
+        const response = await apiClient.get<{ id: string; employeeCode?: string }>('/auth/me')
+        currentEmployeeCode.value = response.data.employeeCode?.trim() || response.data.id.trim()
+        applyRequestedByDefault()
+    } catch {
+        currentEmployeeCode.value = ''
+    }
 }
 
 const handleFieldBlur = (field: keyof DesignRequestFormModel) => {
@@ -680,6 +723,9 @@ const normalizeFormBeforeSubmit = () => {
     formModel.vendorName = formModel.vendorName || formModel.requestedBy || 'Sin asignar'
     formModel.materialType = material.flute
     formModel.materialWeight = [material.ect, material.caliber].filter(Boolean).join(' / ')
+    formModel.fluteDirection = material.fluteDirection
+    formModel.outerLiner = material.outerLiner.trim()
+    formModel.innerLiner = material.innerLiner.trim()
     formModel.printTechnique = closureType.value
     formModel.colorMode = formModel.pantoneReferences.trim() ? 'Pantone' : 'CMYK'
     formModel.dimensions = `${measures.length} x ${measures.width} x ${measures.height}`
@@ -690,6 +736,7 @@ const normalizeFormBeforeSubmit = () => {
         formModel.requireMockup ? 'Mockup 3D' : '',
         formModel.requireDieCut ? 'Plano de troquel' : '',
     ].filter(Boolean)
+    formModel.requireArt = prototypeFlags.requireArt
 }
 
 const handleSubmit = () => {
@@ -712,4 +759,8 @@ watch(
     },
     { immediate: true, deep: true },
 )
+
+onMounted(() => {
+    void Promise.all([hydrateClients(), hydrateCurrentUser()])
+})
 </script>

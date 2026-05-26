@@ -70,6 +70,28 @@ const authUsersSeed = [
         password: '12345678',
         mustChangePassword: false,
     },
+    {
+        employeeCode: 'EMP-1005',
+        fullName: 'Aileen García',
+        email: 'aileen@ruasa.com.sv',
+        phone: '+503 7000-0005',
+        userType: 'Diseñador',
+        department: 'Preprensa',
+        status: 'Activo',
+        password: '12345678',
+        mustChangePassword: false,
+    },
+    {
+        employeeCode: 'EMP-1006',
+        fullName: 'Mauricio Salazar',
+        email: 'jefedisenio@ruasa.com.sv',
+        phone: '+503 7000-0006',
+        userType: 'JefeDiseño',
+        department: 'Preprensa',
+        status: 'Activo',
+        password: '12345678',
+        mustChangePassword: false,
+    },
 ]
 
 const clientsSeed = [
@@ -134,6 +156,13 @@ const vendorsSeed = [
     },
 ]
 
+const requestCatalogSeed = {
+    closureTypes: ['Tapa y Fondo', 'Autoarmable', 'Pegado lateral'],
+    fluteTypes: ['C', 'B', 'E'],
+    fluteDirections: ['Vertical', 'Horizontal'],
+    finishingOptions: ['Barniz UV', 'Laminado Mate', 'Hot Stamping', 'Relieve'],
+}
+
 const requestsSeed = [
     {
         requestCode: 'SOL-2026-001',
@@ -142,20 +171,24 @@ const requestsSeed = [
         productName: 'Caja para galletas',
         requestedBy: 'Jorge Quintanilla',
         vendorName: 'Jorge Quintanilla',
-        materialType: 'Cartulina SBS',
-        materialWeight: '350 g/m2',
-        printTechnique: 'Offset',
-        colorMode: 'CMYK',
+        materialType: 'C',
+        materialWeight: 'ECT 32 / 1.6',
+        fluteDirection: 'Vertical',
+        outerLiner: 'Kraft 200',
+        innerLiner: 'Blanco 180',
+        printTechnique: 'Tapa y Fondo',
+        colorMode: 'Pantone',
         pantoneReferences: 'PANTONE 186C',
-        finishingOptions: ['Barniz UV'],
-        deliverables: ['Arte final', 'PDF impresión'],
-        dimensions: '25 x 18 x 6 cm',
-        quantity: 5000,
+        finishingOptions: ['Barniz UV', 'Laminado Mate'],
+        deliverables: ['Arte final', 'Plano de troquel'],
+        dimensions: '320 x 230 x 120',
+        quantity: 2500,
         requiredDate: new Date('2026-06-15T00:00:00.000Z'),
         priority: 'Alta',
-        status: 'En diseño',
+        status: 'IN_DESIGN',
         designInstructions: 'Mantener lineamientos de marca y área de seguridad.',
         visualReferences: 'https://example.com/referencia-freshbox',
+        requireArt: true,
         requireDieCut: true,
         requireMockup: true,
         attachments: [
@@ -163,21 +196,133 @@ const requestsSeed = [
             { id: 'att-101', name: 'brief.pdf', extension: 'pdf', sizeKb: 280 },
         ],
     },
+    {
+        requestCode: 'SOL-2026-002',
+        clientName: 'Distribuidora Pacífico',
+        brandName: 'Pacífico Clean',
+        productName: 'Caja master detergente',
+        requestedBy: 'Ana López',
+        vendorName: 'Ana López',
+        materialType: 'B',
+        materialWeight: 'ECT 29 / 1.4',
+        fluteDirection: 'Horizontal',
+        outerLiner: 'Kraft 180',
+        innerLiner: 'Test 150',
+        printTechnique: 'Autoarmable',
+        colorMode: 'CMYK',
+        pantoneReferences: '',
+        finishingOptions: ['Relieve'],
+        deliverables: ['Arte final'],
+        dimensions: '410 x 280 x 260',
+        quantity: 1400,
+        requiredDate: new Date('2026-06-25T00:00:00.000Z'),
+        priority: 'Media',
+        status: 'PENDING_ASSIGNMENT',
+        designInstructions: 'Optimizar para estiba en pallet estándar.',
+        visualReferences: '',
+        requireArt: true,
+        requireDieCut: false,
+        requireMockup: false,
+        attachments: [{ id: 'att-200', name: 'manual-marca.pdf', extension: 'pdf', sizeKb: 190 }],
+    },
+    {
+        requestCode: 'SOL-2026-003',
+        clientName: 'Empaques Centro S.A. de C.V.',
+        brandName: 'SnaxPro',
+        productName: 'Caja exhibidora snacks',
+        requestedBy: 'Jorge Quintanilla',
+        vendorName: 'Jorge Quintanilla',
+        materialType: 'E',
+        materialWeight: 'ECT 24 / 1.1',
+        fluteDirection: 'Vertical',
+        outerLiner: 'Blanco 170',
+        innerLiner: 'Kraft 125',
+        printTechnique: 'Pegado lateral',
+        colorMode: 'Pantone',
+        pantoneReferences: 'PANTONE 286C',
+        finishingOptions: ['Barniz UV', 'Hot Stamping'],
+        deliverables: ['Arte final', 'Mockup 3D'],
+        dimensions: '260 x 160 x 210',
+        quantity: 3200,
+        requiredDate: new Date('2026-06-18T00:00:00.000Z'),
+        priority: 'Alta',
+        status: 'IN_QUALITY_REVIEW',
+        designInstructions: 'Incluir zona troquelada para ventana frontal.',
+        visualReferences: 'https://example.com/referencia-snaxpro',
+        requireArt: true,
+        requireDieCut: true,
+        requireMockup: true,
+        attachments: [
+            { id: 'att-300', name: 'snaxpro-brandguide.pdf', extension: 'pdf', sizeKb: 244 },
+        ],
+    },
+    {
+        requestCode: 'SOL-2026-004',
+        clientName: 'Empaques Centro S.A. de C.V.',
+        brandName: 'BioPack',
+        productName: 'Caja farmacia',
+        requestedBy: 'Andrea Martínez',
+        vendorName: 'Ana López',
+        materialType: 'C',
+        materialWeight: 'ECT 32 / 1.6',
+        fluteDirection: 'Vertical',
+        outerLiner: 'Blanco 200',
+        innerLiner: 'Test 150',
+        printTechnique: 'Tapa y Fondo',
+        colorMode: 'CMYK',
+        pantoneReferences: '',
+        finishingOptions: ['Laminado Mate'],
+        deliverables: ['Arte final'],
+        dimensions: '180 x 140 x 90',
+        quantity: 8000,
+        requiredDate: new Date('2026-06-10T00:00:00.000Z'),
+        priority: 'Baja',
+        status: 'APPROVED',
+        designInstructions: 'Validar textos legales y lote en panel lateral.',
+        visualReferences: '',
+        requireArt: true,
+        requireDieCut: false,
+        requireMockup: false,
+        attachments: [{ id: 'att-400', name: 'artes-previos.zip', extension: 'zip', sizeKb: 780 }],
+    },
 ]
 
-const createWorkflowFromRequest = (requestId, requestCode) => {
+const toWorkflowStage = (status) => {
+    if (status === 'APPROVED') {
+        return 'APPROVED'
+    }
+
+    if (status === 'IN_QUALITY_REVIEW') {
+        return 'QUALITY_IN_REVIEW'
+    }
+
+    if (status === 'IN_DESIGN') {
+        return 'DESIGN_IN_PROGRESS'
+    }
+
+    if (status === 'REJECTED') {
+        return 'REJECTED_BY_QUALITY'
+    }
+
+    return 'NEW'
+}
+
+const createWorkflowFromRequest = (requestId, requestCode, status) => {
     const nowIso = new Date().toISOString()
+    const stage = toWorkflowStage(status)
+    const isPending = status === 'PENDING_ASSIGNMENT'
 
     return {
         requestId,
-        stage: 'DESIGN_IN_PROGRESS',
+        stage,
         checklist: {
-            briefValidated: true,
-            technicalSpecsValidated: true,
-            assetsValidated: true,
+            briefValidated: !isPending,
+            technicalSpecsValidated: status === 'IN_QUALITY_REVIEW' || status === 'APPROVED',
+            assetsValidated: !isPending,
             legalValidated: false,
         },
-        observations: [],
+        observations:
+            stage === 'QUALITY_IN_REVIEW' ? ['Pendiente validación final de calidad.'] : [],
         auditTrail: [
             {
                 id: `audit-${requestCode}-001`,
@@ -193,12 +338,12 @@ const createWorkflowFromRequest = (requestId, requestCode) => {
             {
                 id: `audit-${requestCode}-002`,
                 requestId,
-                actorName: 'Jorge Quintanilla',
-                actorRole: 'Disenador',
-                action: 'Diseño tomado',
+                actorName: 'Sistema',
+                actorRole: 'Sistema',
+                action: 'Estado sincronizado',
                 fromStage: 'NEW',
-                toStage: 'DESIGN_IN_PROGRESS',
-                comment: 'Se valida troquel y áreas de seguridad.',
+                toStage: stage,
+                comment: `Estado inicial: ${status}.`,
                 createdAt: nowIso,
             },
         ],
@@ -245,15 +390,100 @@ async function seedVendors() {
     }
 }
 
+async function seedRequestCatalogs() {
+    for (const name of requestCatalogSeed.closureTypes) {
+        await prisma.requestClosureType.upsert({
+            where: { name },
+            create: { name },
+            update: { isActive: true },
+        })
+    }
+
+    for (const name of requestCatalogSeed.fluteTypes) {
+        await prisma.requestFluteType.upsert({
+            where: { name },
+            create: { name },
+            update: { isActive: true },
+        })
+    }
+
+    for (const name of requestCatalogSeed.fluteDirections) {
+        await prisma.requestFluteDirection.upsert({
+            where: { name },
+            create: { name },
+            update: { isActive: true },
+        })
+    }
+
+    for (const name of requestCatalogSeed.finishingOptions) {
+        await prisma.requestFinishingOption.upsert({
+            where: { name },
+            create: { name },
+            update: { isActive: true },
+        })
+    }
+}
+
 async function seedRequestsAndWorkflow() {
+    const aileen = await prisma.authUser.findUnique({
+        where: { email: 'aileen@ruasa.com.sv' },
+    })
+    const designLead = await prisma.authUser.findUnique({
+        where: { email: 'jefedisenio@ruasa.com.sv' },
+    })
+
+    // Asignaciones demo por requestCode → diseñador
+    const assignmentByCode =
+        aileen && designLead
+            ? {
+                  'SOL-2026-001': { designerId: aileen.id, assignedById: designLead.id },
+                  'SOL-2026-003': { designerId: aileen.id, assignedById: designLead.id },
+                  'SOL-2026-004': { designerId: aileen.id, assignedById: designLead.id },
+              }
+            : {}
+
     for (const request of requestsSeed) {
+        const assignment = assignmentByCode[request.requestCode]
+        const enrichedRequest = assignment
+            ? {
+                  ...request,
+                  assignedDesignerId: assignment.designerId,
+                  assignedById: assignment.assignedById,
+                  assignedAt: new Date(),
+              }
+            : request
+
         const createdRequest = await prisma.designRequest.upsert({
             where: { requestCode: request.requestCode },
-            create: request,
-            update: request,
+            create: enrichedRequest,
+            update: enrichedRequest,
         })
 
-        const workflow = createWorkflowFromRequest(createdRequest.id, createdRequest.requestCode)
+        if (assignment) {
+            await prisma.designRequestVersion.upsert({
+                where: {
+                    requestId_versionNumber: {
+                        requestId: createdRequest.id,
+                        versionNumber: createdRequest.currentVersion,
+                    },
+                },
+                create: {
+                    requestId: createdRequest.id,
+                    versionNumber: createdRequest.currentVersion,
+                    designerId: assignment.designerId,
+                    reviewStatus: request.status === 'APPROVED' ? 'APPROVED' : 'PENDING',
+                },
+                update: {
+                    designerId: assignment.designerId,
+                },
+            })
+        }
+
+        const workflow = createWorkflowFromRequest(
+            createdRequest.id,
+            createdRequest.requestCode,
+            request.status,
+        )
         await prisma.requestWorkflow.upsert({
             where: { requestId: createdRequest.id },
             create: workflow,
@@ -267,6 +497,7 @@ async function seed() {
     await seedAuthUsers()
     await seedClients()
     await seedVendors()
+    await seedRequestCatalogs()
     await seedRequestsAndWorkflow()
 }
 

@@ -113,18 +113,23 @@ const stageLabelMap: Record<WorkflowStage, string> = {
 }
 
 const toInitialWorkflowStage = (status: DesignRequest['status']): WorkflowStage => {
-    if (status === 'Aprobada') {
+    if (status === 'APPROVED') {
         return 'APPROVED'
     }
 
-    if (status === 'En revisión') {
-        return 'READY_FOR_QUALITY'
+    if (status === 'IN_QUALITY_REVIEW') {
+        return 'QUALITY_IN_REVIEW'
     }
 
-    if (status === 'En diseño') {
+    if (status === 'IN_DESIGN') {
         return 'DESIGN_IN_PROGRESS'
     }
 
+    if (status === 'REJECTED') {
+        return 'REJECTED_BY_QUALITY'
+    }
+
+    // PENDING_ASSIGNMENT | ASSIGNED
     return 'NEW'
 }
 
@@ -194,7 +199,6 @@ export const useRequestWorkflowStore = defineStore('request-workflow', {
     actions: {
         async hydrate() {
             if (this.hydrated) {
-                this.ensureMockQualityQueue()
                 return
             }
 
@@ -204,55 +208,7 @@ export const useRequestWorkflowStore = defineStore('request-workflow', {
                 designRequests.forEach((request) => this.upsertFromDesignRequest(request))
             }
 
-            this.ensureMockQualityQueue()
-
             this.hydrated = true
-        },
-
-        ensureMockQualityQueue() {
-            const qualityCount = this.requests.filter((request) =>
-                qualityQueueStages.includes(request.stage),
-            ).length
-
-            if (qualityCount || !this.requests.length) {
-                return
-            }
-
-            this.requests = this.requests.map((request, index) => {
-                if (index === 0) {
-                    return {
-                        ...request,
-                        stage: 'QUALITY_IN_REVIEW',
-                        checklist: {
-                            briefValidated: true,
-                            technicalSpecsValidated: true,
-                            assetsValidated: true,
-                            legalValidated: false,
-                        },
-                        observations: request.observations.length
-                            ? request.observations
-                            : ['Pendiente confirmación final de mecánico.'],
-                    }
-                }
-
-                if (index === 1) {
-                    return {
-                        ...request,
-                        stage: 'READY_FOR_QUALITY',
-                        checklist: {
-                            briefValidated: true,
-                            technicalSpecsValidated: true,
-                            assetsValidated: false,
-                            legalValidated: false,
-                        },
-                        observations: request.observations.length
-                            ? request.observations
-                            : ['Lista para validación inicial de calidad.'],
-                    }
-                }
-
-                return request
-            })
         },
 
         setDesignFilters(nextFilters: Partial<QueueFilters>) {

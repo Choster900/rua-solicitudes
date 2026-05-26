@@ -1,15 +1,15 @@
 import dayjs from 'dayjs'
-import type { RequestPriority, RequestStatus } from '../../interfaces/domain/request.interface'
-import { REQUEST_PRIORITIES, REQUEST_STATUSES } from '../../interfaces/domain/request.interface'
+import type { RequestPriority } from '../../interfaces/domain/request.interface'
+import { REQUEST_PRIORITIES } from '../../interfaces/domain/request.interface'
 import {
     createDesignRequest,
     findDesignRequestByCode,
     getAllDesignRequests,
 } from '../../repositories/design-requests.repository'
 import { parseCreateRequestDto } from '../dtos/requests'
+import { getSessionUser } from '../../utils/auth-session.util'
 
 const allowedPriorities: RequestPriority[] = [...REQUEST_PRIORITIES]
-const allowedStatuses: RequestStatus[] = [...REQUEST_STATUSES]
 
 const toRequestCode = (sequence: number) => {
     const year = dayjs().year()
@@ -18,11 +18,24 @@ const toRequestCode = (sequence: number) => {
     return `SOL-${year}-${paddedSequence}`
 }
 
+const getNextRequestCode = async () => {
+    const allRequests = await getAllDesignRequests()
+    const year = dayjs().year()
+    const prefix = `SOL-${year}-`
+    const yearSequences = allRequests
+        .map((request) => request.requestCode)
+        .filter((code) => code.startsWith(prefix))
+        .map((code) => Number.parseInt(code.slice(prefix.length), 10))
+        .filter((value) => Number.isFinite(value))
+
+    const maxSequence = yearSequences.length ? Math.max(...yearSequences) : 0
+    return toRequestCode(maxSequence + 1)
+}
+
 export default defineEventHandler(async (event) => {
     const body = parseCreateRequestDto(await readBody(event))
-    const allRequests = await getAllDesignRequests()
-    const fallbackCode = toRequestCode(allRequests.length + 1)
-    const requestCode = body.requestCode?.trim().toUpperCase() || fallbackCode
+    const sessionUser = getSessionUser(event)
+    const requestCode = body.requestCode?.trim().toUpperCase() || (await getNextRequestCode())
 
     const clientName = body.clientName?.trim() ?? ''
     const brandName = body.brandName?.trim() ?? ''
@@ -31,6 +44,9 @@ export default defineEventHandler(async (event) => {
     const vendorName = body.vendorName?.trim() ?? ''
     const materialType = body.materialType?.trim() ?? ''
     const materialWeight = body.materialWeight?.trim() ?? ''
+    const fluteDirection = body.fluteDirection?.trim() ?? ''
+    const outerLiner = body.outerLiner?.trim() ?? ''
+    const innerLiner = body.innerLiner?.trim() ?? ''
     const printTechnique = body.printTechnique?.trim() ?? ''
     const colorMode = body.colorMode?.trim() ?? ''
     const pantoneReferences = body.pantoneReferences?.trim() ?? ''
@@ -40,9 +56,9 @@ export default defineEventHandler(async (event) => {
     const quantity = Number(body.quantity ?? 0)
     const requiredDate = body.requiredDate?.trim() ?? ''
     const priority = body.priority ?? 'Media'
-    const status = body.status ?? 'Borrador'
     const designInstructions = body.designInstructions?.trim() ?? ''
     const visualReferences = body.visualReferences?.trim() ?? ''
+    const requireArt = typeof body.requireArt === 'boolean' ? body.requireArt : true
     const requireDieCut = Boolean(body.requireDieCut)
     const requireMockup = Boolean(body.requireMockup)
     const attachments = Array.isArray(body.attachments) ? body.attachments : []
@@ -73,13 +89,6 @@ export default defineEventHandler(async (event) => {
         })
     }
 
-    if (!allowedStatuses.includes(status)) {
-        throw createError({
-            statusCode: 400,
-            statusMessage: 'Estado no válido.',
-        })
-    }
-
     const duplicatedRequest = await findDesignRequestByCode(requestCode)
 
     if (duplicatedRequest) {
@@ -98,6 +107,9 @@ export default defineEventHandler(async (event) => {
         vendorName,
         materialType,
         materialWeight,
+        fluteDirection,
+        outerLiner,
+        innerLiner,
         printTechnique,
         colorMode,
         pantoneReferences,
@@ -107,9 +119,17 @@ export default defineEventHandler(async (event) => {
         quantity: Math.floor(quantity),
         requiredDate,
         priority,
-        status,
+        status: 'PENDING_ASSIGNMENT',
+        currentVersion: 1,
+        createdById: sessionUser?.sub ?? null,
+        assignedDesignerId: null,
+        assignedById: null,
+        assignedAt: null,
+        approvedById: null,
+        approvedAt: null,
         designInstructions,
         visualReferences,
+        requireArt,
         requireDieCut,
         requireMockup,
         attachments,

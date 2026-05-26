@@ -13,6 +13,9 @@ export interface CreateRequestDto {
     vendorName?: string
     materialType?: string
     materialWeight?: string
+    fluteDirection?: string
+    outerLiner?: string
+    innerLiner?: string
     printTechnique?: string
     colorMode?: string
     pantoneReferences?: string
@@ -25,6 +28,7 @@ export interface CreateRequestDto {
     status?: RequestStatus
     designInstructions?: string
     visualReferences?: string
+    requireArt?: boolean
     requireDieCut?: boolean
     requireMockup?: boolean
     attachments?: RequestAttachment[]
@@ -39,6 +43,9 @@ export interface UpdateRequestDto {
     vendorName?: string
     materialType?: string
     materialWeight?: string
+    fluteDirection?: string
+    outerLiner?: string
+    innerLiner?: string
     printTechnique?: string
     colorMode?: string
     pantoneReferences?: string
@@ -51,6 +58,7 @@ export interface UpdateRequestDto {
     status?: RequestStatus
     designInstructions?: string
     visualReferences?: string
+    requireArt?: boolean
     requireDieCut?: boolean
     requireMockup?: boolean
     attachments?: RequestAttachment[]

@@ -46,108 +46,20 @@
                     </AppButton>
                 </header>
 
-                <div class="overflow-x-auto">
-                    <table class="min-w-full">
-                        <thead>
-                            <tr
-                                class="border-b border-outline/20 text-left text-xs uppercase tracking-[0.08em] text-outline-variant"
-                            >
-                                <th class="px-4 py-3">Solicitud</th>
-                                <th class="px-4 py-3">Cliente</th>
-                                <th class="px-4 py-3">Producto</th>
-                                <th class="px-4 py-3 text-center">Arte</th>
-                                <th class="px-4 py-3 text-center">Dummie</th>
-                                <th class="px-4 py-3 text-center">Mecánico</th>
-                                <th class="px-4 py-3 text-center">Estado</th>
-                                <th class="px-4 py-3 text-center">Acciones</th>
-                                <th class="px-4 py-3 text-center">Print</th>
-                            </tr>
-                        </thead>
-
-                        <tbody>
-                            <tr
-                                v-for="(row, index) in displayRows"
-                                :key="row.id"
-                                class="border-b border-outline/15 transition-colors hover:bg-surface-container-low/10"
-                                :class="selectedRequestId === row.id ? 'bg-primary/10' : ''"
-                                @click="selectedRequestId = row.id"
-                            >
-                                <td class="px-4 py-3 text-sm font-semibold text-white">
-                                    {{ row.requestCode }}
-                                </td>
-                                <td class="px-4 py-3 text-sm text-outline-variant">
-                                    {{ row.clientName }}
-                                </td>
-                                <td class="px-4 py-3 text-sm text-outline-variant">
-                                    {{ row.productName }}
-                                </td>
-                                <td class="px-4 py-3 text-center">
-                                    <span
-                                        class="inline-flex h-5 w-5 items-center justify-center rounded border border-outline/40"
-                                        :class="
-                                            isStepChecked(index, 0)
-                                                ? 'bg-primary text-white border-primary'
-                                                : ''
-                                        "
-                                        >{{ isStepChecked(index, 0) ? '✓' : '' }}</span
-                                    >
-                                </td>
-                                <td class="px-4 py-3 text-center">
-                                    <span
-                                        class="inline-flex h-5 w-5 items-center justify-center rounded border border-outline/40"
-                                        :class="
-                                            isStepChecked(index, 1)
-                                                ? 'bg-primary text-white border-primary'
-                                                : ''
-                                        "
-                                        >{{ isStepChecked(index, 1) ? '✓' : '' }}</span
-                                    >
-                                </td>
-                                <td class="px-4 py-3 text-center">
-                                    <span
-                                        class="inline-flex h-5 w-5 items-center justify-center rounded border border-outline/40"
-                                        :class="
-                                            isStepChecked(index, 2)
-                                                ? 'bg-primary text-white border-primary'
-                                                : ''
-                                        "
-                                        >{{ isStepChecked(index, 2) ? '✓' : '' }}</span
-                                    >
-                                </td>
-                                <td class="px-4 py-3 text-center">
-                                    <span
-                                        class="inline-flex rounded-md border px-3 py-1 text-xs font-semibold"
-                                        :class="resolveStatusClass(row.status)"
-                                        >{{ row.status }}</span
-                                    >
-                                </td>
-                                <td class="px-4 py-3 text-center">
-                                    <button
-                                        class="text-outline-variant hover:text-white"
-                                        type="button"
-                                        title="Ver"
-                                        @click.stop="goToEditRequest(row.id)"
-                                    >
-                                        <span class="material-symbols-outlined text-[18px]"
-                                            >visibility</span
-                                        >
-                                    </button>
-                                </td>
-                                <td class="px-4 py-3 text-center">
-                                    <button
-                                        class="text-primary hover:text-blue-200"
-                                        type="button"
-                                        title="Enviar"
-                                        @click.stop="sendToDesign(row.id)"
-                                    >
-                                        <span class="material-symbols-outlined text-[18px]"
-                                            >send</span
-                                        >
-                                    </button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <div class="px-4 py-3">
+                    <RequestsDataTable
+                        :can-assign-designer="isDesignLead()"
+                        :can-review-quality="isQuality()"
+                        :can-submit-to-quality="isDesigner() || isDesignLead()"
+                        :current-designer-id="sessionUser?.id ?? null"
+                        :rows="tableRows"
+                        @approve-request="handleApprove"
+                        @assign-designer="openAssignModal"
+                        @duplicate-request="duplicateRequest"
+                        @edit-request="goToEditRequest"
+                        @reject-request="openRejectModal"
+                        @submit-to-quality="handleSubmitToQuality"
+                    />
                 </div>
             </article>
 
@@ -359,6 +271,36 @@
                 type="file"
                 @change="handleImportSelection"
             />
+
+            <AssignDesignerModal
+                ref="assignModalRef"
+                :initial-designer-id="assignRequestSnapshot?.assignedDesignerId ?? null"
+                :open="isAssignModalOpen"
+                :request-code="assignRequestSnapshot?.requestCode ?? ''"
+                @close="closeAssignModal"
+                @confirm="confirmAssignment"
+            />
+
+            <WorkflowDecisionModal
+                confirm-label="Aprobar solicitud"
+                confirm-tone="primary"
+                :description="`Confirma la aprobación de calidad${reviewModalTitleSuffix}.`"
+                :open="isApproveModalOpen"
+                title="Aprobar en calidad"
+                @close="closeApproveModal"
+                @confirm="confirmApprove"
+            />
+
+            <WorkflowDecisionModal
+                confirm-label="Rechazar y crear nueva versión"
+                confirm-tone="danger"
+                :description="`Indica el motivo de rechazo${reviewModalTitleSuffix}. Se creará una nueva versión y volverá al diseñador.`"
+                :open="isRejectModalOpen"
+                require-comment
+                title="Rechazar en calidad"
+                @close="closeRejectModal"
+                @confirm="confirmReject"
+            />
         </section>
     </AppShellLayout>
 </template>
@@ -367,7 +309,11 @@
 import { computed, ref } from 'vue'
 import AppShellLayout from '~/presentation/shared/components/layout/AppShellLayout.vue'
 import AppButton from '~/presentation/shared/components/ui/AppButton.vue'
+import AssignDesignerModal from '~/presentation/requests/components/AssignDesignerModal.vue'
+import RequestsDataTable from '~/presentation/requests/components/RequestsDataTable.vue'
+import WorkflowDecisionModal from '~/presentation/request-workflow/components/WorkflowDecisionModal.vue'
 import { useRequestsModule } from '~/presentation/requests/composables/useRequestsModule'
+import { useSessionUser } from '~/presentation/shared/composables/useSessionUser'
 
 defineOptions({
     name: 'DesignQueueView',
@@ -376,57 +322,128 @@ defineOptions({
 const router = useRouter()
 const {
     importInputRef,
-    draftRequests,
+    pendingAssignmentRequests,
     inDesignRequests,
     highPriorityRequests,
     tableRows,
-    sendToDesign,
     triggerImport,
     handleImportSelection,
     exportRequests,
     hydrateRequests,
+    assignDesigner,
+    submitToQuality,
+    approveRequest,
+    rejectRequest,
+    duplicateRequest,
+    findRequestById,
 } = useRequestsModule()
 
-const selectedRequestId = ref('')
+const { sessionUser, hydrateSession, isDesignLead, isDesigner, isQuality } = useSessionUser()
 
-const displayRows = computed(() => tableRows.value.slice(0, 7))
-const selectedRow = computed(() => {
-    const match = displayRows.value.find((row) => row.id === selectedRequestId.value)
-    return match ?? displayRows.value[0] ?? null
-})
+const selectedRow = computed(() => tableRows.value[0] ?? null)
 
 const artsCount = computed(() => inDesignRequests.value)
-const dummiesCount = computed(() => draftRequests.value)
+const dummiesCount = computed(() => pendingAssignmentRequests.value)
 const mechanicsCount = computed(() => highPriorityRequests.value)
 const pendingQualityCount = computed(
-    () => tableRows.value.filter((row) => row.status !== 'Aprobada').length,
+    () => tableRows.value.filter((row) => row.status !== 'APPROVED').length,
 )
-
-const isStepChecked = (rowIndex: number, step: number) => rowIndex % 3 === step
-
-const resolveStatusClass = (status: string) => {
-    if (status === 'Aprobada') {
-        return 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200'
-    }
-
-    if (status === 'En diseño') {
-        return 'border-amber-500/30 bg-amber-500/10 text-amber-200'
-    }
-
-    return 'border-outline/30 bg-surface-container-lowest/20 text-outline-variant'
-}
 
 const goToEditRequest = (requestId: string) => {
     void router.push(`/solicitudes/${requestId}/editar`)
 }
 
-onMounted(() => {
-    void hydrateRequests()
+const assignModalRef = ref<InstanceType<typeof AssignDesignerModal> | null>(null)
+const isAssignModalOpen = ref(false)
+const assignRequestId = ref<string>('')
+const assignRequestSnapshot = computed(() =>
+    assignRequestId.value ? findRequestById(assignRequestId.value) : null,
+)
 
-    const first = tableRows.value[0]
-    if (first) {
-        selectedRequestId.value = first.id
+const openAssignModal = (requestId: string) => {
+    assignRequestId.value = requestId
+    isAssignModalOpen.value = true
+}
+
+const closeAssignModal = () => {
+    isAssignModalOpen.value = false
+    assignRequestId.value = ''
+    assignModalRef.value?.resetSubmitting()
+}
+
+const confirmAssignment = async (designerId: string) => {
+    if (!assignRequestId.value) {
+        closeAssignModal()
+        return
     }
+
+    const succeeded = await assignDesigner(assignRequestId.value, designerId)
+    assignModalRef.value?.resetSubmitting()
+
+    if (succeeded) {
+        closeAssignModal()
+    }
+}
+
+const isApproveModalOpen = ref(false)
+const isRejectModalOpen = ref(false)
+const reviewRequestId = ref<string>('')
+const reviewRequestSnapshot = computed(() =>
+    reviewRequestId.value ? findRequestById(reviewRequestId.value) : null,
+)
+const reviewModalTitleSuffix = computed(() =>
+    reviewRequestSnapshot.value ? ` · ${reviewRequestSnapshot.value.requestCode}` : '',
+)
+
+const handleSubmitToQuality = async (requestId: string) => {
+    await submitToQuality(requestId)
+}
+
+const handleApprove = (requestId: string) => {
+    reviewRequestId.value = requestId
+    isApproveModalOpen.value = true
+}
+
+const closeApproveModal = () => {
+    isApproveModalOpen.value = false
+    reviewRequestId.value = ''
+}
+
+const confirmApprove = async (comment: string) => {
+    if (!reviewRequestId.value) {
+        closeApproveModal()
+        return
+    }
+    const succeeded = await approveRequest(reviewRequestId.value, comment)
+    if (succeeded) {
+        closeApproveModal()
+    }
+}
+
+const openRejectModal = (requestId: string) => {
+    reviewRequestId.value = requestId
+    isRejectModalOpen.value = true
+}
+
+const closeRejectModal = () => {
+    isRejectModalOpen.value = false
+    reviewRequestId.value = ''
+}
+
+const confirmReject = async (comment: string) => {
+    if (!reviewRequestId.value) {
+        closeRejectModal()
+        return
+    }
+    const succeeded = await rejectRequest(reviewRequestId.value, comment, '')
+    if (succeeded) {
+        closeRejectModal()
+    }
+}
+
+onMounted(() => {
+    void hydrateSession()
+    void hydrateRequests()
 })
 
 useHead(() => ({

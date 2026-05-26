@@ -259,6 +259,9 @@ import AppShellLayout from '~/presentation/shared/components/layout/AppShellLayo
 import AppButton from '~/presentation/shared/components/ui/AppButton.vue'
 import WorkflowDecisionModal from '~/presentation/request-workflow/components/WorkflowDecisionModal.vue'
 import { useRequestWorkflowModule } from '~/presentation/request-workflow/composables/useRequestWorkflowModule'
+import { useApiClient } from '~/presentation/shared/composables/useApiClient'
+import { useAppToast } from '~/presentation/shared/composables/useAppToast'
+import type { HttpClientError } from '~/presentation/interfaces/shared/http/http-client-error.interface'
 import type { WorkflowChecklistState } from '~/presentation/interfaces/request-workflow/workflow-request.interface'
 
 defineOptions({
@@ -266,6 +269,8 @@ defineOptions({
 })
 
 const { workflowStore, qualityQueue, qualityRows, notifyActionResult } = useRequestWorkflowModule()
+const apiClient = useApiClient()
+const toast = useAppToast()
 
 const selectedRequestId = ref('')
 const expandedRowId = ref('')
@@ -316,14 +321,36 @@ const syncChecklistFromRequest = () => {
     }
 }
 
+const persistRequestStatus = async (
+    requestId: string,
+    status: 'IN_QUALITY_REVIEW' | 'IN_DESIGN' | 'APPROVED' | 'REJECTED',
+) => {
+    try {
+        await apiClient.put(`/requests/${requestId}`, { status })
+        return true
+    } catch (error) {
+        const httpError = error as HttpClientError
+        const statusMessage = (httpError.details as { statusMessage?: string } | null)
+            ?.statusMessage
+        toast.error(statusMessage || 'No se pudo actualizar el estado de la solicitud.')
+        return false
+    }
+}
+
 const openRequestDetail = (requestId: string) => {
     selectedRequestId.value = requestId
     expandedRowId.value = expandedRowId.value === requestId ? '' : requestId
     syncChecklistFromRequest()
 }
 
-const handleStartQualityReview = () => {
+const handleStartQualityReview = async () => {
     if (!selectedRequest.value) {
+        return
+    }
+
+    const persisted = await persistRequestStatus(selectedRequest.value.id, 'IN_QUALITY_REVIEW')
+
+    if (!persisted) {
         return
     }
 
@@ -331,10 +358,16 @@ const handleStartQualityReview = () => {
     notifyActionResult(result)
 }
 
-const handleApprove = (comment: string) => {
+const handleApprove = async (comment: string) => {
     approveModalOpen.value = false
 
     if (!selectedRequest.value) {
+        return
+    }
+
+    const persisted = await persistRequestStatus(selectedRequest.value.id, 'APPROVED')
+
+    if (!persisted) {
         return
     }
 
@@ -346,10 +379,16 @@ const handleApprove = (comment: string) => {
     notifyActionResult(result)
 }
 
-const handleReject = (comment: string) => {
+const handleReject = async (comment: string) => {
     rejectModalOpen.value = false
 
     if (!selectedRequest.value) {
+        return
+    }
+
+    const persisted = await persistRequestStatus(selectedRequest.value.id, 'REJECTED')
+
+    if (!persisted) {
         return
     }
 
