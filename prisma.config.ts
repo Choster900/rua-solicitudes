@@ -8,6 +8,6 @@ export default defineConfig({
         seed: 'node prisma/seed/seed.mjs',
     },
     datasource: {
-        url: process.env.DATABASE_URL ?? '',
+        url: process.env.SUPABASE_DB_URL ?? '',
     },
 })

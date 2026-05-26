@@ -3,10 +3,10 @@ import { Pool } from 'pg'
 import { PrismaPg } from '@prisma/adapter-pg'
 import { PrismaClient } from '@prisma/client'
 
-const connectionString = process.env.DATABASE_URL
+const connectionString = process.env.SUPABASE_DB_URL
 
 if (!connectionString) {
-    throw new Error('DATABASE_URL is required to run seed.')
+    throw new Error('SUPABASE_DB_URL is required to run seed.')
 }
 
 const pool = new Pool({ connectionString })

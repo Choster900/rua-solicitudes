@@ -1,7 +1,7 @@
 import Joi from 'joi'
 
 export interface AppEnv {
-    DATABASE_URL: string
+    SUPABASE_DB_URL: string
     AUTH_JWT_SECRET: string
     AUTH_ACCESS_TOKEN_EXPIRES_IN_SECONDS: number
     SUPABASE_URL: string
@@ -15,7 +15,7 @@ export interface AppEnv {
 }
 
 const envSchema = Joi.object<AppEnv>({
-    DATABASE_URL: Joi.string()
+    SUPABASE_DB_URL: Joi.string()
         .uri({ scheme: ['postgres', 'postgresql'] })
         .required(),
     AUTH_JWT_SECRET: Joi.string().min(16).default('ruasa-local-jwt-secret-change-me'),

@@ -120,7 +120,7 @@ Cada módulo vive en `app/presentation/<feature-name>/` con:
 Crear `.env` desde `.env.example`:
 
 ```env
-DATABASE_URL=
+SUPABASE_DB_URL=
 SUPABASE_URL=
 SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
@@ -135,8 +135,10 @@ La validación está en `config/env.ts` (Joi). Si falta una variable crítica, N
 ## 10) Supabase + Prisma
 
 1. Crear proyecto en Supabase y obtener connection strings.
-2. Asignar `DATABASE_URL`.
-3. Ejecutar:
+2. Asignar `SUPABASE_DB_URL` usando el string de **Supavisor Session pooler (5432)** en `Connect -> ORMs -> Prisma`.
+3. Recomendado para entornos Node/pg actuales: agregar `uselibpqcompat=true` junto con `sslmode=require`.
+4. Si usas conexión directa `db.<project-ref>.supabase.co:5432`, tu red debe soportar IPv6 (o debes activar el add-on IPv4 en Supabase).
+5. Ejecutar:
 
 ```bash
 npx prisma generate
@@ -177,6 +179,8 @@ Si `NUXT_PUBLIC_APP_URL` está vacío, se resuelve automáticamente como `http:/
 docker compose up --build
 ```
 
+Este compose ya no levanta Postgres local; usa directamente la base de datos de Supabase definida en `SUPABASE_DB_URL`.
+
 ## 14) Build de producción
 
 ```bash
@@ -213,7 +217,7 @@ npx prisma db seed
 - Centralizar errores y validadores en `server/validators`.
 - Implementar repositorios por agregado y tests por feature.
 - Evitar exponer secretos en `runtimeConfig.public`.
-- Usar `DATABASE_URL` para migraciones y runtime.
+- Usar `SUPABASE_DB_URL` para migraciones y runtime.
 - Mantener imágenes Docker pequeñas y reproducibles con `npm ci`.
 
 ## 18) Swagger y healthcheck

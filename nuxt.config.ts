@@ -33,8 +33,8 @@ export default defineNuxtConfig({
         '~/assets/styles/tailwind/main.css',
     ],
     runtimeConfig: {
-        databaseUrl: env.DATABASE_URL,
-        directUrl: env.DATABASE_URL,
+        databaseUrl: env.SUPABASE_DB_URL,
+        directUrl: env.SUPABASE_DB_URL,
         authJwtSecret: env.AUTH_JWT_SECRET,
         authAccessTokenExpiresInSeconds: env.AUTH_ACCESS_TOKEN_EXPIRES_IN_SECONDS,
         supabaseServiceRoleKey: env.SUPABASE_SERVICE_ROLE_KEY,

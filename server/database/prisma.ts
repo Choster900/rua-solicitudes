@@ -2,10 +2,10 @@ import { PrismaClient } from '@prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
 import { Pool } from 'pg'
 
-const connectionString = process.env.DATABASE_URL
+const connectionString = process.env.SUPABASE_DB_URL
 
 if (!connectionString) {
-    throw new Error('DATABASE_URL is required to initialize Prisma Client.')
+    throw new Error('SUPABASE_DB_URL is required to initialize Prisma Client.')
 }
 
 const globalForPrisma = globalThis as unknown as {
