@@ -86,10 +86,9 @@
                             autocomplete="off"
                             icon="tag"
                             label="Código"
-                            :error="getFieldError('code')"
-                            placeholder="CLI-009"
-                            required
-                            @blur="handleFieldBlur('code')"
+                            :disabled="true"
+                            :hint="mode === 'create' ? 'Autogenerado' : ''"
+                            placeholder="Autogenerado"
                         />
 
                         <div class="space-y-1.5">
@@ -426,7 +425,6 @@ const formModel = reactive<ClientFormModel>({
 })
 
 const schema: ValidationSchema<ClientFormModel> = {
-    code: [validationRules.required<ClientFormModel>('El código es requerido.')],
     name: [validationRules.required<ClientFormModel>('El nombre del cliente es requerido.')],
     taxId: [validationRules.required<ClientFormModel>('El NIT es requerido.')],
     segment: [validationRules.required<ClientFormModel>('El segmento es requerido.')],

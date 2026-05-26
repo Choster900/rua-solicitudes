@@ -1,17 +1,11 @@
-import type { ClientStatus } from '../../interfaces/domain/client.interface'
-import { CLIENT_STATUSES } from '../../interfaces/domain/client.interface'
 import {
     findClientByCode,
+    findClientByTaxId,
     findClientById,
     updateClient,
 } from '../../repositories/clients.repository'
 import { parseUpdateClientDto } from '../dtos/clients'
-
-const allowedStatuses: ClientStatus[] = [...CLIENT_STATUSES]
-
-const isClientStatus = (value: string): value is ClientStatus => {
-    return allowedStatuses.includes(value as ClientStatus)
-}
+import { isClientStatus } from './clients.utils'
 
 export default defineEventHandler(async (event) => {
     const clientId = String(getRouterParam(event, 'id') ?? '').trim()
@@ -33,7 +27,7 @@ export default defineEventHandler(async (event) => {
         })
     }
 
-    const code = body.code?.trim().toUpperCase() ?? sourceClient.code
+    const code = sourceClient.code
     const name = body.name?.trim() ?? sourceClient.name
     const taxId = body.taxId?.trim() ?? sourceClient.taxId
     const segment = body.segment?.trim() ?? sourceClient.segment
@@ -53,6 +47,7 @@ export default defineEventHandler(async (event) => {
     if (
         !code ||
         !name ||
+        !taxId ||
         !segment ||
         !contactName ||
         !contactEmail ||
@@ -81,6 +76,15 @@ export default defineEventHandler(async (event) => {
         throw createError({
             statusCode: 409,
             statusMessage: `Ya existe un cliente con el código ${code}.`,
+        })
+    }
+
+    const duplicatedTaxId = await findClientByTaxId(taxId)
+
+    if (duplicatedTaxId && duplicatedTaxId.id !== clientId) {
+        throw createError({
+            statusCode: 409,
+            statusMessage: `Ya existe un cliente con el NIT/Documento Fiscal ${taxId}.`,
         })
     }
 
