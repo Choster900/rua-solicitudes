@@ -1,6 +1,12 @@
-import type { UserType } from '../domain/user.interface'
+import type { RoleCode, UserType } from '../domain/user.interface'
 
 export type AuthUserStatus = 'Activo' | 'Pendiente' | 'Bloqueado'
+
+export interface AuthUserRoleAssignment {
+    roleId: string
+    code: RoleCode
+    name: UserType
+}
 
 export interface AuthUserRecord {
     id: string
@@ -8,14 +14,14 @@ export interface AuthUserRecord {
     fullName: string
     email: string
     phone: string
-    userType: UserType
     department: string
     status: AuthUserStatus
-    password: string
+    passwordHash: string
     mustChangePassword: boolean
     lastAccessAt: string | null
     createdAt: string
     updatedAt: string
+    roles: AuthUserRoleAssignment[]
 }
 
 export interface AuthUsersStoreState {

@@ -1,20 +1,26 @@
-export const USER_TYPES = [
-    'Administrador',
-    'Vendedor',
-    'JefeDiseño',
-    'Diseñador',
-    'Calidad',
-    'Administrativo',
-    'Gerencia',
-] as const
+export const ROLE_CODES = ['admin', 'vendedor', 'disenador_jefe', 'disenador', 'calidad'] as const
 
-export type UserType = (typeof USER_TYPES)[number]
+export type RoleCode = (typeof ROLE_CODES)[number]
 
-export const DESIGN_LEAD_USER_TYPES: UserType[] = ['Administrador', 'JefeDiseño']
-
-export const isDesignLeadUserType = (userType: string | null | undefined): userType is UserType => {
-    return DESIGN_LEAD_USER_TYPES.includes(userType as UserType)
+export const ROLE_NAME_BY_CODE: Record<RoleCode, string> = {
+    admin: 'Administrador',
+    vendedor: 'Vendedor',
+    disenador_jefe: 'Diseñador Jefe',
+    disenador: 'Diseñador',
+    calidad: 'Calidad',
 }
+
+export const USER_TYPES = Object.values(ROLE_NAME_BY_CODE) as readonly string[]
+export type UserType = (typeof ROLE_NAME_BY_CODE)[RoleCode]
 
 export const USER_STATUSES = ['Activo', 'Pendiente', 'Bloqueado'] as const
 export type UserStatus = (typeof USER_STATUSES)[number]
+
+export const isRoleCode = (value: string): value is RoleCode => {
+    return (ROLE_CODES as readonly string[]).includes(value)
+}
+
+export const getRoleCodeByName = (name: string): RoleCode | null => {
+    const entry = Object.entries(ROLE_NAME_BY_CODE).find(([, label]) => label === name)
+    return entry ? (entry[0] as RoleCode) : null
+}

@@ -1,13 +1,9 @@
 {
     "permissions": {
         "allow": [
-            "Bash(npx prisma *)",
-            "Bash(npx nuxi *)",
-            "Bash(mkdir -p \"server/api/requests/[id]\")",
-            "Bash(grep -rn '$fetch.*requests\\\\|/api/requests' app)"
-        ],
-        "additionalDirectories": [
-            "C:\\Users\\DEV\\Desktop\\Job\\rua-solicitudes\\server\\api\\requests"
+            "Bash(npm run *)",
+            "Bash(xargs grep -l \"assignedTo\\\\|assignedDesigner\\\\|assign.*request\")",
+            "Bash(npx prisma *)"
         ]
     }
 }

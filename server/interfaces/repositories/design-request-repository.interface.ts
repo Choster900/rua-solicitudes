@@ -36,8 +36,12 @@ export interface DesignRequestRecord {
     requireDieCut: boolean
     requireMockup: boolean
     attachments: RequestAttachment[]
+    assignedDesigners: { designerId: string; designerName: string }[]
     createdAt: string
 }
 
-export interface CreateDesignRequestInput extends Omit<DesignRequestRecord, 'id' | 'createdAt'> {}
+export interface CreateDesignRequestInput extends Omit<
+    DesignRequestRecord,
+    'id' | 'createdAt' | 'assignedDesigners'
+> {}
 export interface UpdateDesignRequestInput extends Partial<CreateDesignRequestInput> {}

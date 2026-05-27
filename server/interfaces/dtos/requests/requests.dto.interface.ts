@@ -63,3 +63,8 @@ export interface UpdateRequestDto {
     requireMockup?: boolean
     attachments?: RequestAttachment[]
 }
+
+export interface AssignDesignerDto {
+    designerId: string
+    designerName: string
+}

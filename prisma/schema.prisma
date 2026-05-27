@@ -6,17 +6,22 @@ datasource db {
   provider = "postgresql"
 }
 
-model User {
-  id           String     @id @default(uuid())
-  email        String     @unique
-  username     String?    @unique
-  passwordHash String
-  isActive     Boolean    @default(true)
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-  userRoles    UserRole[]
+model AuthUser {
+  id                 String     @id @default(cuid())
+  employeeCode       String     @unique
+  fullName           String
+  email              String     @unique
+  phone              String     @default("")
+  department         String
+  status             String
+  passwordHash       String
+  mustChangePassword Boolean    @default(true)
+  lastAccessAt       DateTime?
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+  userRoles          UserRole[]
 
-  @@index([isActive])
+  @@index([status])
 }
 
 model Role {
@@ -55,7 +60,7 @@ model UserRole {
   roleId     String
   assignedAt DateTime @default(now())
   assignedBy String?
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user       AuthUser @relation(fields: [userId], references: [id], onDelete: Cascade)
   role       Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
 
   @@unique([userId, roleId])
@@ -75,33 +80,6 @@ model RolePermission {
   @@unique([roleId, permissionId])
   @@index([permissionId])
   @@index([grantedBy])
-}
-
-model AuthUser {
-  id                 String    @id @default(cuid())
-  employeeCode       String    @unique
-  fullName           String
-  email              String    @unique
-  phone              String    @default("")
-  userType           String
-  department         String
-  status             String
-  password           String
-  mustChangePassword Boolean   @default(true)
-  lastAccessAt       DateTime?
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
-
-  createdRequests  DesignRequest[]        @relation("RequestCreator")
-  assignedRequests DesignRequest[]        @relation("RequestDesigner")
-  leadAssignments  DesignRequest[]        @relation("RequestAssigner")
-  approvedRequests DesignRequest[]        @relation("RequestApprover")
-  designedVersions DesignRequestVersion[] @relation("VersionDesigner")
-  reviewedVersions DesignRequestVersion[] @relation("VersionReviewer")
-  requestEvents    DesignRequestEvent[]   @relation("RequestEventActor")
-
-  @@index([status])
-  @@index([userType])
 }
 
 model Client {
@@ -173,100 +151,33 @@ model DesignRequest {
   quantity          Int
   requiredDate      DateTime
   priority          String
-
-  // Estado del flujo
-  // PENDING_ASSIGNMENT | ASSIGNED | IN_DESIGN | IN_QUALITY_REVIEW | APPROVED | REJECTED
-  status         String
-  currentVersion Int    @default(1)
-
-  // Asignación (la hace el jefe de diseño)
-  assignedDesignerId String?
-  assignedById       String?
-  assignedAt         DateTime?
-
-  // Aprobación final (calidad)
-  approvedById String?
-  approvedAt   DateTime?
-
-  // Detalles de la solicitud
-  designInstructions String  @default("")
-  visualReferences   String  @default("")
-  requireArt         Boolean @default(true)
-  requireDieCut      Boolean @default(false)
-  requireMockup      Boolean @default(false)
-  attachments        Json
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  workflow RequestWorkflow?
-  versions DesignRequestVersion[]
-  events   DesignRequestEvent[]
-
-  creator          AuthUser? @relation("RequestCreator", fields: [createdById], references: [id])
-  assignedDesigner AuthUser? @relation("RequestDesigner", fields: [assignedDesignerId], references: [id])
-  assigner         AuthUser? @relation("RequestAssigner", fields: [assignedById], references: [id])
-  approver         AuthUser? @relation("RequestApprover", fields: [approvedById], references: [id])
+  status            String
+  designInstructions   String          @default("")
+  visualReferences     String          @default("")
+  requireDieCut        Boolean         @default(false)
+  requireMockup        Boolean         @default(false)
+  attachments          Json
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+  workflow             RequestWorkflow?
+  designerAssignments  RequestDesignerAssignment[]
 
   @@index([status])
   @@index([priority])
-  @@index([createdById])
-  @@index([assignedDesignerId])
-  @@index([assignedById])
-  @@index([approvedById])
 }
 
-model DesignRequestVersion {
-  id            String @id @default(cuid())
-  requestId     String
-  versionNumber Int
-  designerId    String
+model RequestDesignerAssignment {
+  id           String        @id @default(cuid())
+  requestId    String
+  designerId   String
+  designerName String        @default("")
+  assignedAt   DateTime      @default(now())
+  assignedById String?
+  request      DesignRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
 
-  artFiles      Json      @default("[]")
-  designerNotes String    @default("")
-  submittedAt   DateTime?
-
-  // PENDING | APPROVED | REJECTED
-  reviewStatus    String    @default("PENDING")
-  reviewedById    String?
-  reviewedAt      DateTime?
-  rejectionReason String    @default("")
-  reviewComments  String    @default("")
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  request  DesignRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
-  designer AuthUser      @relation("VersionDesigner", fields: [designerId], references: [id])
-  reviewer AuthUser?     @relation("VersionReviewer", fields: [reviewedById], references: [id])
-
-  @@unique([requestId, versionNumber])
+  @@unique([requestId, designerId])
   @@index([requestId])
   @@index([designerId])
-  @@index([reviewedById])
-  @@index([reviewStatus])
-}
-
-model DesignRequestEvent {
-  id        String @id @default(cuid())
-  requestId String
-
-  // CREATED | ASSIGNED | REASSIGNED | DESIGN_STARTED | ART_SUBMITTED |
-  // QUALITY_APPROVED | QUALITY_REJECTED | VERSION_CREATED | COMMENT
-  eventType  String
-  actorId    String?
-  fromStatus String?
-  toStatus   String?
-  metadata   Json     @default("{}")
-  createdAt  DateTime @default(now())
-
-  request DesignRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
-  actor   AuthUser?     @relation("RequestEventActor", fields: [actorId], references: [id])
-
-  @@index([requestId])
-  @@index([eventType])
-  @@index([actorId])
-  @@index([createdAt])
 }
 
 model RequestWorkflow {

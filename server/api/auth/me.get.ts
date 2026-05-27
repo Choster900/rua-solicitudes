@@ -1,5 +1,6 @@
 import { verifyJwtToken } from '../../utils/auth-jwt.util'
 import type { SessionTokenPayload } from '../../interfaces/api/auth-session.interface'
+import { ROLE_NAME_BY_CODE } from '../../interfaces/domain/user.interface'
 
 const getBearerToken = (authorizationHeader: string | undefined) => {
     if (!authorizationHeader) {
@@ -32,11 +33,27 @@ export default defineEventHandler((event) => {
             secret: runtimeConfig.authJwtSecret,
         })
 
+        const roles = (payload.roleCodes ?? []).map((code) => ({
+            code,
+            name: ROLE_NAME_BY_CODE[code] ?? code,
+        }))
+        const primaryRole = payload.primaryRole
+            ? {
+                  code: payload.primaryRole,
+                  name: ROLE_NAME_BY_CODE[payload.primaryRole] ?? payload.primaryRole,
+              }
+            : null
+
         return {
             id: payload.sub,
             email: payload.email,
+            fullName: payload.fullName ?? '',
             employeeCode: payload.employeeCode,
-            userType: payload.userType,
+            department: payload.department ?? '',
+            roles,
+            primaryRole,
+            permissions: payload.permissionCodes ?? [],
+            userType: primaryRole?.name ?? null,
             mustChangePassword: Boolean(payload.mustChangePassword),
         }
     } catch {

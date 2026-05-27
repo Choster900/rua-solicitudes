@@ -7,9 +7,8 @@ export interface DesignRequestTableRow {
     printTechnique: string
     priority: string
     status: string
-    currentVersion: number
-    assignedDesignerId: string | null
     requiredDateLabel: string
     attachmentsCount: string
     requestedBy: string
+    assignedDesigners: { designerId: string; designerName: string }[]
 }

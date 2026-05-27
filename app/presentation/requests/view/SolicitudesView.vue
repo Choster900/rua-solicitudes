@@ -8,7 +8,7 @@
                     >
                         <div>
                             <h1 class="text-[1.8rem] font-headline-md font-semibold text-white">
-                                Historial General
+                                {{ isVendedor ? 'Mis Solicitudes' : 'Historial General' }}
                             </h1>
                             <p
                                 class="mt-2 text-xs uppercase tracking-[0.12em] text-secondary-container"
@@ -16,7 +16,7 @@
                                 Listado de Solicitudes
                             </p>
                             <p class="text-sm text-outline-variant">
-                                {{ totalRequests }} registros encontrados en la base de datos.
+                                {{ activeRows.length }} registros encontrados.
                             </p>
                         </div>
 
@@ -41,15 +41,37 @@
                         </div>
                     </header>
 
+                    <!-- Tabs para vendedor -->
+                    <div v-if="isVendedor" class="flex gap-1 border-b border-outline/20 px-4 pt-3">
+                        <button
+                            v-for="tab in vendedorTabs"
+                            :key="tab.key"
+                            :class="[
+                                'flex items-center gap-1.5 rounded-t-lg px-4 py-2 text-xs font-semibold uppercase tracking-widest transition-colors',
+                                activeTab === tab.key
+                                    ? 'border-b-2 border-primary text-primary'
+                                    : 'text-outline-variant hover:text-white',
+                            ]"
+                            type="button"
+                            @click="activeTab = tab.key"
+                        >
+                            {{ tab.label }}
+                            <span
+                                class="rounded-full px-1.5 py-0.5 text-[10px] font-bold"
+                                :class="
+                                    activeTab === tab.key
+                                        ? 'bg-primary/20 text-primary'
+                                        : 'bg-outline/20 text-outline-variant'
+                                "
+                            >
+                                {{ tab.count }}
+                            </span>
+                        </button>
+                    </div>
+
                     <div class="min-h-0 px-4 py-3">
                         <RequestsDataTable
-                            :can-assign-designer="isDesignLead()"
-                            :can-review-quality="isQuality()"
-                            :can-submit-to-quality="isDesigner() || isDesignLead()"
-                            :current-designer-id="sessionUser?.id ?? null"
-                            :rows="tableRows"
-                            @approve-request="handleApprove"
-                            @assign-designer="openAssignModal"
+                            :rows="activeRows"
                             @delete-request="removeRequest"
                             @duplicate-request="duplicateRequest"
                             @edit-request="goToEditRequest"
@@ -285,8 +307,11 @@ defineOptions({
 const router = useRouter()
 const {
     importInputRef,
+    isVendedor,
     totalRequests,
     tableRows,
+    pendingAssignmentRows,
+    completedRows,
     removeRequest,
     duplicateRequest,
     assignDesigner,
@@ -302,24 +327,24 @@ const {
 
 const { sessionUser, hydrateSession, isDesignLead, isDesigner, isQuality } = useSessionUser()
 
-const selectedRow = computed(() => tableRows.value[0] ?? null)
+type VendedorTab = 'pending' | 'completed'
+const activeTab = ref<VendedorTab>('pending')
 
-const assignModalRef = ref<InstanceType<typeof AssignDesignerModal> | null>(null)
-const isAssignModalOpen = ref(false)
-const assignRequestId = ref<string>('')
-const assignRequestSnapshot = computed(() =>
-    assignRequestId.value ? findRequestById(assignRequestId.value) : null,
-)
+const vendedorTabs = computed(() => [
+    {
+        key: 'pending' as VendedorTab,
+        label: 'Sin Asignar',
+        count: pendingAssignmentRows.value.length,
+    },
+    { key: 'completed' as VendedorTab, label: 'Completadas', count: completedRows.value.length },
+])
 
-const isApproveModalOpen = ref(false)
-const isRejectModalOpen = ref(false)
-const reviewRequestId = ref<string>('')
-const reviewRequestSnapshot = computed(() =>
-    reviewRequestId.value ? findRequestById(reviewRequestId.value) : null,
-)
-const reviewModalTitleSuffix = computed(() =>
-    reviewRequestSnapshot.value ? ` · ${reviewRequestSnapshot.value.requestCode}` : '',
-)
+const activeRows = computed(() => {
+    if (!isVendedor.value) return tableRows.value
+    return activeTab.value === 'pending' ? pendingAssignmentRows.value : completedRows.value
+})
+
+const selectedRow = computed(() => activeRows.value[0] ?? null)
 
 const goToCreateRequest = () => {
     void router.push('/solicitudes/nueva')

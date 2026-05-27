@@ -35,15 +35,7 @@ const toAttachmentArray = (value: unknown): DesignRequestRecord['attachments'] =
     })
 }
 
-const toIsoOrNull = (value: Date | null | undefined) => {
-    if (!value) {
-        return null
-    }
-
-    return dayjs(value).toISOString()
-}
-
-const toDesignRequestRecord = (source: {
+type PrismaDesignRequest = {
     id: string
     requestCode: string
     clientName: string
@@ -53,9 +45,6 @@ const toDesignRequestRecord = (source: {
     vendorName: string
     materialType: string
     materialWeight: string
-    fluteDirection: string
-    outerLiner: string
-    innerLiner: string
     printTechnique: string
     colorMode: string
     pantoneReferences: string
@@ -66,21 +55,16 @@ const toDesignRequestRecord = (source: {
     requiredDate: Date
     priority: string
     status: string
-    currentVersion: number
-    createdById: string | null
-    assignedDesignerId: string | null
-    assignedById: string | null
-    assignedAt: Date | null
-    approvedById: string | null
-    approvedAt: Date | null
     designInstructions: string
     visualReferences: string
-    requireArt: boolean
     requireDieCut: boolean
     requireMockup: boolean
     attachments: unknown
     createdAt: Date
-}): DesignRequestRecord => {
+    designerAssignments?: Array<{ designerId: string; designerName: string }>
+}
+
+const toDesignRequestRecord = (source: PrismaDesignRequest): DesignRequestRecord => {
     return {
         id: source.id,
         requestCode: source.requestCode,
@@ -91,9 +75,6 @@ const toDesignRequestRecord = (source: {
         vendorName: source.vendorName,
         materialType: source.materialType,
         materialWeight: source.materialWeight,
-        fluteDirection: source.fluteDirection,
-        outerLiner: source.outerLiner,
-        innerLiner: source.innerLiner,
         printTechnique: source.printTechnique,
         colorMode: source.colorMode,
         pantoneReferences: source.pantoneReferences,
@@ -104,46 +85,35 @@ const toDesignRequestRecord = (source: {
         requiredDate: dayjs(source.requiredDate).toISOString(),
         priority: source.priority as DesignRequestRecord['priority'],
         status: source.status as DesignRequestRecord['status'],
-        currentVersion: source.currentVersion,
-        createdById: source.createdById,
-        assignedDesignerId: source.assignedDesignerId,
-        assignedById: source.assignedById,
-        assignedAt: toIsoOrNull(source.assignedAt),
-        approvedById: source.approvedById,
-        approvedAt: toIsoOrNull(source.approvedAt),
         designInstructions: source.designInstructions,
         visualReferences: source.visualReferences,
-        requireArt: source.requireArt,
         requireDieCut: source.requireDieCut,
         requireMockup: source.requireMockup,
         attachments: toAttachmentArray(source.attachments),
+        assignedDesigners: (source.designerAssignments ?? []).map((a) => ({
+            designerId: a.designerId,
+            designerName: a.designerName,
+        })),
         createdAt: dayjs(source.createdAt).toISOString(),
     }
 }
 
+const withAssignments = { designerAssignments: true } as const
+
 const toRequestDataPayload = (payload: CreateDesignRequestInput | UpdateDesignRequestInput) => {
     return {
         ...payload,
-        ...(payload.finishingOptions
-            ? { finishingOptions: payload.finishingOptions as unknown as Prisma.InputJsonValue }
-            : {}),
-        ...(payload.deliverables
-            ? { deliverables: payload.deliverables as unknown as Prisma.InputJsonValue }
-            : {}),
-        ...(payload.attachments
-            ? { attachments: payload.attachments as unknown as Prisma.InputJsonValue }
-            : {}),
+        ...(payload.finishingOptions ? { finishingOptions: payload.finishingOptions } : {}),
+        ...(payload.deliverables ? { deliverables: payload.deliverables } : {}),
+        ...(payload.attachments ? { attachments: payload.attachments } : {}),
         ...(payload.requiredDate ? { requiredDate: dayjs(payload.requiredDate).toDate() } : {}),
-        ...(payload.assignedAt ? { assignedAt: dayjs(payload.assignedAt).toDate() } : {}),
-        ...(payload.approvedAt ? { approvedAt: dayjs(payload.approvedAt).toDate() } : {}),
     }
 }
 
 export const getAllDesignRequests = async () => {
     const requests = await prisma.designRequest.findMany({
-        orderBy: {
-            createdAt: 'desc',
-        },
+        orderBy: { createdAt: 'desc' },
+        include: withAssignments,
     })
 
     return requests.map(toDesignRequestRecord)
@@ -151,9 +121,8 @@ export const getAllDesignRequests = async () => {
 
 export const findDesignRequestById = async (requestId: string) => {
     const request = await prisma.designRequest.findUnique({
-        where: {
-            id: requestId,
-        },
+        where: { id: requestId },
+        include: withAssignments,
     })
 
     return request ? toDesignRequestRecord(request) : null
@@ -162,12 +131,8 @@ export const findDesignRequestById = async (requestId: string) => {
 export const findDesignRequestByCode = async (requestCode: string) => {
     const normalizedCode = requestCode.trim()
     const request = await prisma.designRequest.findFirst({
-        where: {
-            requestCode: {
-                equals: normalizedCode,
-                mode: 'insensitive',
-            },
-        },
+        where: { requestCode: { equals: normalizedCode, mode: 'insensitive' } },
+        include: withAssignments,
     })
 
     return request ? toDesignRequestRecord(request) : null
@@ -175,7 +140,8 @@ export const findDesignRequestByCode = async (requestCode: string) => {
 
 export const createDesignRequest = async (payload: CreateDesignRequestInput) => {
     const createdRequest = await prisma.designRequest.create({
-        data: toRequestDataPayload(payload) as any,
+        data: toRequestDataPayload(payload),
+        include: withAssignments,
     })
 
     return toDesignRequestRecord(createdRequest)
@@ -183,10 +149,9 @@ export const createDesignRequest = async (payload: CreateDesignRequestInput) => 
 
 export const updateDesignRequest = async (requestId: string, payload: UpdateDesignRequestInput) => {
     const updatedRequest = await prisma.designRequest.update({
-        where: {
-            id: requestId,
-        },
-        data: toRequestDataPayload(payload) as any,
+        where: { id: requestId },
+        data: toRequestDataPayload(payload),
+        include: withAssignments,
     })
 
     return toDesignRequestRecord(updatedRequest)
@@ -194,10 +159,56 @@ export const updateDesignRequest = async (requestId: string, payload: UpdateDesi
 
 export const deleteDesignRequestById = async (requestId: string) => {
     const deletedRequest = await prisma.designRequest.delete({
-        where: {
-            id: requestId,
-        },
+        where: { id: requestId },
+        include: withAssignments,
     })
 
     return toDesignRequestRecord(deletedRequest)
+}
+
+export const addDesignerAssignment = async (
+    requestId: string,
+    designerId: string,
+    designerName: string,
+): Promise<DesignRequestRecord> => {
+    await prisma.requestDesignerAssignment.create({
+        data: { requestId, designerId, designerName },
+    })
+
+    await prisma.designRequest.updateMany({
+        where: { id: requestId, status: { in: ['PENDING_ASSIGNMENT', 'Borrador'] } },
+        data: { status: 'ASSIGNED' },
+    })
+
+    const updated = await prisma.designRequest.findUniqueOrThrow({
+        where: { id: requestId },
+        include: withAssignments,
+    })
+
+    return toDesignRequestRecord(updated)
+}
+
+export const removeDesignerAssignment = async (
+    requestId: string,
+    designerId: string,
+): Promise<DesignRequestRecord> => {
+    await prisma.requestDesignerAssignment.delete({
+        where: { requestId_designerId: { requestId, designerId } },
+    })
+
+    const remaining = await prisma.requestDesignerAssignment.count({ where: { requestId } })
+
+    if (remaining === 0) {
+        await prisma.designRequest.updateMany({
+            where: { id: requestId, status: 'ASSIGNED' },
+            data: { status: 'PENDING_ASSIGNMENT' },
+        })
+    }
+
+    const updated = await prisma.designRequest.findUniqueOrThrow({
+        where: { id: requestId },
+        include: withAssignments,
+    })
+
+    return toDesignRequestRecord(updated)
 }

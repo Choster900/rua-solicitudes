@@ -46,20 +46,166 @@
                     </AppButton>
                 </header>
 
-                <div class="px-4 py-3">
-                    <RequestsDataTable
-                        :can-assign-designer="isDesignLead()"
-                        :can-review-quality="isQuality()"
-                        :can-submit-to-quality="isDesigner() || isDesignLead()"
-                        :current-designer-id="sessionUser?.id ?? null"
-                        :rows="tableRows"
-                        @approve-request="handleApprove"
-                        @assign-designer="openAssignModal"
-                        @duplicate-request="duplicateRequest"
-                        @edit-request="goToEditRequest"
-                        @reject-request="openRejectModal"
-                        @submit-to-quality="handleSubmitToQuality"
-                    />
+                <div class="overflow-x-auto">
+                    <table class="min-w-full">
+                        <thead>
+                            <tr
+                                class="border-b border-outline/20 text-left text-xs uppercase tracking-[0.08em] text-outline-variant"
+                            >
+                                <th class="px-4 py-3">Solicitud</th>
+                                <th class="px-4 py-3">Cliente</th>
+                                <th class="px-4 py-3">Producto</th>
+                                <th class="px-4 py-3">Diseñador</th>
+                                <th class="px-4 py-3 text-center">Arte</th>
+                                <th class="px-4 py-3 text-center">Dummie</th>
+                                <th class="px-4 py-3 text-center">Mecánico</th>
+                                <th class="px-4 py-3 text-center">Estado</th>
+                                <th class="px-4 py-3 text-center">Acciones</th>
+                                <th class="px-4 py-3 text-center">Enviar</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            <tr
+                                v-for="(row, index) in displayRows"
+                                :key="row.id"
+                                class="border-b border-outline/15 transition-colors hover:bg-surface-container-low/10"
+                                :class="selectedRequestId === row.id ? 'bg-primary/10' : ''"
+                                @click="selectedRequestId = row.id"
+                            >
+                                <td class="px-4 py-3 text-sm font-semibold text-white">
+                                    {{ row.requestCode }}
+                                </td>
+                                <td class="px-4 py-3 text-sm text-outline-variant">
+                                    {{ row.clientName }}
+                                </td>
+                                <td class="px-4 py-3 text-sm text-outline-variant">
+                                    {{ row.productName }}
+                                </td>
+                                <td class="px-4 py-3" @click.stop>
+                                    <div class="flex flex-col gap-1">
+                                        <div
+                                            v-if="row.assignedDesigners.length"
+                                            class="flex flex-wrap gap-1"
+                                        >
+                                            <span
+                                                v-for="a in row.assignedDesigners"
+                                                :key="a.designerId"
+                                                class="inline-flex items-center gap-0.5 rounded-full bg-primary/15 px-2 py-0.5 text-[11px] text-primary-fixed-dim"
+                                            >
+                                                {{ a.designerName }}
+                                                <button
+                                                    v-if="isJefe"
+                                                    type="button"
+                                                    class="ml-0.5 leading-none text-outline-variant hover:text-red-400"
+                                                    title="Quitar asignación"
+                                                    @click.stop="
+                                                        onRemoveDesigner(row.id, a.designerId)
+                                                    "
+                                                >
+                                                    ×
+                                                </button>
+                                            </span>
+                                        </div>
+                                        <select
+                                            v-if="
+                                                isJefe &&
+                                                (row.status === 'PENDING_ASSIGNMENT' ||
+                                                    row.status === 'ASSIGNED') &&
+                                                getAvailableDesigners(row).length > 0
+                                            "
+                                            value=""
+                                            class="w-full rounded-md border border-outline/30 bg-surface-container-lowest/20 px-2 py-1 text-xs text-outline-variant focus:border-primary focus:outline-none"
+                                            @change="onAssignDesigner(row.id, $event)"
+                                        >
+                                            <option value="" class="bg-[#0D1E2E]">
+                                                + Asignar...
+                                            </option>
+                                            <option
+                                                v-for="designer in getAvailableDesigners(row)"
+                                                :key="designer.id"
+                                                :value="designer.id"
+                                                class="bg-[#0D1E2E] text-white"
+                                            >
+                                                {{ designer.fullName }}
+                                            </option>
+                                        </select>
+                                        <span
+                                            v-if="!row.assignedDesigners.length && !isJefe"
+                                            class="text-sm text-outline-variant/50"
+                                            >—</span
+                                        >
+                                    </div>
+                                </td>
+                                <td class="px-4 py-3 text-center">
+                                    <span
+                                        class="inline-flex h-5 w-5 items-center justify-center rounded border border-outline/40"
+                                        :class="
+                                            isStepChecked(index, 0)
+                                                ? 'bg-primary text-white border-primary'
+                                                : ''
+                                        "
+                                        >{{ isStepChecked(index, 0) ? '✓' : '' }}</span
+                                    >
+                                </td>
+                                <td class="px-4 py-3 text-center">
+                                    <span
+                                        class="inline-flex h-5 w-5 items-center justify-center rounded border border-outline/40"
+                                        :class="
+                                            isStepChecked(index, 1)
+                                                ? 'bg-primary text-white border-primary'
+                                                : ''
+                                        "
+                                        >{{ isStepChecked(index, 1) ? '✓' : '' }}</span
+                                    >
+                                </td>
+                                <td class="px-4 py-3 text-center">
+                                    <span
+                                        class="inline-flex h-5 w-5 items-center justify-center rounded border border-outline/40"
+                                        :class="
+                                            isStepChecked(index, 2)
+                                                ? 'bg-primary text-white border-primary'
+                                                : ''
+                                        "
+                                        >{{ isStepChecked(index, 2) ? '✓' : '' }}</span
+                                    >
+                                </td>
+                                <td class="px-4 py-3 text-center">
+                                    <span
+                                        class="inline-flex rounded-md border px-3 py-1 text-xs font-semibold"
+                                        :class="resolveStatusClass(row.status)"
+                                        >{{ row.status }}</span
+                                    >
+                                </td>
+                                <td class="px-4 py-3 text-center">
+                                    <button
+                                        class="text-outline-variant hover:text-white"
+                                        type="button"
+                                        title="Ver"
+                                        @click.stop="goToEditRequest(row.id)"
+                                    >
+                                        <span class="material-symbols-outlined text-[18px]"
+                                            >visibility</span
+                                        >
+                                    </button>
+                                </td>
+                                <td class="px-4 py-3 text-center">
+                                    <button
+                                        v-if="row.status === 'ASSIGNED'"
+                                        class="text-primary hover:text-blue-200"
+                                        type="button"
+                                        title="Enviar a calidad"
+                                        @click.stop="sendToQualityReview(row.id)"
+                                    >
+                                        <span class="material-symbols-outlined text-[18px]"
+                                            >send</span
+                                        >
+                                    </button>
+                                    <span v-else class="text-outline-variant/30">—</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </article>
 
@@ -313,19 +459,33 @@ import AssignDesignerModal from '~/presentation/requests/components/AssignDesign
 import RequestsDataTable from '~/presentation/requests/components/RequestsDataTable.vue'
 import WorkflowDecisionModal from '~/presentation/request-workflow/components/WorkflowDecisionModal.vue'
 import { useRequestsModule } from '~/presentation/requests/composables/useRequestsModule'
-import { useSessionUser } from '~/presentation/shared/composables/useSessionUser'
+import { useApiClient } from '~/presentation/shared/composables/useApiClient'
 
 defineOptions({
     name: 'DesignQueueView',
 })
 
+interface Designer {
+    id: string
+    fullName: string
+    employeeCode: string
+}
+
 const router = useRouter()
+const apiClient = useApiClient()
 const {
     importInputRef,
-    pendingAssignmentRequests,
+    isJefe,
+    isDisenador,
+    draftRequests,
     inDesignRequests,
     highPriorityRequests,
     tableRows,
+    myAssignedRows,
+    sendToDesign,
+    sendToQualityReview,
+    assignDesigner,
+    removeDesignerAssignment,
     triggerImport,
     handleImportSelection,
     exportRequests,
@@ -338,9 +498,35 @@ const {
     findRequestById,
 } = useRequestsModule()
 
-const { sessionUser, hydrateSession, isDesignLead, isDesigner, isQuality } = useSessionUser()
+const selectedRequestId = ref('')
+const designers = ref<Designer[]>([])
 
-const selectedRow = computed(() => tableRows.value[0] ?? null)
+const sourceRows = computed(() => (isDisenador.value ? myAssignedRows.value : tableRows.value))
+const displayRows = computed(() => sourceRows.value.slice(0, 50))
+const selectedRow = computed(() => {
+    const match = displayRows.value.find((row) => row.id === selectedRequestId.value)
+    return match ?? displayRows.value[0] ?? null
+})
+
+const getAvailableDesigners = (row: { assignedDesigners: { designerId: string }[] }) => {
+    const assignedIds = new Set(row.assignedDesigners.map((a) => a.designerId))
+    return designers.value.filter((d) => !assignedIds.has(d.id))
+}
+
+const onAssignDesigner = (requestId: string, event: Event) => {
+    const select = event.target as HTMLSelectElement
+    const designerId = select.value
+    if (!designerId) return
+    const designer = designers.value.find((d) => d.id === designerId)
+    if (designer) {
+        void assignDesigner(requestId, designer.id, designer.fullName)
+        select.value = ''
+    }
+}
+
+const onRemoveDesigner = (requestId: string, designerId: string) => {
+    void removeDesignerAssignment(requestId, designerId)
+}
 
 const artsCount = computed(() => inDesignRequests.value)
 const dummiesCount = computed(() => pendingAssignmentRequests.value)
@@ -441,9 +627,22 @@ const confirmReject = async (comment: string) => {
     }
 }
 
-onMounted(() => {
-    void hydrateSession()
-    void hydrateRequests()
+onMounted(async () => {
+    await hydrateRequests()
+
+    const first = tableRows.value[0]
+    if (first) {
+        selectedRequestId.value = first.id
+    }
+
+    if (isJefe.value) {
+        try {
+            const response = await apiClient.get<Designer[]>('/users/designers')
+            designers.value = response.data
+        } catch {
+            // designers list is non-critical, silently ignore
+        }
+    }
 })
 
 useHead(() => ({

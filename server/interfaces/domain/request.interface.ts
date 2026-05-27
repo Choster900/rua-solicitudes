@@ -1,10 +1,12 @@
 export const REQUEST_STATUSES = [
+    'Borrador',
     'PENDING_ASSIGNMENT',
     'ASSIGNED',
-    'IN_DESIGN',
     'IN_QUALITY_REVIEW',
     'APPROVED',
-    'REJECTED',
+    'En revisión',
+    'En diseño',
+    'Aprobada',
 ] as const
 export type RequestStatus = (typeof REQUEST_STATUSES)[number]
 

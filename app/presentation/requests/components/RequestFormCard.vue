@@ -33,7 +33,7 @@
                         v-model="formModel.requestedBy"
                         label="Solicitado por"
                         :error="getFieldError('requestedBy')"
-                        placeholder="Ing. Ricardo Méndez"
+                        :readonly="mode === 'create'"
                         required
                         @blur="handleFieldBlur('requestedBy')"
                     />
@@ -54,8 +54,10 @@
                                     : ''
                             "
                             :options="clientOptions"
-                            placeholder="Seleccione Cliente..."
-                            :searchable="false"
+                            :placeholder="
+                                isLoadingClients ? 'Cargando clientes...' : 'Seleccione Cliente...'
+                            "
+                            :searchable="true"
                             @blur="handleFieldBlur('clientName')"
                         />
                         <p v-if="getFieldError('clientName')" class="text-xs text-status-error">
@@ -488,6 +490,8 @@ import {
 } from '~/presentation/shared/composables/forms/useFormValidation'
 import { useApiClient } from '~/presentation/shared/composables/useApiClient'
 import { useAppToast } from '~/presentation/shared/composables/useAppToast'
+import { useApiClient } from '~/presentation/shared/composables/useApiClient'
+import { getAuthTokenProfile } from '~/presentation/auth/utils/auth-token.util'
 import { toRequestAttachmentFromFile } from '~/presentation/requests/composables/useRequestsModule'
 import type { Client } from '~/presentation/interfaces/clients/client.interface'
 import type { DesignRequestFormModel } from '~/presentation/interfaces/requests/request-form.interface'
@@ -511,8 +515,28 @@ const emit = defineEmits<{
 
 const apiClient = useApiClient()
 const toast = useAppToast()
+const apiClient = useApiClient()
 const attachmentInputRef = ref<HTMLInputElement | null>(null)
-const currentEmployeeCode = ref('')
+
+const accessToken = useCookie<string | null>('access_token')
+const currentUserName = computed(() => {
+    const token = accessToken.value
+    return token ? (getAuthTokenProfile(token)?.fullName ?? '') : ''
+})
+const clientOptions = ref<AppSelectOption[]>([])
+const isLoadingClients = ref(false)
+
+onMounted(async () => {
+    isLoadingClients.value = true
+    try {
+        const response = await apiClient.get<Array<{ name: string; code: string }>>('/clients')
+        clientOptions.value = response.data.map((c) => ({ label: c.name, value: c.name }))
+    } catch {
+        toast.error('No se pudieron cargar los clientes.')
+    } finally {
+        isLoadingClients.value = false
+    }
+})
 
 const formModel = reactive<DesignRequestFormModel>({
     clientName: '',
@@ -563,8 +587,6 @@ const prototypeFlags = reactive({
 })
 
 const closureType = ref('Tapa y Fondo')
-
-const clientOptions = ref<AppSelectOption[]>([{ label: 'Seleccione Cliente...', value: '' }])
 
 const closureTypeOptions: AppSelectOption[] = [
     { label: 'Tapa y Fondo', value: 'Tapa y Fondo' },
@@ -755,6 +777,9 @@ watch(
     () => props.model,
     () => {
         syncFormModel()
+        if (props.mode === 'create') {
+            formModel.requestedBy = currentUserName.value
+        }
         clearValidation()
     },
     { immediate: true, deep: true },
