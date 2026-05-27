@@ -113,18 +113,9 @@ const stageLabelMap: Record<WorkflowStage, string> = {
 }
 
 const toInitialWorkflowStage = (status: DesignRequest['status']): WorkflowStage => {
-    if (status === 'Aprobada') {
-        return 'APPROVED'
-    }
-
-    if (status === 'En revisión') {
-        return 'READY_FOR_QUALITY'
-    }
-
-    if (status === 'En diseño') {
-        return 'DESIGN_IN_PROGRESS'
-    }
-
+    if (status === 'APPROVED' || status === 'Aprobada') return 'APPROVED'
+    if (status === 'IN_QUALITY_REVIEW' || status === 'En revisión') return 'QUALITY_IN_REVIEW'
+    if (status === 'ASSIGNED' || status === 'En diseño') return 'DESIGN_IN_PROGRESS'
     return 'NEW'
 }
 

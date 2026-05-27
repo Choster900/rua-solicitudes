@@ -10,6 +10,5 @@ export interface DesignRequestTableRow {
     requiredDateLabel: string
     attachmentsCount: string
     requestedBy: string
-    assignedDesignerId: string | null
-    assignedDesignerName: string
+    assignedDesigners: { designerId: string; designerName: string }[]
 }

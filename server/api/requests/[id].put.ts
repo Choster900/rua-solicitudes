@@ -61,11 +61,6 @@ export default defineEventHandler(async (event) => {
     const attachments = Array.isArray(body.attachments)
         ? body.attachments
         : sourceRequest.attachments
-    const assignedDesignerId =
-        'assignedDesignerId' in body
-            ? (body.assignedDesignerId ?? null)
-            : sourceRequest.assignedDesignerId
-    const assignedDesignerName = body.assignedDesignerName ?? sourceRequest.assignedDesignerName
 
     if (
         !clientName ||
@@ -133,7 +128,5 @@ export default defineEventHandler(async (event) => {
         requireDieCut,
         requireMockup,
         attachments,
-        assignedDesignerId,
-        assignedDesignerName,
     })
 })

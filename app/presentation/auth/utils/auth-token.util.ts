@@ -64,6 +64,14 @@ export const getAuthTokenProfile = (token: string) => {
     }
 }
 
+export const getAuthTokenUserId = (token: string): string | null => {
+    const payload = parseAuthTokenPayload(token)
+    if (!payload || typeof payload.sub !== 'string') {
+        return null
+    }
+    return payload.sub
+}
+
 export const getAuthTokenRoleCodes = (token: string): string[] => {
     const payload = parseAuthTokenPayload(token)
 

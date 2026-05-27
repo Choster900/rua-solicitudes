@@ -61,7 +61,7 @@
                                 <th class="px-4 py-3 text-center">Mecánico</th>
                                 <th class="px-4 py-3 text-center">Estado</th>
                                 <th class="px-4 py-3 text-center">Acciones</th>
-                                <th class="px-4 py-3 text-center">Print</th>
+                                <th class="px-4 py-3 text-center">Enviar</th>
                             </tr>
                         </thead>
 
@@ -83,35 +83,59 @@
                                     {{ row.productName }}
                                 </td>
                                 <td class="px-4 py-3" @click.stop>
-                                    <select
-                                        v-if="isJefe"
-                                        :value="row.assignedDesignerId || ''"
-                                        class="w-full rounded-md border border-outline/30 bg-surface-container-lowest/20 px-2 py-1 text-xs text-white focus:border-primary focus:outline-none"
-                                        @change="onAssignDesigner(row.id, $event)"
-                                    >
-                                        <option value="" class="bg-[#0D1E2E] text-outline-variant">
-                                            Sin asignar
-                                        </option>
-                                        <option
-                                            v-for="designer in designers"
-                                            :key="designer.id"
-                                            :value="designer.id"
-                                            class="bg-[#0D1E2E] text-white"
+                                    <div class="flex flex-col gap-1">
+                                        <div
+                                            v-if="row.assignedDesigners.length"
+                                            class="flex flex-wrap gap-1"
                                         >
-                                            {{ designer.fullName }}
-                                        </option>
-                                    </select>
-                                    <span
-                                        v-else
-                                        class="text-sm"
-                                        :class="
-                                            row.assignedDesignerName
-                                                ? 'text-white'
-                                                : 'text-outline-variant/50'
-                                        "
-                                    >
-                                        {{ row.assignedDesignerName || '—' }}
-                                    </span>
+                                            <span
+                                                v-for="a in row.assignedDesigners"
+                                                :key="a.designerId"
+                                                class="inline-flex items-center gap-0.5 rounded-full bg-primary/15 px-2 py-0.5 text-[11px] text-primary-fixed-dim"
+                                            >
+                                                {{ a.designerName }}
+                                                <button
+                                                    v-if="isJefe"
+                                                    type="button"
+                                                    class="ml-0.5 leading-none text-outline-variant hover:text-red-400"
+                                                    title="Quitar asignación"
+                                                    @click.stop="
+                                                        onRemoveDesigner(row.id, a.designerId)
+                                                    "
+                                                >
+                                                    ×
+                                                </button>
+                                            </span>
+                                        </div>
+                                        <select
+                                            v-if="
+                                                isJefe &&
+                                                (row.status === 'PENDING_ASSIGNMENT' ||
+                                                    row.status === 'ASSIGNED') &&
+                                                getAvailableDesigners(row).length > 0
+                                            "
+                                            value=""
+                                            class="w-full rounded-md border border-outline/30 bg-surface-container-lowest/20 px-2 py-1 text-xs text-outline-variant focus:border-primary focus:outline-none"
+                                            @change="onAssignDesigner(row.id, $event)"
+                                        >
+                                            <option value="" class="bg-[#0D1E2E]">
+                                                + Asignar...
+                                            </option>
+                                            <option
+                                                v-for="designer in getAvailableDesigners(row)"
+                                                :key="designer.id"
+                                                :value="designer.id"
+                                                class="bg-[#0D1E2E] text-white"
+                                            >
+                                                {{ designer.fullName }}
+                                            </option>
+                                        </select>
+                                        <span
+                                            v-if="!row.assignedDesigners.length && !isJefe"
+                                            class="text-sm text-outline-variant/50"
+                                            >—</span
+                                        >
+                                    </div>
                                 </td>
                                 <td class="px-4 py-3 text-center">
                                     <span
@@ -167,15 +191,17 @@
                                 </td>
                                 <td class="px-4 py-3 text-center">
                                     <button
+                                        v-if="row.status === 'ASSIGNED'"
                                         class="text-primary hover:text-blue-200"
                                         type="button"
-                                        title="Enviar"
-                                        @click.stop="sendToDesign(row.id)"
+                                        title="Enviar a calidad"
+                                        @click.stop="sendToQualityReview(row.id)"
                                     >
                                         <span class="material-symbols-outlined text-[18px]"
                                             >send</span
                                         >
                                     </button>
+                                    <span v-else class="text-outline-variant/30">—</span>
                                 </td>
                             </tr>
                         </tbody>
@@ -417,12 +443,16 @@ const apiClient = useApiClient()
 const {
     importInputRef,
     isJefe,
+    isDisenador,
     draftRequests,
     inDesignRequests,
     highPriorityRequests,
     tableRows,
+    myAssignedRows,
     sendToDesign,
+    sendToQualityReview,
     assignDesigner,
+    removeDesignerAssignment,
     triggerImport,
     handleImportSelection,
     exportRequests,
@@ -432,11 +462,17 @@ const {
 const selectedRequestId = ref('')
 const designers = ref<Designer[]>([])
 
-const displayRows = computed(() => tableRows.value.slice(0, 7))
+const sourceRows = computed(() => (isDisenador.value ? myAssignedRows.value : tableRows.value))
+const displayRows = computed(() => sourceRows.value.slice(0, 50))
 const selectedRow = computed(() => {
     const match = displayRows.value.find((row) => row.id === selectedRequestId.value)
     return match ?? displayRows.value[0] ?? null
 })
+
+const getAvailableDesigners = (row: { assignedDesigners: { designerId: string }[] }) => {
+    const assignedIds = new Set(row.assignedDesigners.map((a) => a.designerId))
+    return designers.value.filter((d) => !assignedIds.has(d.id))
+}
 
 const onAssignDesigner = (requestId: string, event: Event) => {
     const select = event.target as HTMLSelectElement
@@ -445,7 +481,12 @@ const onAssignDesigner = (requestId: string, event: Event) => {
     const designer = designers.value.find((d) => d.id === designerId)
     if (designer) {
         void assignDesigner(requestId, designer.id, designer.fullName)
+        select.value = ''
     }
+}
+
+const onRemoveDesigner = (requestId: string, designerId: string) => {
+    void removeDesignerAssignment(requestId, designerId)
 }
 
 const artsCount = computed(() => inDesignRequests.value)

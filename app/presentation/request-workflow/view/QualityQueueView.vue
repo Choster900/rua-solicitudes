@@ -1,43 +1,35 @@
 <template>
     <AppShellLayout screen-title="Bandeja Calidad">
-        <section class="grid min-h-[calc(100vh-112px)] grid-cols-1 gap-3 xl:grid-cols-[70%_30%]">
+        <section class="grid min-h-[calc(100vh-112px)] grid-cols-1 gap-3 xl:grid-cols-[65%_35%]">
+            <!-- Lista de solicitudes -->
             <div class="space-y-3">
                 <header class="flex items-start justify-between gap-4">
                     <div>
                         <h1 class="text-3xl font-semibold leading-tight text-white">
-                            Bandeja de Revisiones Técnicas
+                            Revisiones de Calidad
                         </h1>
-                        <p class="mt-1 max-w-xl text-lg text-outline-variant">
-                            Validación de artes y especificaciones industriales.
+                        <p class="mt-1 text-sm text-outline-variant">
+                            {{ qualityRows.length }} solicitudes en revisión
                         </p>
                     </div>
-
-                    <AppButton
-                        icon="filter_alt"
-                        size="md"
-                        variant="ghost"
-                        @click="workflowStore.setQualityFilters({ priority: 'ALL', query: '' })"
-                    >
-                        Filtrar
-                    </AppButton>
                 </header>
 
                 <article
                     class="overflow-hidden rounded-xl border border-outline/20 bg-surface-container-lowest/5"
                 >
                     <header
-                        class="grid grid-cols-[24%_32%_18%_26%] border-b border-outline/20 bg-surface-container-low/20 px-3 py-1.5 text-[10px] uppercase tracking-[0.12em] text-secondary-container"
+                        class="grid grid-cols-[28%_36%_18%_18%] border-b border-outline/20 bg-surface-container-low/20 px-3 py-1.5 text-[10px] uppercase tracking-[0.12em] text-secondary-container"
                     >
                         <p>ID Solicitud</p>
                         <p>Cliente / Producto</p>
+                        <p>Prioridad</p>
                         <p>Estado</p>
-                        <p>Acciones</p>
                     </header>
 
                     <div v-if="displayRows.length" class="divide-y divide-outline/15">
                         <template v-for="row in displayRows" :key="row.id">
                             <button
-                                class="grid w-full grid-cols-[24%_32%_18%_26%] items-center px-3 py-2.5 text-left transition-colors hover:bg-surface-container-low/20"
+                                class="grid w-full grid-cols-[28%_36%_18%_18%] items-center px-3 py-2.5 text-left transition-colors hover:bg-surface-container-low/20"
                                 :class="
                                     selectedRequestId === row.id
                                         ? 'border-l-2 border-primary bg-primary/10'
@@ -46,194 +38,272 @@
                                 type="button"
                                 @click="openRequestDetail(row.id)"
                             >
-                                <p class="text-lg font-semibold text-primary-fixed">
+                                <p class="font-mono text-sm font-semibold text-primary-fixed">
                                     {{ row.requestCode }}
                                 </p>
                                 <div>
-                                    <p class="text-xl leading-tight text-white">
+                                    <p class="text-sm font-medium leading-tight text-white">
                                         {{ row.clientName }}
                                     </p>
-                                    <p class="text-lg leading-tight text-outline-variant">
+                                    <p class="text-xs leading-tight text-outline-variant">
                                         {{ row.productName }}
                                     </p>
                                 </div>
-                                <div>
-                                    <span
-                                        class="inline-flex rounded-md border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em]"
-                                        :class="stageChipClass(row.id)"
-                                    >
-                                        {{ stageChipLabel(row.id) }}
-                                    </span>
-                                </div>
-                                <div class="flex justify-end">
-                                    <span class="material-symbols-outlined text-primary">
-                                        {{
-                                            expandedRowId === row.id ? 'expand_less' : 'expand_more'
-                                        }}
-                                    </span>
-                                </div>
+                                <span
+                                    class="inline-flex w-fit rounded-md border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em]"
+                                    :class="priorityChipClass(row.id)"
+                                >
+                                    {{ row.priorityLabel }}
+                                </span>
+                                <span
+                                    class="inline-flex w-fit rounded-md border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] border-primary/35 bg-primary/10 text-primary-fixed-dim"
+                                >
+                                    En revisión
+                                </span>
                             </button>
-
-                            <section
-                                v-if="expandedRowId === row.id && selectedRequest"
-                                class="grid gap-3 border-t border-outline/10 bg-surface-container-lowest/5 px-3 py-3 lg:grid-cols-[40%_60%]"
-                            >
-                                <div>
-                                    <h3
-                                        class="mb-2 text-[10px] uppercase tracking-[0.12em] text-secondary-container"
-                                    >
-                                        Checklist de validación
-                                    </h3>
-                                    <div
-                                        class="space-y-1.5 rounded-lg border border-outline/15 bg-surface-container-lowest/5 p-2"
-                                    >
-                                        <article
-                                            v-for="item in checklistRows"
-                                            :key="item.label"
-                                            class="flex items-center justify-between rounded-md bg-surface-container-low/30 px-2 py-1.5"
-                                        >
-                                            <p
-                                                class="inline-flex items-center gap-1.5 text-xs text-white"
-                                            >
-                                                <span
-                                                    class="inline-block h-2.5 w-2.5 rounded-full"
-                                                    :class="item.dotClass"
-                                                />
-                                                {{ item.label }}
-                                            </p>
-                                            <span
-                                                class="rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.08em]"
-                                                :class="item.statusClass"
-                                            >
-                                                {{ item.status }}
-                                            </span>
-                                        </article>
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <h3
-                                        class="mb-2 text-[10px] uppercase tracking-[0.12em] text-secondary-container"
-                                    >
-                                        Observaciones técnicas
-                                    </h3>
-                                    <textarea
-                                        v-model="qualityObservation"
-                                        class="h-[96px] w-full rounded-lg border border-outline/25 bg-surface-container-low/10 px-2.5 py-2 text-xs text-white outline-none placeholder:text-outline-variant focus:border-primary/60"
-                                        placeholder="Añadir comentarios específicos para los puntos de validación..."
-                                    />
-
-                                    <div class="mt-2.5 flex flex-wrap justify-end gap-2">
-                                        <AppButton
-                                            v-if="selectedRequest.stage === 'QUALITY_IN_REVIEW'"
-                                            icon="cancel"
-                                            size="md"
-                                            variant="danger"
-                                            @click="rejectModalOpen = true"
-                                        >
-                                            Rechazar con observaciones
-                                        </AppButton>
-
-                                        <AppButton
-                                            v-if="selectedRequest.stage === 'READY_FOR_QUALITY'"
-                                            icon="fact_check"
-                                            size="md"
-                                            variant="secondary"
-                                            @click="handleStartQualityReview"
-                                        >
-                                            Iniciar revisión
-                                        </AppButton>
-
-                                        <AppButton
-                                            v-if="selectedRequest.stage === 'QUALITY_IN_REVIEW'"
-                                            icon="task_alt"
-                                            size="md"
-                                            variant="primary"
-                                            @click="approveModalOpen = true"
-                                        >
-                                            Aprobar revisión
-                                        </AppButton>
-                                    </div>
-                                </div>
-                            </section>
                         </template>
                     </div>
 
-                    <div v-else class="px-3 py-6 text-center text-xs text-outline-variant">
-                        No hay solicitudes en calidad con los filtros actuales.
+                    <div v-else class="px-3 py-8 text-center text-xs text-outline-variant">
+                        No hay solicitudes en revisión de calidad.
                     </div>
                 </article>
             </div>
 
+            <!-- Panel de detalle -->
             <aside
                 class="flex h-full flex-col overflow-hidden rounded-xl border border-outline/20 bg-surface-container-lowest/5"
             >
-                <header class="border-b border-outline/20 px-3 py-3">
-                    <h2 class="inline-flex items-center gap-2 text-xl font-semibold text-white">
-                        <span class="material-symbols-outlined text-[18px] text-primary"
-                            >confirmation_number</span
-                        >
-                        Centro de Casos Consultados
+                <header class="border-b border-outline/20 px-4 py-3">
+                    <p
+                        class="inline-flex w-fit rounded bg-primary/10 px-2 py-0.5 font-mono text-xs text-primary-fixed-dim"
+                    >
+                        {{ selectedFullRequest?.requestCode ?? 'SOL-0000-000' }}
+                    </p>
+                    <h2 class="mt-1 text-base font-semibold text-white">
+                        {{ selectedFullRequest?.clientName ?? 'Selecciona una solicitud' }}
                     </h2>
-                    <p class="mt-1 text-xs text-outline-variant">
-                        Tickets de preventa y factibilidad técnica.
+                    <p class="text-xs text-outline-variant">
+                        {{ selectedFullRequest?.productName ?? '' }}
                     </p>
                 </header>
 
-                <div class="flex-1 space-y-1 overflow-y-auto py-0">
-                    <article
-                        v-for="(ticket, index) in consultedCases"
-                        :key="ticket.code"
-                        class="border-l-2 px-3 py-3 transition-colors"
-                        :class="
-                            index === 0
-                                ? 'border-primary bg-primary/10'
-                                : 'border-transparent hover:bg-surface-container-lowest/20'
-                        "
-                    >
-                        <div class="flex items-start justify-between gap-2">
-                            <p class="text-xs font-semibold tracking-[0.04em] text-primary-fixed">
-                                {{ ticket.code }}
-                            </p>
-                            <span
-                                class="rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.08em]"
-                                :class="ticket.statusClass"
+                <div v-if="selectedFullRequest" class="flex-1 space-y-4 overflow-y-auto px-4 py-4">
+                    <!-- Especificaciones -->
+                    <section>
+                        <h3
+                            class="mb-2 text-[10px] uppercase tracking-[0.12em] text-secondary-container"
+                        >
+                            Especificaciones
+                        </h3>
+                        <div class="grid gap-1 text-xs">
+                            <div class="flex justify-between border-b border-outline/15 pb-1">
+                                <span class="text-outline-variant">Dimensiones</span>
+                                <span class="font-medium text-white">{{
+                                    selectedFullRequest.dimensions
+                                }}</span>
+                            </div>
+                            <div class="flex justify-between border-b border-outline/15 pb-1">
+                                <span class="text-outline-variant">Cantidad</span>
+                                <span class="font-medium text-white">{{
+                                    selectedFullRequest.quantity.toLocaleString('es-SV')
+                                }}</span>
+                            </div>
+                            <div class="flex justify-between border-b border-outline/15 pb-1">
+                                <span class="text-outline-variant">Material</span>
+                                <span class="font-medium text-white"
+                                    >{{ selectedFullRequest.materialType }} ·
+                                    {{ selectedFullRequest.materialWeight }}</span
+                                >
+                            </div>
+                            <div class="flex justify-between border-b border-outline/15 pb-1">
+                                <span class="text-outline-variant">Técnica</span>
+                                <span class="font-medium text-white">{{
+                                    selectedFullRequest.printTechnique
+                                }}</span>
+                            </div>
+                            <div class="flex justify-between border-b border-outline/15 pb-1">
+                                <span class="text-outline-variant">Color</span>
+                                <span class="font-medium text-white">
+                                    {{ selectedFullRequest.colorMode }}
+                                    <span
+                                        v-if="selectedFullRequest.pantoneReferences"
+                                        class="text-outline-variant"
+                                    >
+                                        · {{ selectedFullRequest.pantoneReferences }}</span
+                                    >
+                                </span>
+                            </div>
+                            <div
+                                v-if="selectedFullRequest.finishingOptions.length"
+                                class="flex justify-between border-b border-outline/15 pb-1"
                             >
-                                {{ ticket.status }}
+                                <span class="text-outline-variant">Acabados</span>
+                                <span class="font-medium text-white text-right">{{
+                                    selectedFullRequest.finishingOptions.join(', ')
+                                }}</span>
+                            </div>
+                            <div class="flex justify-between border-b border-outline/15 pb-1">
+                                <span class="text-outline-variant">Troquel</span>
+                                <span
+                                    :class="
+                                        selectedFullRequest.requireDieCut
+                                            ? 'text-primary-fixed-dim'
+                                            : 'text-outline-variant'
+                                    "
+                                >
+                                    {{ selectedFullRequest.requireDieCut ? 'Sí' : 'No' }}
+                                </span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-outline-variant">Mockup</span>
+                                <span
+                                    :class="
+                                        selectedFullRequest.requireMockup
+                                            ? 'text-primary-fixed-dim'
+                                            : 'text-outline-variant'
+                                    "
+                                >
+                                    {{ selectedFullRequest.requireMockup ? 'Sí' : 'No' }}
+                                </span>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Instrucciones -->
+                    <section v-if="selectedFullRequest.designInstructions">
+                        <h3
+                            class="mb-2 text-[10px] uppercase tracking-[0.12em] text-secondary-container"
+                        >
+                            Instrucciones de Diseño
+                        </h3>
+                        <p
+                            class="rounded-lg border border-outline/20 bg-surface-container-lowest/20 px-3 py-2 text-xs italic text-outline-variant"
+                        >
+                            {{ selectedFullRequest.designInstructions }}
+                        </p>
+                    </section>
+
+                    <!-- Diseñadores asignados -->
+                    <section v-if="selectedFullRequest.assignedDesigners.length">
+                        <h3
+                            class="mb-2 text-[10px] uppercase tracking-[0.12em] text-secondary-container"
+                        >
+                            Diseñadores Asignados
+                        </h3>
+                        <div class="flex flex-wrap gap-1">
+                            <span
+                                v-for="d in selectedFullRequest.assignedDesigners"
+                                :key="d.designerId"
+                                class="rounded-full bg-primary/15 px-2 py-0.5 text-[11px] text-primary-fixed-dim"
+                            >
+                                {{ d.designerName }}
                             </span>
                         </div>
-                        <p class="mt-1.5 text-lg leading-tight text-white">
-                            {{ ticket.title }}
-                        </p>
-                        <div
-                            class="mt-1.5 flex items-center justify-between text-[11px] text-outline-variant"
+                    </section>
+
+                    <!-- Adjuntos -->
+                    <section v-if="selectedFullRequest.attachments.length">
+                        <h3
+                            class="mb-2 text-[10px] uppercase tracking-[0.12em] text-secondary-container"
                         >
-                            <p class="inline-flex items-center gap-1">
-                                <span class="material-symbols-outlined text-[14px]">person</span>
-                                {{ ticket.owner }}
-                            </p>
-                            <p class="uppercase tracking-[0.08em]">
-                                {{ ticket.area }}
-                            </p>
+                            Archivos ({{ selectedFullRequest.attachments.length }})
+                        </h3>
+                        <div class="space-y-1">
+                            <div
+                                v-for="att in selectedFullRequest.attachments"
+                                :key="att.id"
+                                class="flex items-center justify-between rounded-md border border-outline/15 bg-surface-container-lowest/10 px-2 py-1.5"
+                            >
+                                <span class="truncate text-[11px] text-white">{{ att.name }}</span>
+                                <span class="ml-2 shrink-0 text-[10px] text-outline-variant"
+                                    >{{ att.sizeKb }} KB</span
+                                >
+                            </div>
                         </div>
-                    </article>
+                    </section>
+
+                    <!-- Checklist -->
+                    <section>
+                        <h3
+                            class="mb-2 text-[10px] uppercase tracking-[0.12em] text-secondary-container"
+                        >
+                            Checklist de Validación
+                        </h3>
+                        <div class="space-y-1.5">
+                            <article
+                                v-for="item in checklistRows"
+                                :key="item.label"
+                                class="flex cursor-pointer items-center justify-between rounded-md bg-surface-container-low/30 px-2 py-1.5"
+                                @click="toggleChecklist(item.key)"
+                            >
+                                <p class="inline-flex items-center gap-1.5 text-xs text-white">
+                                    <span
+                                        class="inline-block h-2.5 w-2.5 rounded-full"
+                                        :class="item.dotClass"
+                                    />
+                                    {{ item.label }}
+                                </p>
+                                <span
+                                    class="rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.08em]"
+                                    :class="item.statusClass"
+                                >
+                                    {{ item.status }}
+                                </span>
+                            </article>
+                        </div>
+                    </section>
+
+                    <!-- Observaciones -->
+                    <section>
+                        <h3
+                            class="mb-2 text-[10px] uppercase tracking-[0.12em] text-secondary-container"
+                        >
+                            Observaciones
+                        </h3>
+                        <textarea
+                            v-model="qualityObservation"
+                            class="h-20 w-full rounded-lg border border-outline/25 bg-surface-container-low/10 px-2.5 py-2 text-xs text-white outline-none placeholder:text-outline-variant focus:border-primary/60"
+                            placeholder="Comentarios para el equipo de diseño..."
+                        />
+                    </section>
                 </div>
 
-                <footer class="border-t border-outline/20 p-3">
-                    <button
-                        class="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-outline/25 bg-surface-container-lowest/20 px-3 py-2 text-xs text-white transition-colors hover:bg-surface-container-lowest/35"
-                        type="button"
+                <div
+                    v-else
+                    class="flex flex-1 items-center justify-center text-xs text-outline-variant"
+                >
+                    Selecciona una solicitud para ver el detalle.
+                </div>
+
+                <!-- Acciones -->
+                <footer
+                    v-if="selectedFullRequest"
+                    class="grid grid-cols-2 gap-2 border-t border-outline/20 px-4 py-3"
+                >
+                    <AppButton
+                        icon="cancel"
+                        size="md"
+                        variant="danger"
+                        @click="rejectModalOpen = true"
                     >
-                        <span class="material-symbols-outlined text-[16px]">history</span>
-                        Ver Historial de Casos
-                    </button>
+                        Rechazar
+                    </AppButton>
+                    <AppButton
+                        icon="task_alt"
+                        size="md"
+                        variant="primary"
+                        @click="approveModalOpen = true"
+                    >
+                        Aprobar
+                    </AppButton>
                 </footer>
             </aside>
         </section>
 
         <WorkflowDecisionModal
             confirm-label="Aprobar"
-            description="Puedes agregar un comentario opcional para dejar constancia de la aprobación."
+            description="La solicitud será marcada como aprobada y notificada al equipo."
             :open="approveModalOpen"
             title="Aprobar solicitud"
             @close="approveModalOpen = false"
@@ -243,7 +313,7 @@
         <WorkflowDecisionModal
             confirm-label="Rechazar"
             confirm-tone="danger"
-            description="La observación es obligatoria y la solicitud volverá a Diseño."
+            description="La solicitud volverá al equipo de diseño. La observación es obligatoria."
             :open="rejectModalOpen"
             :require-comment="true"
             title="Rechazar solicitud"
@@ -254,21 +324,23 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, ref } from 'vue'
 import AppShellLayout from '~/presentation/shared/components/layout/AppShellLayout.vue'
 import AppButton from '~/presentation/shared/components/ui/AppButton.vue'
 import WorkflowDecisionModal from '~/presentation/request-workflow/components/WorkflowDecisionModal.vue'
 import { useRequestWorkflowModule } from '~/presentation/request-workflow/composables/useRequestWorkflowModule'
+import { useRequestsModule } from '~/presentation/requests/composables/useRequestsModule'
 import type { WorkflowChecklistState } from '~/presentation/interfaces/request-workflow/workflow-request.interface'
 
 defineOptions({
     name: 'QualityQueueView',
 })
 
-const { workflowStore, qualityQueue, qualityRows, notifyActionResult } = useRequestWorkflowModule()
+const { workflowStore, qualityQueue, qualityRows } = useRequestWorkflowModule()
+const { findRequestById, approveQualityReview, rejectQualityReview, hydrateRequests } =
+    useRequestsModule()
 
 const selectedRequestId = ref('')
-const expandedRowId = ref('')
 const approveModalOpen = ref(false)
 const rejectModalOpen = ref(false)
 const qualityObservation = ref('')
@@ -280,191 +352,91 @@ const activeChecklist = ref<WorkflowChecklistState>({
     legalValidated: false,
 })
 
-const selectedRequest = computed(() => {
-    if (!selectedRequestId.value) {
-        return null
-    }
-
-    return workflowStore.requestById(selectedRequestId.value)
+const selectedFullRequest = computed(() => {
+    if (!selectedRequestId.value) return null
+    return findRequestById(selectedRequestId.value)
 })
-
-const stageByRequestId = computed(() => {
-    const map: Record<
-        string,
-        | 'NEW'
-        | 'DESIGN_IN_PROGRESS'
-        | 'READY_FOR_QUALITY'
-        | 'QUALITY_IN_REVIEW'
-        | 'REJECTED_BY_QUALITY'
-        | 'APPROVED'
-    > = {}
-
-    workflowStore.allRequests.forEach((request) => {
-        map[request.id] = request.stage
-    })
-
-    return map
-})
-
-const syncChecklistFromRequest = () => {
-    if (!selectedRequest.value) {
-        return
-    }
-
-    activeChecklist.value = {
-        ...selectedRequest.value.checklist,
-    }
-}
 
 const openRequestDetail = (requestId: string) => {
     selectedRequestId.value = requestId
-    expandedRowId.value = expandedRowId.value === requestId ? '' : requestId
-    syncChecklistFromRequest()
-}
-
-const handleStartQualityReview = () => {
-    if (!selectedRequest.value) {
-        return
+    qualityObservation.value = ''
+    const wfRequest = workflowStore.requestById(requestId)
+    if (wfRequest) {
+        activeChecklist.value = { ...wfRequest.checklist }
     }
-
-    const result = workflowStore.startQualityReview(selectedRequest.value.id)
-    notifyActionResult(result)
 }
 
-const handleApprove = (comment: string) => {
+const toggleChecklist = (key: keyof WorkflowChecklistState) => {
+    activeChecklist.value = {
+        ...activeChecklist.value,
+        [key]: !activeChecklist.value[key],
+    }
+}
+
+const handleApprove = async (comment: string) => {
     approveModalOpen.value = false
-
-    if (!selectedRequest.value) {
-        return
-    }
-
-    const result = workflowStore.approveInQuality(
-        selectedRequest.value.id,
-        'Equipo Calidad',
-        comment,
-    )
-    notifyActionResult(result)
+    if (!selectedRequestId.value) return
+    const ok = await approveQualityReview(selectedRequestId.value)
+    if (ok) selectedRequestId.value = ''
 }
 
-const handleReject = (comment: string) => {
+const handleReject = async (comment: string) => {
     rejectModalOpen.value = false
-
-    if (!selectedRequest.value) {
-        return
+    if (!selectedRequestId.value) return
+    if (comment.trim()) {
+        workflowStore.appendObservation(
+            selectedRequestId.value,
+            comment,
+            'Equipo Calidad',
+            'Calidad',
+        )
     }
-
-    const result = workflowStore.rejectInQuality(
-        selectedRequest.value.id,
-        comment,
-        'Equipo Calidad',
-    )
-    notifyActionResult(result)
+    const ok = await rejectQualityReview(selectedRequestId.value)
+    if (ok) selectedRequestId.value = ''
 }
 
-const displayRows = computed(() => qualityRows.value.slice(0, 6))
+const displayRows = computed(() => qualityRows.value)
 
-const stageChipLabel = (requestId: string) => {
-    const stage = stageByRequestId.value[requestId]
-
-    if (stage === 'READY_FOR_QUALITY') {
-        return 'Pendiente'
-    }
-
-    if (stage === 'QUALITY_IN_REVIEW') {
-        return 'En proceso'
-    }
-
-    return 'Revisión'
-}
-
-const stageChipClass = (requestId: string) => {
-    const stage = stageByRequestId.value[requestId]
-
-    if (stage === 'READY_FOR_QUALITY') {
-        return 'border-amber-500/35 bg-amber-500/10 text-amber-200'
-    }
-
-    if (stage === 'QUALITY_IN_REVIEW') {
-        return 'border-primary/35 bg-primary/10 text-primary-fixed-dim'
-    }
-
+const priorityChipClass = (requestId: string) => {
+    const wfRequest = workflowStore.requestById(requestId)
+    if (!wfRequest) return 'border-outline/30 text-outline-variant'
+    if (wfRequest.priority === 'HIGH') return 'border-rose-500/35 bg-rose-500/10 text-rose-200'
+    if (wfRequest.priority === 'MEDIUM') return 'border-amber-500/35 bg-amber-500/10 text-amber-200'
     return 'border-outline/30 bg-surface-container-lowest/20 text-outline-variant'
 }
 
 const checklistRows = computed(() => {
     const source = activeChecklist.value
-    const allOk = Object.values(source).every(Boolean)
 
-    const toItem = (label: string, done: boolean, pendingText = 'Revisando') => {
-        if (done) {
-            return {
-                label,
-                status: 'OK',
-                dotClass: 'bg-emerald-400',
-                statusClass: 'bg-emerald-500/20 text-emerald-200',
-            }
-        }
-
-        return {
-            label,
-            status: pendingText,
-            dotClass: 'bg-amber-300',
-            statusClass: 'bg-amber-500/20 text-amber-200',
-        }
-    }
+    const toItem = (label: string, key: keyof WorkflowChecklistState, done: boolean) => ({
+        key,
+        label,
+        status: done ? 'OK' : 'Pendiente',
+        dotClass: done ? 'bg-emerald-400' : 'bg-amber-300',
+        statusClass: done ? 'bg-emerald-500/20 text-emerald-200' : 'bg-amber-500/20 text-amber-200',
+    })
 
     return [
-        toItem('Validación de Medidas', source.briefValidated),
-        toItem('Gramaje de Sustrato', source.technicalSpecsValidated),
-        toItem('Verificación de Dummie', source.assetsValidated),
-        source.legalValidated
-            ? toItem('Verificación de Mecánico', true)
-            : {
-                  label: 'Verificación de Mecánico',
-                  status: 'Ajuste req.',
-                  dotClass: 'bg-rose-400',
-                  statusClass: 'bg-rose-500/20 text-rose-200',
-              },
-        toItem('Prueba de Color', source.technicalSpecsValidated, 'Revisando'),
-        toItem('Datos Generales', allOk),
+        toItem('Brief validado', 'briefValidated', source.briefValidated),
+        toItem(
+            'Especificaciones técnicas',
+            'technicalSpecsValidated',
+            source.technicalSpecsValidated,
+        ),
+        toItem('Assets y archivos fuente', 'assetsValidated', source.assetsValidated),
+        toItem('Revisión legal / etiquetas', 'legalValidated', source.legalValidated),
     ]
 })
 
-const consultedCases = computed(() => {
-    return displayRows.value.slice(0, 3).map((row, index) => ({
-        code: `CASE-${row.requestCode.replace('SOL-', '')}`,
-        title: row.clientName.toUpperCase(),
-        owner: row.requestedBy,
-        area: index === 0 ? 'Producción' : index === 1 ? 'Materiales' : 'Diseño',
-        status: index === 0 ? 'Abierto' : index === 1 ? 'Urgente' : 'Resuelto',
-        statusClass:
-            index === 0
-                ? 'bg-primary/20 text-primary-fixed'
-                : index === 1
-                  ? 'bg-amber-500/20 text-amber-200'
-                  : 'bg-emerald-500/20 text-emerald-200',
-    }))
-})
-
 onMounted(async () => {
-    await workflowStore.hydrate()
-
-    const firstRequest = qualityQueue.value[0]
-
-    if (firstRequest) {
-        selectedRequestId.value = firstRequest.id
-        expandedRowId.value = firstRequest.id
-        syncChecklistFromRequest()
-    }
+    await Promise.all([workflowStore.hydrate(), hydrateRequests()])
+    const first = qualityQueue.value[0]
+    if (first) openRequestDetail(first.id)
 })
 
 useHead(() => ({
     title: 'RUASA ERP - Bandeja Calidad',
-    htmlAttrs: {
-        lang: 'es',
-    },
-    bodyAttrs: {
-        class: 'font-body-md overflow-hidden bg-deep-navy text-on-surface-variant',
-    },
+    htmlAttrs: { lang: 'es' },
+    bodyAttrs: { class: 'font-body-md overflow-hidden bg-deep-navy text-on-surface-variant' },
 }))
 </script>

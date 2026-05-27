@@ -41,7 +41,6 @@ export interface DesignRequest {
     requireDieCut: boolean
     requireMockup: boolean
     attachments: RequestAttachment[]
-    assignedDesignerId: string | null
-    assignedDesignerName: string
+    assignedDesigners: { designerId: string; designerName: string }[]
     createdAt: string
 }

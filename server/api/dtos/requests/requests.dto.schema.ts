@@ -1,5 +1,9 @@
 import Joi from 'joi'
-import type { CreateRequestDto, UpdateRequestDto } from '../../../interfaces/dtos/requests'
+import type {
+    AssignDesignerDto,
+    CreateRequestDto,
+    UpdateRequestDto,
+} from '../../../interfaces/dtos/requests'
 
 const requestAttachmentSchema = Joi.object({
     id: Joi.string().trim().required(),
@@ -32,8 +36,6 @@ export const createRequestDtoSchema = Joi.object<CreateRequestDto>({
     requireDieCut: Joi.boolean().optional(),
     requireMockup: Joi.boolean().optional(),
     attachments: Joi.array().items(requestAttachmentSchema).optional(),
-    assignedDesignerId: Joi.string().trim().allow('', null).optional(),
-    assignedDesignerName: Joi.string().trim().allow('').optional(),
 })
 
 export const updateRequestDtoSchema = Joi.object<UpdateRequestDto>({
@@ -60,6 +62,9 @@ export const updateRequestDtoSchema = Joi.object<UpdateRequestDto>({
     requireDieCut: Joi.boolean().optional(),
     requireMockup: Joi.boolean().optional(),
     attachments: Joi.array().items(requestAttachmentSchema).optional(),
-    assignedDesignerId: Joi.string().trim().allow('', null).optional(),
-    assignedDesignerName: Joi.string().trim().allow('').optional(),
+})
+
+export const assignDesignerDtoSchema = Joi.object<AssignDesignerDto>({
+    designerId: Joi.string().trim().required(),
+    designerName: Joi.string().trim().required(),
 })

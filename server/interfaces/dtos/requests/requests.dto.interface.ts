@@ -28,8 +28,6 @@ export interface CreateRequestDto {
     requireDieCut?: boolean
     requireMockup?: boolean
     attachments?: RequestAttachment[]
-    assignedDesignerId?: string | null
-    assignedDesignerName?: string
 }
 
 export interface UpdateRequestDto {
@@ -56,6 +54,9 @@ export interface UpdateRequestDto {
     requireDieCut?: boolean
     requireMockup?: boolean
     attachments?: RequestAttachment[]
-    assignedDesignerId?: string | null
-    assignedDesignerName?: string
+}
+
+export interface AssignDesignerDto {
+    designerId: string
+    designerName: string
 }

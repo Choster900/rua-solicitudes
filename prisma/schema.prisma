@@ -147,14 +147,27 @@ model DesignRequest {
   requireDieCut        Boolean         @default(false)
   requireMockup        Boolean         @default(false)
   attachments          Json
-  assignedDesignerId   String?
-  assignedDesignerName String          @default("")
   createdAt            DateTime        @default(now())
   updatedAt            DateTime        @updatedAt
   workflow             RequestWorkflow?
+  designerAssignments  RequestDesignerAssignment[]
 
   @@index([status])
   @@index([priority])
+}
+
+model RequestDesignerAssignment {
+  id           String        @id @default(cuid())
+  requestId    String
+  designerId   String
+  designerName String        @default("")
+  assignedAt   DateTime      @default(now())
+  assignedById String?
+  request      DesignRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@unique([requestId, designerId])
+  @@index([requestId])
+  @@index([designerId])
 }
 
 model RequestWorkflow {

@@ -4,7 +4,7 @@ import dayjs from 'dayjs'
 import { useApiClient } from '~/presentation/shared/composables/useApiClient'
 import { useRequestWorkflowStore } from '~/presentation/request-workflow/stores/useRequestWorkflowStore'
 import { useAppToast } from '~/presentation/shared/composables/useAppToast'
-import { authTokenHasRole } from '~/presentation/auth/utils/auth-token.util'
+import { authTokenHasRole, getAuthTokenUserId } from '~/presentation/auth/utils/auth-token.util'
 import type { HttpClientError } from '~/presentation/interfaces/shared/http/http-client-error.interface'
 import type { DesignRequestFormModel } from '~/presentation/interfaces/requests/request-form.interface'
 import type {
@@ -162,6 +162,16 @@ export const useRequestsModule = () => {
         return token ? authTokenHasRole(token, 'disenador_jefe') : false
     })
 
+    const isDisenador = computed(() => {
+        const token = accessToken.value
+        return token ? authTokenHasRole(token, 'disenador') : false
+    })
+
+    const currentUserId = computed(() => {
+        const token = accessToken.value
+        return token ? getAuthTokenUserId(token) : null
+    })
+
     const hydrateRequests = async (force = false) => {
         if (isHydrated.value && !force) {
             return
@@ -218,8 +228,7 @@ export const useRequestsModule = () => {
             requiredDateLabel: formatDateLabel(request.requiredDate),
             attachmentsCount: request.attachments.length.toString(),
             requestedBy: request.requestedBy,
-            assignedDesignerId: request.assignedDesignerId,
-            assignedDesignerName: request.assignedDesignerName,
+            assignedDesigners: request.assignedDesigners,
         }))
     })
 
@@ -369,6 +378,81 @@ export const useRequestsModule = () => {
         }
     }
 
+    const approveQualityReview = async (requestId: string) => {
+        const request = findRequestById(requestId)
+        if (!request) {
+            toast.error('No se encontró la solicitud seleccionada.')
+            return false
+        }
+        try {
+            const response = await apiClient.put<DesignRequest>(`/requests/${requestId}`, {
+                status: 'APPROVED' as RequestStatus,
+            })
+            requests.value = requests.value.map((item) =>
+                item.id === requestId ? response.data : item,
+            )
+            workflowStore.upsertFromDesignRequest(response.data)
+            toast.success(`Solicitud aprobada: ${request.requestCode}`)
+            return true
+        } catch (error) {
+            const httpError = error as HttpClientError
+            const statusMessage = (httpError.details as { statusMessage?: string } | null)
+                ?.statusMessage
+            toast.error(statusMessage || 'No se pudo aprobar la solicitud.')
+            return false
+        }
+    }
+
+    const rejectQualityReview = async (requestId: string) => {
+        const request = findRequestById(requestId)
+        if (!request) {
+            toast.error('No se encontró la solicitud seleccionada.')
+            return false
+        }
+        try {
+            const response = await apiClient.put<DesignRequest>(`/requests/${requestId}`, {
+                status: 'ASSIGNED' as RequestStatus,
+            })
+            requests.value = requests.value.map((item) =>
+                item.id === requestId ? response.data : item,
+            )
+            workflowStore.upsertFromDesignRequest(response.data)
+            toast.success(`Solicitud devuelta a diseño: ${request.requestCode}`)
+            return true
+        } catch (error) {
+            const httpError = error as HttpClientError
+            const statusMessage = (httpError.details as { statusMessage?: string } | null)
+                ?.statusMessage
+            toast.error(statusMessage || 'No se pudo rechazar la solicitud.')
+            return false
+        }
+    }
+
+    const sendToQualityReview = async (requestId: string) => {
+        const request = findRequestById(requestId)
+
+        if (!request) {
+            toast.error('No se encontró la solicitud seleccionada.')
+            return
+        }
+
+        try {
+            const response = await apiClient.put<DesignRequest>(`/requests/${requestId}`, {
+                status: 'IN_QUALITY_REVIEW' as RequestStatus,
+            })
+            requests.value = requests.value.map((item) =>
+                item.id === requestId ? response.data : item,
+            )
+            workflowStore.upsertFromDesignRequest(response.data)
+            toast.success(`Solicitud enviada a calidad: ${request.requestCode}`)
+        } catch (error) {
+            const httpError = error as HttpClientError
+            const statusMessage = (httpError.details as { statusMessage?: string } | null)
+                ?.statusMessage
+            toast.error(statusMessage || 'No se pudo enviar la solicitud a calidad.')
+        }
+    }
+
     const triggerImport = () => {
         importInputRef.value?.click()
     }
@@ -426,12 +510,19 @@ export const useRequestsModule = () => {
             requiredDateLabel: formatDateLabel(request.requiredDate),
             attachmentsCount: request.attachments.length.toString(),
             requestedBy: request.requestedBy,
-            assignedDesignerId: request.assignedDesignerId,
-            assignedDesignerName: request.assignedDesignerName,
+            assignedDesigners: request.assignedDesigners,
         }))
 
     const pendingAssignmentRows = computed(() => toRows(pendingAssignmentRequests.value))
     const completedRows = computed(() => toRows(completedRequests.value))
+
+    const myAssignedRows = computed(() =>
+        toRows(
+            requests.value.filter((r) =>
+                r.assignedDesigners.some((a) => a.designerId === currentUserId.value),
+            ),
+        ),
+    )
 
     const assignDesigner = async (requestId: string, designerId: string, designerName: string) => {
         const request = findRequestById(requestId)
@@ -441,22 +532,47 @@ export const useRequestsModule = () => {
         }
 
         try {
-            const response = await apiClient.put<DesignRequest>(`/requests/${requestId}`, {
-                assignedDesignerId: designerId,
-                assignedDesignerName: designerName,
-                status: 'ASSIGNED',
-            })
+            const response = await apiClient.post<DesignRequest>(
+                `/requests/${requestId}/assignments`,
+                { designerId, designerName },
+            )
             requests.value = requests.value.map((item) =>
                 item.id === requestId ? response.data : item,
             )
             workflowStore.upsertFromDesignRequest(response.data)
-            toast.success(`Solicitud ${request.requestCode} asignada a ${designerName}`)
+            toast.success(`${designerName} asignado a ${request.requestCode}`)
             return true
         } catch (error) {
             const httpError = error as HttpClientError
             const statusMessage = (httpError.details as { statusMessage?: string } | null)
                 ?.statusMessage
-            toast.error(statusMessage || 'No se pudo asignar la solicitud.')
+            toast.error(statusMessage || 'No se pudo asignar el diseñador.')
+            return false
+        }
+    }
+
+    const removeDesignerAssignment = async (requestId: string, designerId: string) => {
+        const request = findRequestById(requestId)
+        if (!request) {
+            toast.error('No se encontró la solicitud.')
+            return false
+        }
+
+        try {
+            const response = await apiClient.delete<DesignRequest>(
+                `/requests/${requestId}/assignments/${designerId}`,
+            )
+            requests.value = requests.value.map((item) =>
+                item.id === requestId ? response.data : item,
+            )
+            workflowStore.upsertFromDesignRequest(response.data)
+            toast.success(`Asignación removida de ${request.requestCode}`)
+            return true
+        } catch (error) {
+            const httpError = error as HttpClientError
+            const statusMessage = (httpError.details as { statusMessage?: string } | null)
+                ?.statusMessage
+            toast.error(statusMessage || 'No se pudo quitar la asignación.')
             return false
         }
     }
@@ -465,6 +581,8 @@ export const useRequestsModule = () => {
         importInputRef,
         isVendedor,
         isJefe,
+        isDisenador,
+        currentUserId,
         totalRequests,
         draftRequests,
         inDesignRequests,
@@ -472,12 +590,17 @@ export const useRequestsModule = () => {
         tableRows,
         pendingAssignmentRows,
         completedRows,
+        myAssignedRows,
         createRequest,
         updateRequest,
         removeRequest,
         duplicateRequest,
         sendToDesign,
+        sendToQualityReview,
+        approveQualityReview,
+        rejectQualityReview,
         assignDesigner,
+        removeDesignerAssignment,
         findRequestById,
         getFormModelById,
         triggerImport,

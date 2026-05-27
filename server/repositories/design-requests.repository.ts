@@ -34,7 +34,7 @@ const toAttachmentArray = (value: unknown): DesignRequestRecord['attachments'] =
     })
 }
 
-const toDesignRequestRecord = (source: {
+type PrismaDesignRequest = {
     id: string
     requestCode: string
     clientName: string
@@ -59,10 +59,11 @@ const toDesignRequestRecord = (source: {
     requireDieCut: boolean
     requireMockup: boolean
     attachments: unknown
-    assignedDesignerId: string | null
-    assignedDesignerName: string
     createdAt: Date
-}): DesignRequestRecord => {
+    designerAssignments?: Array<{ designerId: string; designerName: string }>
+}
+
+const toDesignRequestRecord = (source: PrismaDesignRequest): DesignRequestRecord => {
     return {
         id: source.id,
         requestCode: source.requestCode,
@@ -88,11 +89,15 @@ const toDesignRequestRecord = (source: {
         requireDieCut: source.requireDieCut,
         requireMockup: source.requireMockup,
         attachments: toAttachmentArray(source.attachments),
-        assignedDesignerId: source.assignedDesignerId,
-        assignedDesignerName: source.assignedDesignerName,
+        assignedDesigners: (source.designerAssignments ?? []).map((a) => ({
+            designerId: a.designerId,
+            designerName: a.designerName,
+        })),
         createdAt: dayjs(source.createdAt).toISOString(),
     }
 }
+
+const withAssignments = { designerAssignments: true } as const
 
 const toRequestDataPayload = (payload: CreateDesignRequestInput | UpdateDesignRequestInput) => {
     return {
@@ -106,9 +111,8 @@ const toRequestDataPayload = (payload: CreateDesignRequestInput | UpdateDesignRe
 
 export const getAllDesignRequests = async () => {
     const requests = await prisma.designRequest.findMany({
-        orderBy: {
-            createdAt: 'desc',
-        },
+        orderBy: { createdAt: 'desc' },
+        include: withAssignments,
     })
 
     return requests.map(toDesignRequestRecord)
@@ -116,9 +120,8 @@ export const getAllDesignRequests = async () => {
 
 export const findDesignRequestById = async (requestId: string) => {
     const request = await prisma.designRequest.findUnique({
-        where: {
-            id: requestId,
-        },
+        where: { id: requestId },
+        include: withAssignments,
     })
 
     return request ? toDesignRequestRecord(request) : null
@@ -127,12 +130,8 @@ export const findDesignRequestById = async (requestId: string) => {
 export const findDesignRequestByCode = async (requestCode: string) => {
     const normalizedCode = requestCode.trim()
     const request = await prisma.designRequest.findFirst({
-        where: {
-            requestCode: {
-                equals: normalizedCode,
-                mode: 'insensitive',
-            },
-        },
+        where: { requestCode: { equals: normalizedCode, mode: 'insensitive' } },
+        include: withAssignments,
     })
 
     return request ? toDesignRequestRecord(request) : null
@@ -141,6 +140,7 @@ export const findDesignRequestByCode = async (requestCode: string) => {
 export const createDesignRequest = async (payload: CreateDesignRequestInput) => {
     const createdRequest = await prisma.designRequest.create({
         data: toRequestDataPayload(payload),
+        include: withAssignments,
     })
 
     return toDesignRequestRecord(createdRequest)
@@ -148,10 +148,9 @@ export const createDesignRequest = async (payload: CreateDesignRequestInput) => 
 
 export const updateDesignRequest = async (requestId: string, payload: UpdateDesignRequestInput) => {
     const updatedRequest = await prisma.designRequest.update({
-        where: {
-            id: requestId,
-        },
+        where: { id: requestId },
         data: toRequestDataPayload(payload),
+        include: withAssignments,
     })
 
     return toDesignRequestRecord(updatedRequest)
@@ -159,10 +158,56 @@ export const updateDesignRequest = async (requestId: string, payload: UpdateDesi
 
 export const deleteDesignRequestById = async (requestId: string) => {
     const deletedRequest = await prisma.designRequest.delete({
-        where: {
-            id: requestId,
-        },
+        where: { id: requestId },
+        include: withAssignments,
     })
 
     return toDesignRequestRecord(deletedRequest)
+}
+
+export const addDesignerAssignment = async (
+    requestId: string,
+    designerId: string,
+    designerName: string,
+): Promise<DesignRequestRecord> => {
+    await prisma.requestDesignerAssignment.create({
+        data: { requestId, designerId, designerName },
+    })
+
+    await prisma.designRequest.updateMany({
+        where: { id: requestId, status: { in: ['PENDING_ASSIGNMENT', 'Borrador'] } },
+        data: { status: 'ASSIGNED' },
+    })
+
+    const updated = await prisma.designRequest.findUniqueOrThrow({
+        where: { id: requestId },
+        include: withAssignments,
+    })
+
+    return toDesignRequestRecord(updated)
+}
+
+export const removeDesignerAssignment = async (
+    requestId: string,
+    designerId: string,
+): Promise<DesignRequestRecord> => {
+    await prisma.requestDesignerAssignment.delete({
+        where: { requestId_designerId: { requestId, designerId } },
+    })
+
+    const remaining = await prisma.requestDesignerAssignment.count({ where: { requestId } })
+
+    if (remaining === 0) {
+        await prisma.designRequest.updateMany({
+            where: { id: requestId, status: 'ASSIGNED' },
+            data: { status: 'PENDING_ASSIGNMENT' },
+        })
+    }
+
+    const updated = await prisma.designRequest.findUniqueOrThrow({
+        where: { id: requestId },
+        include: withAssignments,
+    })
+
+    return toDesignRequestRecord(updated)
 }
