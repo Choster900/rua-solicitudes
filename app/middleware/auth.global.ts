@@ -9,6 +9,7 @@ const PUBLIC_PATHS = new Set(['/', '/login', '/landing', '/auth/change-password'
 
 const getRoleHomePath = (roleCodes: string[]): string => {
     if (roleCodes.includes('vendedor')) return '/solicitudes'
+    if (roleCodes.includes('disenador_jefe')) return '/requests/design'
     if (roleCodes.includes('disenador')) return '/requests/design'
     if (roleCodes.includes('calidad')) return '/requests/quality'
     return '/dashboard'

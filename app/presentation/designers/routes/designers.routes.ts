@@ -5,6 +5,6 @@ export const designersRoutes: RouteRecordRaw[] = [
         name: 'disenadores',
         path: '/disenadores',
         component: () => import('~/presentation/designers/view/DisenadoresView.vue'),
-        meta: { allowedRoles: ['admin', 'disenador_jefe'] },
+        meta: { allowedRoles: ['admin'] },
     },
 ]

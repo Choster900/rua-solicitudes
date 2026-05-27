@@ -32,6 +32,8 @@ export const createRequestDtoSchema = Joi.object<CreateRequestDto>({
     requireDieCut: Joi.boolean().optional(),
     requireMockup: Joi.boolean().optional(),
     attachments: Joi.array().items(requestAttachmentSchema).optional(),
+    assignedDesignerId: Joi.string().trim().allow('', null).optional(),
+    assignedDesignerName: Joi.string().trim().allow('').optional(),
 })
 
 export const updateRequestDtoSchema = Joi.object<UpdateRequestDto>({
@@ -58,4 +60,6 @@ export const updateRequestDtoSchema = Joi.object<UpdateRequestDto>({
     requireDieCut: Joi.boolean().optional(),
     requireMockup: Joi.boolean().optional(),
     attachments: Joi.array().items(requestAttachmentSchema).optional(),
+    assignedDesignerId: Joi.string().trim().allow('', null).optional(),
+    assignedDesignerName: Joi.string().trim().allow('').optional(),
 })

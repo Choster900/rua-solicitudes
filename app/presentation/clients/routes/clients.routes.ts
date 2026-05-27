@@ -1,6 +1,6 @@
 import type { RouteRecordRaw } from 'vue-router'
 
-const CLIENTES_ROLES = ['admin', 'vendedor', 'disenador_jefe', 'calidad']
+const CLIENTES_ROLES = ['admin', 'vendedor', 'calidad']
 
 export const clientsRoutes: RouteRecordRaw[] = [
     {

@@ -55,6 +55,7 @@
                                 <th class="px-4 py-3">Solicitud</th>
                                 <th class="px-4 py-3">Cliente</th>
                                 <th class="px-4 py-3">Producto</th>
+                                <th class="px-4 py-3">Diseñador</th>
                                 <th class="px-4 py-3 text-center">Arte</th>
                                 <th class="px-4 py-3 text-center">Dummie</th>
                                 <th class="px-4 py-3 text-center">Mecánico</th>
@@ -80,6 +81,37 @@
                                 </td>
                                 <td class="px-4 py-3 text-sm text-outline-variant">
                                     {{ row.productName }}
+                                </td>
+                                <td class="px-4 py-3" @click.stop>
+                                    <select
+                                        v-if="isJefe"
+                                        :value="row.assignedDesignerId || ''"
+                                        class="w-full rounded-md border border-outline/30 bg-surface-container-lowest/20 px-2 py-1 text-xs text-white focus:border-primary focus:outline-none"
+                                        @change="onAssignDesigner(row.id, $event)"
+                                    >
+                                        <option value="" class="bg-[#0D1E2E] text-outline-variant">
+                                            Sin asignar
+                                        </option>
+                                        <option
+                                            v-for="designer in designers"
+                                            :key="designer.id"
+                                            :value="designer.id"
+                                            class="bg-[#0D1E2E] text-white"
+                                        >
+                                            {{ designer.fullName }}
+                                        </option>
+                                    </select>
+                                    <span
+                                        v-else
+                                        class="text-sm"
+                                        :class="
+                                            row.assignedDesignerName
+                                                ? 'text-white'
+                                                : 'text-outline-variant/50'
+                                        "
+                                    >
+                                        {{ row.assignedDesignerName || '—' }}
+                                    </span>
                                 </td>
                                 <td class="px-4 py-3 text-center">
                                     <span
@@ -368,19 +400,29 @@ import { computed, ref } from 'vue'
 import AppShellLayout from '~/presentation/shared/components/layout/AppShellLayout.vue'
 import AppButton from '~/presentation/shared/components/ui/AppButton.vue'
 import { useRequestsModule } from '~/presentation/requests/composables/useRequestsModule'
+import { useApiClient } from '~/presentation/shared/composables/useApiClient'
 
 defineOptions({
     name: 'DesignQueueView',
 })
 
+interface Designer {
+    id: string
+    fullName: string
+    employeeCode: string
+}
+
 const router = useRouter()
+const apiClient = useApiClient()
 const {
     importInputRef,
+    isJefe,
     draftRequests,
     inDesignRequests,
     highPriorityRequests,
     tableRows,
     sendToDesign,
+    assignDesigner,
     triggerImport,
     handleImportSelection,
     exportRequests,
@@ -388,12 +430,23 @@ const {
 } = useRequestsModule()
 
 const selectedRequestId = ref('')
+const designers = ref<Designer[]>([])
 
 const displayRows = computed(() => tableRows.value.slice(0, 7))
 const selectedRow = computed(() => {
     const match = displayRows.value.find((row) => row.id === selectedRequestId.value)
     return match ?? displayRows.value[0] ?? null
 })
+
+const onAssignDesigner = (requestId: string, event: Event) => {
+    const select = event.target as HTMLSelectElement
+    const designerId = select.value
+    if (!designerId) return
+    const designer = designers.value.find((d) => d.id === designerId)
+    if (designer) {
+        void assignDesigner(requestId, designer.id, designer.fullName)
+    }
+}
 
 const artsCount = computed(() => inDesignRequests.value)
 const dummiesCount = computed(() => draftRequests.value)
@@ -420,12 +473,21 @@ const goToEditRequest = (requestId: string) => {
     void router.push(`/solicitudes/${requestId}/editar`)
 }
 
-onMounted(() => {
-    void hydrateRequests()
+onMounted(async () => {
+    await hydrateRequests()
 
     const first = tableRows.value[0]
     if (first) {
         selectedRequestId.value = first.id
+    }
+
+    if (isJefe.value) {
+        try {
+            const response = await apiClient.get<Designer[]>('/users/designers')
+            designers.value = response.data
+        } catch {
+            // designers list is non-critical, silently ignore
+        }
     }
 })
 

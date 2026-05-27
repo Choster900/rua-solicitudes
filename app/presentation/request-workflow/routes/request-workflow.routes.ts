@@ -1,8 +1,8 @@
 import type { RouteRecordRaw } from 'vue-router'
 
 const DESIGN_ROLES = ['admin', 'disenador_jefe', 'disenador']
-const QUALITY_ROLES = ['admin', 'disenador_jefe', 'calidad']
-const WORKFLOW_ROLES = ['admin', 'disenador_jefe', 'disenador', 'calidad']
+const QUALITY_ROLES = ['admin', 'calidad']
+const WORKFLOW_ROLES = ['admin', 'calidad']
 
 export const requestWorkflowRoutes: RouteRecordRaw[] = [
     {

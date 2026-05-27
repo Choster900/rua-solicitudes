@@ -25,6 +25,8 @@ export interface DesignRequestRecord {
     requireDieCut: boolean
     requireMockup: boolean
     attachments: RequestAttachment[]
+    assignedDesignerId: string | null
+    assignedDesignerName: string
     createdAt: string
 }
 

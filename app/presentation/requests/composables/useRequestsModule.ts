@@ -157,6 +157,11 @@ export const useRequestsModule = () => {
         return token ? authTokenHasRole(token, 'vendedor') : false
     })
 
+    const isJefe = computed(() => {
+        const token = accessToken.value
+        return token ? authTokenHasRole(token, 'disenador_jefe') : false
+    })
+
     const hydrateRequests = async (force = false) => {
         if (isHydrated.value && !force) {
             return
@@ -194,12 +199,11 @@ export const useRequestsModule = () => {
         () => requests.value.filter((request) => request.priority === 'Alta').length,
     )
 
-    // "No asignadas" = Borrador o En revisión (ninguna ha llegado a un diseñador aún)
-    const ASSIGNED_STATUSES = new Set<string>(['En diseño', 'Aprobada'])
+    const NEW_REQUEST_STATUSES = new Set<string>(['Borrador', 'PENDING_ASSIGNMENT'])
     const pendingAssignmentRequests = computed(() =>
-        requests.value.filter((r) => !ASSIGNED_STATUSES.has(r.status)),
+        requests.value.filter((r) => NEW_REQUEST_STATUSES.has(r.status)),
     )
-    const completedRequests = computed(() => requests.value.filter((r) => r.status === 'Aprobada'))
+    const completedRequests = computed(() => requests.value.filter((r) => r.status === 'APPROVED'))
 
     const tableRows = computed<DesignRequestTableRow[]>(() => {
         return requests.value.map((request) => ({
@@ -214,6 +218,8 @@ export const useRequestsModule = () => {
             requiredDateLabel: formatDateLabel(request.requiredDate),
             attachmentsCount: request.attachments.length.toString(),
             requestedBy: request.requestedBy,
+            assignedDesignerId: request.assignedDesignerId,
+            assignedDesignerName: request.assignedDesignerName,
         }))
     })
 
@@ -420,14 +426,45 @@ export const useRequestsModule = () => {
             requiredDateLabel: formatDateLabel(request.requiredDate),
             attachmentsCount: request.attachments.length.toString(),
             requestedBy: request.requestedBy,
+            assignedDesignerId: request.assignedDesignerId,
+            assignedDesignerName: request.assignedDesignerName,
         }))
 
     const pendingAssignmentRows = computed(() => toRows(pendingAssignmentRequests.value))
     const completedRows = computed(() => toRows(completedRequests.value))
 
+    const assignDesigner = async (requestId: string, designerId: string, designerName: string) => {
+        const request = findRequestById(requestId)
+        if (!request) {
+            toast.error('No se encontró la solicitud.')
+            return false
+        }
+
+        try {
+            const response = await apiClient.put<DesignRequest>(`/requests/${requestId}`, {
+                assignedDesignerId: designerId,
+                assignedDesignerName: designerName,
+                status: 'ASSIGNED',
+            })
+            requests.value = requests.value.map((item) =>
+                item.id === requestId ? response.data : item,
+            )
+            workflowStore.upsertFromDesignRequest(response.data)
+            toast.success(`Solicitud ${request.requestCode} asignada a ${designerName}`)
+            return true
+        } catch (error) {
+            const httpError = error as HttpClientError
+            const statusMessage = (httpError.details as { statusMessage?: string } | null)
+                ?.statusMessage
+            toast.error(statusMessage || 'No se pudo asignar la solicitud.')
+            return false
+        }
+    }
+
     return {
         importInputRef,
         isVendedor,
+        isJefe,
         totalRequests,
         draftRequests,
         inDesignRequests,
@@ -440,6 +477,7 @@ export const useRequestsModule = () => {
         removeRequest,
         duplicateRequest,
         sendToDesign,
+        assignDesigner,
         findRequestById,
         getFormModelById,
         triggerImport,

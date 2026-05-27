@@ -142,14 +142,16 @@ model DesignRequest {
   requiredDate      DateTime
   priority          String
   status            String
-  designInstructions String          @default("")
-  visualReferences  String           @default("")
-  requireDieCut     Boolean          @default(false)
-  requireMockup     Boolean          @default(false)
-  attachments       Json
-  createdAt         DateTime         @default(now())
-  updatedAt         DateTime         @updatedAt
-  workflow          RequestWorkflow?
+  designInstructions   String          @default("")
+  visualReferences     String          @default("")
+  requireDieCut        Boolean         @default(false)
+  requireMockup        Boolean         @default(false)
+  attachments          Json
+  assignedDesignerId   String?
+  assignedDesignerName String          @default("")
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+  workflow             RequestWorkflow?
 
   @@index([status])
   @@index([priority])

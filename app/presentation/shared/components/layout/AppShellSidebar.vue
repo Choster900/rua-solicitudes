@@ -103,22 +103,18 @@ const accessToken = useCookie<string | null>('access_token')
 
 const sidebarLogoSrc = computed(() => (mode.value === 'light' ? logoModoClaro : logoModoOscuro))
 
-const isAdmin = computed(() => {
-    const token = accessToken.value
-    return token ? authTokenHasRole(token, 'admin') : false
-})
-
 const allNavigationItems: AppShellNavItem[] = [
     {
         key: 'dashboard',
         label: 'Dashboard',
         icon: 'dashboard',
-        allowedRoles: ['admin', 'disenador_jefe', 'disenador', 'calidad'],
+        allowedRoles: ['admin', 'calidad'],
     },
     {
         key: 'solicitudes',
         label: 'Solicitudes',
         icon: 'assignment_add',
+        allowedRoles: ['admin', 'vendedor', 'calidad'],
     },
     {
         key: 'bandeja-diseno',
@@ -130,7 +126,7 @@ const allNavigationItems: AppShellNavItem[] = [
         key: 'bandeja-calidad',
         label: 'Bandeja Calidad',
         icon: 'rule',
-        allowedRoles: ['admin', 'disenador_jefe', 'calidad'],
+        allowedRoles: ['admin', 'calidad'],
     },
     {
         key: 'usuarios',
@@ -142,7 +138,7 @@ const allNavigationItems: AppShellNavItem[] = [
         key: 'clientes',
         label: 'Clientes',
         icon: 'badge',
-        allowedRoles: ['admin', 'vendedor', 'disenador_jefe', 'calidad'],
+        allowedRoles: ['admin', 'vendedor', 'calidad'],
     },
 ]
 

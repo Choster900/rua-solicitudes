@@ -1,5 +1,9 @@
 {
     "permissions": {
-        "allow": ["Bash(npm run *)"]
+        "allow": [
+            "Bash(npm run *)",
+            "Bash(xargs grep -l \"assignedTo\\\\|assignedDesigner\\\\|assign.*request\")",
+            "Bash(npx prisma *)"
+        ]
     }
 }
