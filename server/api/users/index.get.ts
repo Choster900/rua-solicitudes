@@ -1,6 +1,9 @@
 import { getAllAuthUsers } from '../../repositories/auth-users.repository'
+import { requireRole } from '../../utils/require-permission.util'
 
-export default defineEventHandler(async () => {
+export default defineEventHandler(async (event) => {
+    requireRole(event, ['admin'])
+
     const authUsers = await getAllAuthUsers()
 
     return authUsers.map((user) => {
@@ -16,7 +19,6 @@ export default defineEventHandler(async () => {
             lastAccessAt: user.lastAccessAt,
             roles: user.roles.map((role) => ({ code: role.code, name: role.name })),
             primaryRole: primaryRole ? { code: primaryRole.code, name: primaryRole.name } : null,
-            // Compat field for legacy frontend consumers
             userType: primaryRole?.name ?? null,
         }
     })

@@ -7,6 +7,7 @@ import {
 import type { UserStatus } from '../../interfaces/services/users-service.interface'
 import { USER_STATUSES, isRoleCode, type RoleCode } from '../../interfaces/domain/user.interface'
 import { parseUpdateUserDto } from '../dtos/users'
+import { requireRole } from '../../utils/require-permission.util'
 
 const allowedStatuses: UserStatus[] = [...USER_STATUSES]
 
@@ -15,6 +16,8 @@ const isUserStatus = (value: string): value is UserStatus => {
 }
 
 export default defineEventHandler(async (event) => {
+    requireRole(event, ['admin'])
+
     const userId = String(getRouterParam(event, 'id') ?? '').trim()
     const body = parseUpdateUserDto(await readBody(event))
 

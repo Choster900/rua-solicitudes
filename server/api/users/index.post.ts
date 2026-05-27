@@ -3,6 +3,7 @@ import { USER_STATUSES, isRoleCode, type RoleCode } from '../../interfaces/domai
 import { createAuthSystemUser } from '../../services/users.service'
 import { isDatabaseConnectionAvailable } from '../../repositories/database-health.repository'
 import { parseCreateUserDto } from '../dtos/users'
+import { requireRole } from '../../utils/require-permission.util'
 
 const allowedStatuses: UserStatus[] = [...USER_STATUSES]
 
@@ -11,6 +12,8 @@ const isUserStatus = (value: string): value is UserStatus => {
 }
 
 export default defineEventHandler(async (event) => {
+    requireRole(event, ['admin'])
+
     const body = parseCreateUserDto(await readBody(event))
 
     const employeeCode = body.employeeCode?.trim().toUpperCase() ?? ''

@@ -422,7 +422,7 @@ async function seedAuthUsersAndRoles() {
         const passwordHash = await hashPassword(authUser.plainPassword)
 
         const saved = await prisma.authUser.upsert({
-            where: { email: authUser.email },
+            where: { employeeCode: authUser.employeeCode },
             create: {
                 employeeCode: authUser.employeeCode,
                 fullName: authUser.fullName,
@@ -434,8 +434,8 @@ async function seedAuthUsersAndRoles() {
                 mustChangePassword: authUser.mustChangePassword,
             },
             update: {
-                employeeCode: authUser.employeeCode,
                 fullName: authUser.fullName,
+                email: authUser.email,
                 phone: authUser.phone,
                 department: authUser.department,
                 status: authUser.status,

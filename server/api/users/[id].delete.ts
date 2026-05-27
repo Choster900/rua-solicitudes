@@ -1,26 +1,29 @@
 import { deleteAuthUserById } from '../../repositories/auth-users.repository'
+import { requireRole } from '../../utils/require-permission.util'
 
 export default defineEventHandler(async (event) => {
-  const userId = String(getRouterParam(event, 'id') ?? '').trim()
+    requireRole(event, ['admin'])
 
-  if (!userId) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: 'ID de usuario inválido.',
-    })
-  }
+    const userId = String(getRouterParam(event, 'id') ?? '').trim()
 
-  const deletedUser = await deleteAuthUserById(userId)
+    if (!userId) {
+        throw createError({
+            statusCode: 400,
+            statusMessage: 'ID de usuario inválido.',
+        })
+    }
 
-  if (!deletedUser) {
-    throw createError({
-      statusCode: 404,
-      statusMessage: 'Usuario no encontrado.',
-    })
-  }
+    const deletedUser = await deleteAuthUserById(userId)
 
-  return {
-    id: deletedUser.id,
-    fullName: deletedUser.fullName,
-  }
+    if (!deletedUser) {
+        throw createError({
+            statusCode: 404,
+            statusMessage: 'Usuario no encontrado.',
+        })
+    }
+
+    return {
+        id: deletedUser.id,
+        fullName: deletedUser.fullName,
+    }
 })
