@@ -1,45 +1,79 @@
-import { isAuthTokenExpired, isAuthTokenPasswordChangeRequired } from '~/presentation/auth/utils/auth-token.util'
+import {
+    isAuthTokenExpired,
+    isAuthTokenPasswordChangeRequired,
+    authTokenHasRole,
+    getAuthTokenRoleCodes,
+} from '~/presentation/auth/utils/auth-token.util'
 
-const PUBLIC_PATHS = new Set([
-  '/',
-  '/login',
-  '/landing',
-  '/auth/change-password',
-])
+const PUBLIC_PATHS = new Set(['/', '/login', '/landing', '/auth/change-password'])
+
+const getRoleHomePath = (roleCodes: string[]): string => {
+    if (roleCodes.includes('vendedor')) return '/solicitudes'
+    if (roleCodes.includes('disenador')) return '/requests/design'
+    if (roleCodes.includes('calidad')) return '/requests/quality'
+    return '/dashboard'
+}
 
 export default defineNuxtRouteMiddleware((to) => {
-  if (!import.meta.client) {
-    return
-  }
-
-  const accessToken = useCookie<string | null>('access_token')
-  let tokenValue = accessToken.value
-  const isPublicPath = PUBLIC_PATHS.has(to.path)
-
-  if (tokenValue && isAuthTokenExpired(tokenValue)) {
-    accessToken.value = null
-    tokenValue = null
-
-    if (!isPublicPath) {
-      return navigateTo('/login?reason=session-expired')
+    if (!import.meta.client) {
+        return
     }
-  }
 
-  const requiresPasswordChange = tokenValue ? isAuthTokenPasswordChangeRequired(tokenValue) : false
+    const accessToken = useCookie<string | null>('access_token')
+    let tokenValue = accessToken.value
+    const isPublicPath = PUBLIC_PATHS.has(to.path)
 
-  if (!tokenValue && !isPublicPath) {
-    return navigateTo('/login')
-  }
+    if (tokenValue && isAuthTokenExpired(tokenValue)) {
+        accessToken.value = null
+        tokenValue = null
 
-  if (tokenValue && requiresPasswordChange && to.path !== '/auth/change-password') {
-    return navigateTo('/auth/change-password')
-  }
+        if (!isPublicPath) {
+            return navigateTo('/login?reason=session-expired')
+        }
+    }
 
-  if (tokenValue && !requiresPasswordChange && to.path === '/auth/change-password') {
-    return navigateTo('/dashboard')
-  }
+    const requiresPasswordChange = tokenValue
+        ? isAuthTokenPasswordChangeRequired(tokenValue)
+        : false
 
-  if (tokenValue && !isAuthTokenExpired(tokenValue) && (to.path === '/' || to.path === '/login')) {
-    return navigateTo('/dashboard')
-  }
+    if (!tokenValue && !isPublicPath) {
+        return navigateTo('/login')
+    }
+
+    if (tokenValue && requiresPasswordChange && to.path !== '/auth/change-password') {
+        return navigateTo('/auth/change-password')
+    }
+
+    if (tokenValue && !requiresPasswordChange && to.path === '/auth/change-password') {
+        return navigateTo('/dashboard')
+    }
+
+    // Redirect root / login to role home
+    if (
+        tokenValue &&
+        !isAuthTokenExpired(tokenValue) &&
+        (to.path === '/' || to.path === '/login')
+    ) {
+        const roleCodes = getAuthTokenRoleCodes(tokenValue)
+        return navigateTo(getRoleHomePath(roleCodes))
+    }
+
+    // Route-level role guard (meta.allowedRoles or meta.requiresRole)
+    if (tokenValue) {
+        const allowedRoles = to.meta?.allowedRoles as string[] | undefined
+        const requiredRole = to.meta?.requiresRole as string | undefined
+
+        if (allowedRoles && allowedRoles.length > 0) {
+            const hasAccess = allowedRoles.some((role) => authTokenHasRole(tokenValue!, role))
+            if (!hasAccess) {
+                const roleCodes = getAuthTokenRoleCodes(tokenValue)
+                return navigateTo(getRoleHomePath(roleCodes))
+            }
+        } else if (requiredRole) {
+            if (!authTokenHasRole(tokenValue, requiredRole)) {
+                const roleCodes = getAuthTokenRoleCodes(tokenValue)
+                return navigateTo(getRoleHomePath(roleCodes))
+            }
+        }
+    }
 })

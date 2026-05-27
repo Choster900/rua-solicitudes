@@ -47,7 +47,9 @@ export default defineEventHandler((event) => {
         return {
             id: payload.sub,
             email: payload.email,
+            fullName: payload.fullName ?? '',
             employeeCode: payload.employeeCode,
+            department: payload.department ?? '',
             roles,
             primaryRole,
             permissions: payload.permissionCodes ?? [],

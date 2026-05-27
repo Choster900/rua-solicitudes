@@ -78,7 +78,9 @@ export const loginWithSystemUser = async (
     const payload: LoginTokenPayload = {
         sub: authUser.id,
         email: authUser.email,
+        fullName: authUser.fullName,
         employeeCode: authUser.employeeCode,
+        department: authUser.department,
         primaryRole: primaryRole?.code ?? null,
         roleCodes,
         permissionCodes,
@@ -145,7 +147,9 @@ export const changeAuthUserPassword = async (
     const tokenPayload: LoginTokenPayload = {
         sub: updatedUser.id,
         email: updatedUser.email,
+        fullName: updatedUser.fullName,
         employeeCode: updatedUser.employeeCode,
+        department: updatedUser.department,
         primaryRole: primaryRole?.code ?? null,
         roleCodes,
         permissionCodes,

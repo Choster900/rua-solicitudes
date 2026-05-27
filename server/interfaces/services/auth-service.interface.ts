@@ -13,7 +13,9 @@ export interface SessionRoleSummary {
 export interface LoginTokenPayload extends Record<string, unknown> {
     sub: string
     email: string
+    fullName: string
     employeeCode: string
+    department: string
     primaryRole: RoleCode | null
     roleCodes: RoleCode[]
     permissionCodes: string[]

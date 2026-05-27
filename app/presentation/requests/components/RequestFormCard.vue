@@ -33,7 +33,7 @@
                         v-model="formModel.requestedBy"
                         label="Solicitado por"
                         :error="getFieldError('requestedBy')"
-                        placeholder="Ing. Ricardo Méndez"
+                        :readonly="mode === 'create'"
                         required
                         @blur="handleFieldBlur('requestedBy')"
                     />
@@ -54,8 +54,10 @@
                                     : ''
                             "
                             :options="clientOptions"
-                            placeholder="Seleccione Cliente..."
-                            :searchable="false"
+                            :placeholder="
+                                isLoadingClients ? 'Cargando clientes...' : 'Seleccione Cliente...'
+                            "
+                            :searchable="true"
                             @blur="handleFieldBlur('clientName')"
                         />
                         <p v-if="getFieldError('clientName')" class="text-xs text-status-error">
@@ -477,7 +479,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import AppButton from '~/presentation/shared/components/ui/AppButton.vue'
 import AppSelect, { type AppSelectOption } from '~/presentation/shared/components/ui/AppSelect.vue'
 import AppTextField from '~/presentation/shared/components/ui/AppTextField.vue'
@@ -487,6 +489,8 @@ import {
     type ValidationSchema,
 } from '~/presentation/shared/composables/forms/useFormValidation'
 import { useAppToast } from '~/presentation/shared/composables/useAppToast'
+import { useApiClient } from '~/presentation/shared/composables/useApiClient'
+import { getAuthTokenProfile } from '~/presentation/auth/utils/auth-token.util'
 import { toRequestAttachmentFromFile } from '~/presentation/requests/composables/useRequestsModule'
 import type { DesignRequestFormModel } from '~/presentation/interfaces/requests/request-form.interface'
 
@@ -508,7 +512,28 @@ const emit = defineEmits<{
 }>()
 
 const toast = useAppToast()
+const apiClient = useApiClient()
 const attachmentInputRef = ref<HTMLInputElement | null>(null)
+
+const accessToken = useCookie<string | null>('access_token')
+const currentUserName = computed(() => {
+    const token = accessToken.value
+    return token ? (getAuthTokenProfile(token)?.fullName ?? '') : ''
+})
+const clientOptions = ref<AppSelectOption[]>([])
+const isLoadingClients = ref(false)
+
+onMounted(async () => {
+    isLoadingClients.value = true
+    try {
+        const response = await apiClient.get<Array<{ name: string; code: string }>>('/clients')
+        clientOptions.value = response.data.map((c) => ({ label: c.name, value: c.name }))
+    } catch {
+        toast.error('No se pudieron cargar los clientes.')
+    } finally {
+        isLoadingClients.value = false
+    }
+})
 
 const formModel = reactive<DesignRequestFormModel>({
     clientName: '',
@@ -555,13 +580,6 @@ const prototypeFlags = reactive({
 })
 
 const closureType = ref('Tapa y Fondo')
-
-const clientOptions: AppSelectOption[] = [
-    { label: 'Seleccione Cliente...', value: '' },
-    { label: 'Global Logistics S.A.', value: 'Global Logistics S.A.' },
-    { label: 'FoodCorp Inc.', value: 'FoodCorp Inc.' },
-    { label: 'Aerospace Dynamics', value: 'Aerospace Dynamics' },
-]
 
 const closureTypeOptions: AppSelectOption[] = [
     { label: 'Tapa y Fondo', value: 'Tapa y Fondo' },
@@ -708,6 +726,9 @@ watch(
     () => props.model,
     () => {
         syncFormModel()
+        if (props.mode === 'create') {
+            formModel.requestedBy = currentUserName.value
+        }
         clearValidation()
     },
     { immediate: true, deep: true },

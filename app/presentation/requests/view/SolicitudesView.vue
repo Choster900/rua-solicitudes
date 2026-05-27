@@ -8,7 +8,7 @@
                     >
                         <div>
                             <h1 class="text-[1.8rem] font-headline-md font-semibold text-white">
-                                Historial General
+                                {{ isVendedor ? 'Mis Solicitudes' : 'Historial General' }}
                             </h1>
                             <p
                                 class="mt-2 text-xs uppercase tracking-[0.12em] text-secondary-container"
@@ -16,7 +16,7 @@
                                 Listado de Solicitudes
                             </p>
                             <p class="text-sm text-outline-variant">
-                                {{ totalRequests }} registros encontrados en la base de datos.
+                                {{ activeRows.length }} registros encontrados.
                             </p>
                         </div>
 
@@ -41,9 +41,37 @@
                         </div>
                     </header>
 
+                    <!-- Tabs para vendedor -->
+                    <div v-if="isVendedor" class="flex gap-1 border-b border-outline/20 px-4 pt-3">
+                        <button
+                            v-for="tab in vendedorTabs"
+                            :key="tab.key"
+                            :class="[
+                                'flex items-center gap-1.5 rounded-t-lg px-4 py-2 text-xs font-semibold uppercase tracking-widest transition-colors',
+                                activeTab === tab.key
+                                    ? 'border-b-2 border-primary text-primary'
+                                    : 'text-outline-variant hover:text-white',
+                            ]"
+                            type="button"
+                            @click="activeTab = tab.key"
+                        >
+                            {{ tab.label }}
+                            <span
+                                class="rounded-full px-1.5 py-0.5 text-[10px] font-bold"
+                                :class="
+                                    activeTab === tab.key
+                                        ? 'bg-primary/20 text-primary'
+                                        : 'bg-outline/20 text-outline-variant'
+                                "
+                            >
+                                {{ tab.count }}
+                            </span>
+                        </button>
+                    </div>
+
                     <div class="min-h-0 px-4 py-3">
                         <RequestsDataTable
-                            :rows="tableRows"
+                            :rows="activeRows"
                             @delete-request="removeRequest"
                             @duplicate-request="duplicateRequest"
                             @edit-request="goToEditRequest"
@@ -232,7 +260,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import AppShellLayout from '~/presentation/shared/components/layout/AppShellLayout.vue'
 import AppButton from '~/presentation/shared/components/ui/AppButton.vue'
 import RequestsDataTable from '~/presentation/requests/components/RequestsDataTable.vue'
@@ -245,8 +273,11 @@ defineOptions({
 const router = useRouter()
 const {
     importInputRef,
+    isVendedor,
     totalRequests,
     tableRows,
+    pendingAssignmentRows,
+    completedRows,
     removeRequest,
     duplicateRequest,
     sendToDesign,
@@ -256,7 +287,24 @@ const {
     hydrateRequests,
 } = useRequestsModule()
 
-const selectedRow = computed(() => tableRows.value[0] ?? null)
+type VendedorTab = 'pending' | 'completed'
+const activeTab = ref<VendedorTab>('pending')
+
+const vendedorTabs = computed(() => [
+    {
+        key: 'pending' as VendedorTab,
+        label: 'Sin Asignar',
+        count: pendingAssignmentRows.value.length,
+    },
+    { key: 'completed' as VendedorTab, label: 'Completadas', count: completedRows.value.length },
+])
+
+const activeRows = computed(() => {
+    if (!isVendedor.value) return tableRows.value
+    return activeTab.value === 'pending' ? pendingAssignmentRows.value : completedRows.value
+})
+
+const selectedRow = computed(() => activeRows.value[0] ?? null)
 
 const goToCreateRequest = () => {
     void router.push('/solicitudes/nueva')
