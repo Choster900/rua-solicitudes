@@ -77,6 +77,8 @@
                             @edit-request="goToEditRequest"
                             @reject-request="openRejectModal"
                             @submit-to-quality="handleSubmitToQuality"
+                            @assign-designer="openAssignModal"
+                            @approve-request="handleApprove"
                         />
                     </div>
                 </article>
@@ -315,9 +317,9 @@ const {
     removeRequest,
     duplicateRequest,
     assignDesigner,
-    submitToQuality,
-    approveRequest,
-    rejectRequest,
+    sendToQualityReview,
+    approveQualityReview,
+    rejectQualityReview,
     findRequestById,
     triggerImport,
     handleImportSelection,
@@ -326,6 +328,29 @@ const {
 } = useRequestsModule()
 
 const { sessionUser, hydrateSession, isDesignLead, isDesigner, isQuality } = useSessionUser()
+
+const assignRequestId = ref('')
+const isAssignModalOpen = ref(false)
+const assignModalRef = ref<InstanceType<typeof AssignDesignerModal> | null>(null)
+const reviewRequestId = ref('')
+const isApproveModalOpen = ref(false)
+const isRejectModalOpen = ref(false)
+
+const assignRequestSnapshot = computed(() => {
+    if (!assignRequestId.value) return null
+    const req = findRequestById(assignRequestId.value)
+    if (!req) return null
+    return {
+        assignedDesignerId: req.assignedDesigners[0]?.designerId ?? null,
+        requestCode: req.requestCode,
+    }
+})
+
+const reviewModalTitleSuffix = computed(() => {
+    if (!reviewRequestId.value) return ''
+    const req = findRequestById(reviewRequestId.value)
+    return req ? ` de ${req.requestCode}` : ''
+})
 
 type VendedorTab = 'pending' | 'completed'
 const activeTab = ref<VendedorTab>('pending')
@@ -365,13 +390,13 @@ const closeAssignModal = () => {
     assignModalRef.value?.resetSubmitting()
 }
 
-const confirmAssignment = async (designerId: string) => {
+const confirmAssignment = async (designerId: string, designerName: string) => {
     if (!assignRequestId.value) {
         closeAssignModal()
         return
     }
 
-    const succeeded = await assignDesigner(assignRequestId.value, designerId)
+    const succeeded = await assignDesigner(assignRequestId.value, designerId, designerName)
     assignModalRef.value?.resetSubmitting()
 
     if (succeeded) {
@@ -380,7 +405,7 @@ const confirmAssignment = async (designerId: string) => {
 }
 
 const handleSubmitToQuality = async (requestId: string) => {
-    await submitToQuality(requestId)
+    await sendToQualityReview(requestId)
 }
 
 const handleApprove = (requestId: string) => {
@@ -393,12 +418,12 @@ const closeApproveModal = () => {
     reviewRequestId.value = ''
 }
 
-const confirmApprove = async (comment: string) => {
+const confirmApprove = async () => {
     if (!reviewRequestId.value) {
         closeApproveModal()
         return
     }
-    const succeeded = await approveRequest(reviewRequestId.value, comment)
+    const succeeded = await approveQualityReview(reviewRequestId.value)
     if (succeeded) {
         closeApproveModal()
     }
@@ -414,12 +439,12 @@ const closeRejectModal = () => {
     reviewRequestId.value = ''
 }
 
-const confirmReject = async (comment: string) => {
+const confirmReject = async () => {
     if (!reviewRequestId.value) {
         closeRejectModal()
         return
     }
-    const succeeded = await rejectRequest(reviewRequestId.value, comment, '')
+    const succeeded = await rejectQualityReview(reviewRequestId.value)
     if (succeeded) {
         closeRejectModal()
     }

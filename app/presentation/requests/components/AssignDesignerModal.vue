@@ -88,7 +88,7 @@ const props = withDefaults(defineProps<AssignDesignerModalProps>(), {
 
 const emit = defineEmits<{
     close: []
-    confirm: [designerId: string]
+    confirm: [designerId: string, designerName: string]
 }>()
 
 const apiClient = useApiClient()
@@ -138,7 +138,9 @@ const handleConfirm = () => {
 
     errorMessage.value = ''
     isSubmitting.value = true
-    emit('confirm', selectedDesignerId.value)
+    const selectedDesigner = designers.value.find((d) => d.id === selectedDesignerId.value)
+    const designerName = selectedDesigner?.fullName ?? ''
+    emit('confirm', selectedDesignerId.value, designerName)
 }
 
 watch(

@@ -322,7 +322,11 @@ export const useClientsModule = () => {
         toast.success('Plantilla de clientes descargada.')
     }
 
-    const parseImportFileContent = (sourceContent: string) => {
+    type ImportResult =
+        | { success: false; message: string }
+        | { success: true; rows: ClientFormModel[]; skippedCount: number }
+
+    const parseImportFileContent = (sourceContent: string): ImportResult => {
         const lines = sourceContent
             .split(/\r?\n/)
             .map((line) => line.trim())
@@ -335,7 +339,7 @@ export const useClientsModule = () => {
             }
         }
 
-        const headers = parseCsvLine(lines[0]).map((header) => header.trim().toLowerCase())
+        const headers = parseCsvLine(lines[0]!).map((header) => header.trim().toLowerCase())
         const missingHeaders = requiredImportHeaders.filter((header) => !headers.includes(header))
 
         if (missingHeaders.length > 0) {
@@ -352,28 +356,29 @@ export const useClientsModule = () => {
             },
             {},
         )
+        const ci = (key: string): number => columnIndexMap[key] ?? 0
 
         const nextRows: ClientFormModel[] = []
         let skippedCount = 0
 
         for (let lineIndex = 1; lineIndex < lines.length; lineIndex += 1) {
-            const row = parseCsvLine(lines[lineIndex])
-            const code = row[columnIndexMap.code]?.trim().toUpperCase() ?? ''
-            const name = row[columnIndexMap.name]?.trim() ?? ''
-            const taxId = row[columnIndexMap.tax_id]?.trim() ?? ''
-            const segment = row[columnIndexMap.segment]?.trim() ?? ''
-            const contactName = row[columnIndexMap.contact_name]?.trim() ?? ''
-            const contactEmail = row[columnIndexMap.contact_email]?.trim().toLowerCase() ?? ''
-            const contactPhone = row[columnIndexMap.contact_phone]?.trim() ?? ''
-            const country = row[columnIndexMap.country]?.trim() ?? ''
-            const department = row[columnIndexMap.department]?.trim() ?? ''
-            const city = row[columnIndexMap.city]?.trim() ?? ''
-            const addressLine = row[columnIndexMap.address_line]?.trim() ?? ''
-            const addressReference = row[columnIndexMap.address_reference]?.trim() ?? ''
-            const website = row[columnIndexMap.website]?.trim() ?? ''
-            const googleMapsUrl = row[columnIndexMap.google_maps_url]?.trim() ?? ''
-            const statusValue = row[columnIndexMap.status]?.trim() ?? ''
-            const notes = row[columnIndexMap.notes]?.trim() ?? ''
+            const row = parseCsvLine(lines[lineIndex]!)
+            const code = row[ci('code')]?.trim().toUpperCase() ?? ''
+            const name = row[ci('name')]?.trim() ?? ''
+            const taxId = row[ci('tax_id')]?.trim() ?? ''
+            const segment = row[ci('segment')]?.trim() ?? ''
+            const contactName = row[ci('contact_name')]?.trim() ?? ''
+            const contactEmail = row[ci('contact_email')]?.trim().toLowerCase() ?? ''
+            const contactPhone = row[ci('contact_phone')]?.trim() ?? ''
+            const country = row[ci('country')]?.trim() ?? ''
+            const department = row[ci('department')]?.trim() ?? ''
+            const city = row[ci('city')]?.trim() ?? ''
+            const addressLine = row[ci('address_line')]?.trim() ?? ''
+            const addressReference = row[ci('address_reference')]?.trim() ?? ''
+            const website = row[ci('website')]?.trim() ?? ''
+            const googleMapsUrl = row[ci('google_maps_url')]?.trim() ?? ''
+            const statusValue = row[ci('status')]?.trim() ?? ''
+            const notes = row[ci('notes')]?.trim() ?? ''
 
             if (
                 !code ||
@@ -437,7 +442,7 @@ export const useClientsModule = () => {
         const fileContent = await selectedFile.text()
         const importResult = parseImportFileContent(fileContent)
 
-        if (!importResult.success || !('rows' in importResult)) {
+        if (!importResult.success) {
             toast.error(importResult.message)
             target.value = ''
             return

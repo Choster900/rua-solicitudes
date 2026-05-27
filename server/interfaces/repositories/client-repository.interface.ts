@@ -1,24 +1,20 @@
-import type { ClientStatus } from '../domain/client.interface'
-
 export interface ClientRecord {
     id: string
     code: string
     name: string
-    taxId: string
-    segment: string
-    contactName: string
-    contactEmail: string
-    contactPhone: string
-    country: string
-    department: string
-    city: string
-    addressLine: string
+    taxId: string | null
+    contactName: string | null
+    contactEmail: string | null
+    contactPhone: string | null
+    country: string | null
+    department: string | null
+    city: string | null
+    addressLine: string | null
     addressReference: string
-    website: string
-    googleMapsUrl: string
     notes: string
-    status: ClientStatus
+    isActive: boolean
+    createdAt: string
 }
 
-export type CreateClientInput = Omit<ClientRecord, 'id'>
+export type CreateClientInput = Omit<ClientRecord, 'id' | 'createdAt'>
 export type UpdateClientInput = Partial<CreateClientInput>

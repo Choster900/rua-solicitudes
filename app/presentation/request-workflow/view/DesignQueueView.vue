@@ -420,7 +420,9 @@
 
             <AssignDesignerModal
                 ref="assignModalRef"
-                :initial-designer-id="assignRequestSnapshot?.assignedDesignerId ?? null"
+                :initial-designer-id="
+                    assignRequestSnapshot?.assignedDesigners[0]?.designerId ?? null
+                "
                 :open="isAssignModalOpen"
                 :request-code="assignRequestSnapshot?.requestCode ?? ''"
                 @close="closeAssignModal"
@@ -484,18 +486,16 @@ const {
     myAssignedRows,
     sendToDesign,
     sendToQualityReview,
+    approveQualityReview,
+    rejectQualityReview,
     assignDesigner,
     removeDesignerAssignment,
+    duplicateRequest,
+    findRequestById,
     triggerImport,
     handleImportSelection,
     exportRequests,
     hydrateRequests,
-    assignDesigner,
-    submitToQuality,
-    approveRequest,
-    rejectRequest,
-    duplicateRequest,
-    findRequestById,
 } = useRequestsModule()
 
 const selectedRequestId = ref('')
@@ -529,7 +529,7 @@ const onRemoveDesigner = (requestId: string, designerId: string) => {
 }
 
 const artsCount = computed(() => inDesignRequests.value)
-const dummiesCount = computed(() => pendingAssignmentRequests.value)
+const dummiesCount = computed(() => draftRequests.value)
 const mechanicsCount = computed(() => highPriorityRequests.value)
 const pendingQualityCount = computed(
     () => tableRows.value.filter((row) => row.status !== 'APPROVED').length,
@@ -538,6 +538,33 @@ const pendingQualityCount = computed(
 const goToEditRequest = (requestId: string) => {
     void router.push(`/solicitudes/${requestId}/editar`)
 }
+
+const WORKFLOW_STEPS = ['Arte final', 'Mockup 3D', 'Plano de troquel']
+
+const isStepChecked = (rowIndex: number, stepIndex: number): boolean => {
+    const row = displayRows.value[rowIndex]
+    if (!row) return false
+    const step = WORKFLOW_STEPS[stepIndex]
+    return Array.isArray(row.assignedDesigners) && row.assignedDesigners.length > 0
+        ? ['IN_QUALITY_REVIEW', 'QUALITY_APPROVED', 'APPROVED'].includes(row.status)
+        : false
+}
+
+const STATUS_CLASSES: Record<string, string> = {
+    CREATED: 'border-outline/40 text-outline-variant',
+    PENDING_DESIGN_REVIEW: 'border-yellow-500/40 bg-yellow-500/10 text-yellow-300',
+    ASSIGNED_TO_DESIGNER: 'border-blue-400/40 bg-blue-400/10 text-blue-300',
+    IN_DESIGN: 'border-primary/40 bg-primary/10 text-primary-fixed-dim',
+    SENT_TO_QUALITY: 'border-purple-400/40 bg-purple-400/10 text-purple-300',
+    QUALITY_REJECTED: 'border-red-400/40 bg-red-400/10 text-red-300',
+    QUALITY_APPROVED: 'border-emerald-400/40 bg-emerald-400/10 text-emerald-300',
+    APPROVED: 'border-emerald-400/40 bg-emerald-400/10 text-emerald-300',
+    DELIVERED_TO_SALES: 'border-teal-400/40 bg-teal-400/10 text-teal-300',
+    CANCELLED: 'border-outline/30 bg-outline/5 text-outline-variant',
+}
+
+const resolveStatusClass = (status: string): string =>
+    STATUS_CLASSES[status] ?? 'border-outline/40 text-outline-variant'
 
 const assignModalRef = ref<InstanceType<typeof AssignDesignerModal> | null>(null)
 const isAssignModalOpen = ref(false)
@@ -557,13 +584,13 @@ const closeAssignModal = () => {
     assignModalRef.value?.resetSubmitting()
 }
 
-const confirmAssignment = async (designerId: string) => {
+const confirmAssignment = async (designerId: string, designerName: string) => {
     if (!assignRequestId.value) {
         closeAssignModal()
         return
     }
 
-    const succeeded = await assignDesigner(assignRequestId.value, designerId)
+    const succeeded = await assignDesigner(assignRequestId.value, designerId, designerName)
     assignModalRef.value?.resetSubmitting()
 
     if (succeeded) {
@@ -582,7 +609,7 @@ const reviewModalTitleSuffix = computed(() =>
 )
 
 const handleSubmitToQuality = async (requestId: string) => {
-    await submitToQuality(requestId)
+    await sendToQualityReview(requestId)
 }
 
 const handleApprove = (requestId: string) => {
@@ -595,12 +622,12 @@ const closeApproveModal = () => {
     reviewRequestId.value = ''
 }
 
-const confirmApprove = async (comment: string) => {
+const confirmApprove = async () => {
     if (!reviewRequestId.value) {
         closeApproveModal()
         return
     }
-    const succeeded = await approveRequest(reviewRequestId.value, comment)
+    const succeeded = await approveQualityReview(reviewRequestId.value)
     if (succeeded) {
         closeApproveModal()
     }
@@ -616,12 +643,12 @@ const closeRejectModal = () => {
     reviewRequestId.value = ''
 }
 
-const confirmReject = async (comment: string) => {
+const confirmReject = async () => {
     if (!reviewRequestId.value) {
         closeRejectModal()
         return
     }
-    const succeeded = await rejectRequest(reviewRequestId.value, comment, '')
+    const succeeded = await rejectQualityReview(reviewRequestId.value)
     if (succeeded) {
         closeRejectModal()
     }

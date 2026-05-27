@@ -8,7 +8,7 @@ export interface CreateAuthSystemUserInput {
     email: string
     phone?: string
     roleCode: RoleCode
-    department: string
+    department: string | null
     status: UserStatus
 }
 
@@ -18,7 +18,7 @@ export interface CreatedAuthSystemUserShape {
     fullName: string
     email: string
     phone: string
-    department: string
+    department: string | null
     status: UserStatus
     lastAccessAt: null
     mustChangePassword: boolean

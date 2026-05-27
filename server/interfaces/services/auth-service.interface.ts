@@ -15,7 +15,7 @@ export interface LoginTokenPayload extends Record<string, unknown> {
     email: string
     fullName: string
     employeeCode: string
-    department: string
+    department: string | null
     primaryRole: RoleCode | null
     roleCodes: RoleCode[]
     permissionCodes: string[]
@@ -33,7 +33,7 @@ export interface AuthLoginResponse {
         employeeCode: string
         fullName: string
         email: string
-        department: string
+        department: string | null
         primaryRole: SessionRoleSummary | null
         roles: SessionRoleSummary[]
         permissions: string[]

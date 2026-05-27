@@ -6,52 +6,149 @@ datasource db {
   provider = "postgresql"
 }
 
+/**
+ * =========================
+ * ENUMS
+ * =========================
+ */
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum RequestStatus {
+  CREATED
+  PENDING_DESIGN_REVIEW
+  ASSIGNED_TO_DESIGNER
+  IN_DESIGN
+  SENT_TO_QUALITY
+  QUALITY_REJECTED
+  QUALITY_APPROVED
+  DELIVERED_TO_SALES
+  CANCELLED
+}
+
+enum RequestPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum VersionStatus {
+  IN_DESIGN
+  SENT_TO_QUALITY
+  REJECTED
+  APPROVED
+  CLOSED
+}
+
+enum VersionReason {
+  INITIAL
+  QUALITY_REJECTION
+  MANUAL_CORRECTION
+}
+
+enum AssignmentStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum QualityDecision {
+  APPROVED
+  REJECTED
+}
+
+enum FileOrigin {
+  SALES
+  DESIGN
+  QUALITY
+}
+
+enum FileCategory {
+  SALES_REFERENCE
+  DESIGN_SOURCE
+  DESIGN_OUTPUT
+  QUALITY_EVIDENCE
+  FINAL_DELIVERABLE
+  OTHER
+}
+
+enum WorkflowAction {
+  CREATED
+  REVIEWED_BY_DESIGN_LEAD
+  ASSIGNED_DESIGNER
+  SENT_TO_QUALITY
+  QUALITY_REJECTED
+  VERSION_CREATED
+  QUALITY_APPROVED
+  DELIVERED_TO_SALES
+  CANCELLED
+}
+
+/**
+ * =========================
+ * AUTH
+ * =========================
+ */
+
 model AuthUser {
   id                 String     @id @default(cuid())
   employeeCode       String     @unique
   fullName           String
   email              String     @unique
   phone              String     @default("")
-  department         String
-  status             String
+  department         String?
+  status             UserStatus @default(ACTIVE)
   passwordHash       String
   mustChangePassword Boolean    @default(true)
   lastAccessAt       DateTime?
-  createdAt          DateTime   @default(now())
-  updatedAt          DateTime   @updatedAt
-  userRoles          UserRole[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userRoles UserRole[]
+
+  // Solicitudes creadas por el vendedor
+  salesRequests DesignRequest[] @relation("RequestSeller")
+
+  // Versiones creadas por usuarios
+  createdVersions DesignRequestVersion[] @relation("VersionCreatedBy")
+
+  // Asignaciones de diseño
+  designerAssignments RequestDesignerAssignment[] @relation("AssignedDesigner")
+  assignmentsMade     RequestDesignerAssignment[] @relation("AssignedBy")
+
+  // Calidad
+  qualityReviews QualityReview[] @relation("QualityReviewedBy")
+
+  // Archivos
+  uploadedFiles RequestFile[] @relation("FileUploadedBy")
+
+  // Historial
+  workflowEvents RequestWorkflowEvent[] @relation("WorkflowActor")
 
   @@index([status])
+  @@index([department])
 }
 
 model Role {
-  id              String           @id @default(uuid())
-  name            String           @unique
-  code            String           @unique
-  description     String?
-  isSystem        Boolean          @default(false)
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  userRoles       UserRole[]
-  rolePermissions RolePermission[]
+  id          String  @id @default(uuid())
+  name        String  @unique
+  code        String  @unique
+  description String?
+  isSystem    Boolean @default(false)
 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userRoles UserRole[]
+
+  @@index([code])
   @@index([isSystem])
-}
-
-model Permission {
-  id              String           @id @default(uuid())
-  name            String
-  code            String           @unique
-  resource        String
-  action          String
-  description     String?
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  rolePermissions RolePermission[]
-
-  @@unique([resource, action])
-  @@index([resource])
-  @@index([action])
 }
 
 model UserRole {
@@ -59,177 +156,318 @@ model UserRole {
   userId     String
   roleId     String
   assignedAt DateTime @default(now())
-  assignedBy String?
-  user       AuthUser @relation(fields: [userId], references: [id], onDelete: Cascade)
-  role       Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  user AuthUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
 
   @@unique([userId, roleId])
+  @@index([userId])
   @@index([roleId])
-  @@index([assignedBy])
 }
 
-model RolePermission {
-  id           String     @id @default(uuid())
-  roleId       String
-  permissionId String
-  grantedAt    DateTime   @default(now())
-  grantedBy    String?
-  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
-  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
-
-  @@unique([roleId, permissionId])
-  @@index([permissionId])
-  @@index([grantedBy])
-}
+/**
+ * =========================
+ * CLIENTES
+ * =========================
+ */
 
 model Client {
-  id               String   @id @default(cuid())
-  code             String   @unique
-  name             String
-  taxId            String   @unique
-  segment          String
-  contactName      String
-  contactEmail     String
-  contactPhone     String
-  country          String
-  department       String
-  city             String
-  addressLine      String
-  addressReference String   @default("")
-  website          String   @default("")
-  googleMapsUrl    String   @default("")
-  notes            String   @default("")
-  status           String   @default("Prospecto")
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id    String  @id @default(cuid())
+  code  String  @unique
+  name  String
+  taxId String? @unique
 
-  @@index([status])
+  contactName  String?
+  contactEmail String?
+  contactPhone String?
+
+  country          String?
+  department       String?
+  city             String?
+  addressLine      String?
+  addressReference String  @default("")
+
+  notes    String  @default("")
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  designRequests DesignRequest[]
+
+  @@index([name])
+  @@index([isActive])
 }
 
-model Vendor {
-  id                  String   @id @default(cuid())
-  code                String   @unique
-  fullName            String
-  zone                String
-  phone               String
-  email               String
-  assignedClientCodes Json
-  monthlySalesUsd     Int
-  status              String
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
-
-  @@index([status])
-}
+/**
+ * =========================
+ * SOLICITUD PRINCIPAL
+ * =========================
+ */
 
 model DesignRequest {
-  id          String @id @default(cuid())
-  requestCode String @unique
+  id   String @id @default(cuid())
+  code String @unique
 
-  // Quién creó la solicitud (vendedor)
-  createdById String?
-  requestedBy String
-  vendorName  String
+  // Cliente para quien se hace la solicitud
+  clientId String
 
-  // Contexto del cliente
-  clientName  String
+  // Vendedor que creó la solicitud
+  sellerId String
+
+  title       String
   brandName   String
   productName String
 
-  // Especificaciones técnicas
-  materialType      String
-  materialWeight    String
-  fluteDirection    String   @default("")
-  outerLiner        String   @default("")
-  innerLiner        String   @default("")
-  printTechnique    String
-  colorMode         String
-  pantoneReferences String   @default("")
-  finishingOptions  Json
-  deliverables      Json
-  dimensions        String
-  quantity          Int
-  requiredDate      DateTime
-  priority          String
-  status            String
-  designInstructions   String          @default("")
-  visualReferences     String          @default("")
-  requireDieCut        Boolean         @default(false)
-  requireMockup        Boolean         @default(false)
-  attachments          Json
-  createdAt            DateTime        @default(now())
-  updatedAt            DateTime        @updatedAt
-  workflow             RequestWorkflow?
-  designerAssignments  RequestDesignerAssignment[]
+  priority RequestPriority @default(MEDIUM)
+  status   RequestStatus   @default(CREATED)
 
+  requiredDate DateTime?
+  closedAt     DateTime?
+  cancelledAt  DateTime?
+
+  currentVersionId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  client Client   @relation(fields: [clientId], references: [id])
+  seller AuthUser @relation("RequestSeller", fields: [sellerId], references: [id])
+
+  currentVersion DesignRequestVersion? @relation("CurrentRequestVersion", fields: [currentVersionId], references: [id], onDelete: SetNull)
+
+  versions       DesignRequestVersion[] @relation("RequestVersions")
+  files          RequestFile[]
+  workflowEvents RequestWorkflowEvent[]
+
+  @@index([clientId])
+  @@index([sellerId])
   @@index([status])
   @@index([priority])
+  @@index([requiredDate])
+  @@index([createdAt])
 }
+
+/**
+ * =========================
+ * VERSIONES DE LA SOLICITUD
+ * =========================
+ */
+
+model DesignRequestVersion {
+  id String @id @default(cuid())
+
+  requestId     String
+  versionNumber Int
+
+  basedOnVersionId String?
+  createdById      String
+
+  reason VersionReason @default(INITIAL)
+  status VersionStatus @default(IN_DESIGN)
+
+  materialType   String?
+  materialWeight String?
+  closureType    String?
+  fluteType      String?
+  fluteDirection String?
+
+  outerLiner String?
+  innerLiner String?
+
+  printTechnique    String?
+  colorMode         String?
+  pantoneReferences String?
+
+  length        Decimal? @db.Decimal(10, 2)
+  width         Decimal? @db.Decimal(10, 2)
+  height        Decimal? @db.Decimal(10, 2)
+  dimensionUnit String   @default("cm")
+
+  quantity Int?
+
+  finishingOptions String[] @default([])
+  deliverables     String[] @default([])
+
+  designInstructions String @default("")
+  visualReferences   String @default("")
+
+  requireDieCut Boolean @default(false)
+  requireMockup Boolean @default(false)
+
+  // Checklist interno de diseño antes de enviar a calidad
+  artCompleted        Boolean @default(false)
+  mechanicalCompleted Boolean @default(false)
+  dummyCompleted      Boolean @default(false)
+
+  artCompletedAt        DateTime?
+  mechanicalCompletedAt DateTime?
+  dummyCompletedAt      DateTime?
+
+  submittedToQualityAt DateTime?
+  approvedAt           DateTime?
+  rejectedAt           DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  request   DesignRequest @relation("RequestVersions", fields: [requestId], references: [id], onDelete: Cascade)
+  createdBy AuthUser      @relation("VersionCreatedBy", fields: [createdById], references: [id])
+
+  basedOnVersion  DesignRequestVersion?  @relation("VersionHistory", fields: [basedOnVersionId], references: [id], onDelete: SetNull)
+  derivedVersions DesignRequestVersion[] @relation("VersionHistory")
+
+  currentForRequests DesignRequest[] @relation("CurrentRequestVersion")
+
+  assignments    RequestDesignerAssignment[]
+  files          RequestFile[]
+  qualityReviews QualityReview[]
+  workflowEvents RequestWorkflowEvent[]
+
+  @@unique([requestId, versionNumber])
+  @@index([requestId])
+  @@index([status])
+  @@index([basedOnVersionId])
+  @@index([createdById])
+}
+
+/**
+ * =========================
+ * ASIGNACIÓN DE DISEÑADORES
+ * =========================
+ */
 
 model RequestDesignerAssignment {
-  id           String        @id @default(cuid())
-  requestId    String
+  id String @id @default(cuid())
+
+  versionId    String
   designerId   String
-  designerName String        @default("")
-  assignedAt   DateTime      @default(now())
-  assignedById String?
-  request      DesignRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  assignedById String
 
-  @@unique([requestId, designerId])
-  @@index([requestId])
+  isLeadDesigner Boolean @default(false)
+
+  status AssignmentStatus @default(ACTIVE)
+  notes  String           @default("")
+
+  assignedAt  DateTime  @default(now())
+  completedAt DateTime?
+  cancelledAt DateTime?
+
+  version    DesignRequestVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  designer   AuthUser             @relation("AssignedDesigner", fields: [designerId], references: [id])
+  assignedBy AuthUser             @relation("AssignedBy", fields: [assignedById], references: [id])
+
+  @@unique([versionId, designerId])
+  @@index([versionId])
   @@index([designerId])
+  @@index([assignedById])
+  @@index([status])
 }
 
-model RequestWorkflow {
-  id           String        @id @default(cuid())
-  requestId    String        @unique
-  stage        String
-  checklist    Json
-  observations Json
-  auditTrail   Json
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  request      DesignRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+/**
+ * =========================
+ * REVISIÓN DE CALIDAD
+ * =========================
+ */
 
-  @@index([stage])
+model QualityReview {
+  id String @id @default(cuid())
+
+  versionId    String
+  reviewedById String
+
+  decision            QualityDecision
+  generalObservations String          @default("")
+
+  checklist Json?
+
+  reviewedAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  version    DesignRequestVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  reviewedBy AuthUser             @relation("QualityReviewedBy", fields: [reviewedById], references: [id])
+
+  @@index([versionId])
+  @@index([reviewedById])
+  @@index([decision])
+  @@index([reviewedAt])
 }
 
-model RequestClosureType {
-  id        String   @id @default(cuid())
-  name      String   @unique
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+/**
+ * =========================
+ * ARCHIVOS
+ * =========================
+ */
 
+model RequestFile {
+  id String @id @default(cuid())
+
+  requestId String
+  versionId String?
+
+  uploadedById String
+
+  origin   FileOrigin
+  category FileCategory
+
+  originalName  String
+  mimeType      String
+  sizeBytes     BigInt
+  base64Content String   @db.Text
+
+  notes    String  @default("")
+  isActive Boolean @default(true)
+
+  createdAt DateTime  @default(now())
+  deletedAt DateTime?
+
+  request    DesignRequest         @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  version    DesignRequestVersion? @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  uploadedBy AuthUser              @relation("FileUploadedBy", fields: [uploadedById], references: [id])
+
+  @@index([requestId])
+  @@index([versionId])
+  @@index([uploadedById])
+  @@index([origin])
+  @@index([category])
   @@index([isActive])
+  @@index([createdAt])
 }
 
-model RequestFluteType {
-  id        String   @id @default(cuid())
-  name      String   @unique
-  isActive  Boolean  @default(true)
+/**
+ * =========================
+ * HISTORIAL DEL FLUJO
+ * =========================
+ */
+
+model RequestWorkflowEvent {
+  id String @id @default(cuid())
+
+  requestId String
+  versionId String?
+
+  actorId String?
+
+  action WorkflowAction
+
+  fromRequestStatus RequestStatus?
+  toRequestStatus   RequestStatus?
+
+  fromVersionStatus VersionStatus?
+  toVersionStatus   VersionStatus?
+
+  comments String @default("")
+  metadata Json?
+
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 
-  @@index([isActive])
-}
+  request DesignRequest         @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  version DesignRequestVersion? @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  actor   AuthUser?             @relation("WorkflowActor", fields: [actorId], references: [id])
 
-model RequestFluteDirection {
-  id        String   @id @default(cuid())
-  name      String   @unique
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([isActive])
-}
-
-model RequestFinishingOption {
-  id        String   @id @default(cuid())
-  name      String   @unique
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([isActive])
+  @@index([requestId])
+  @@index([versionId])
+  @@index([actorId])
+  @@index([action])
+  @@index([createdAt])
 }

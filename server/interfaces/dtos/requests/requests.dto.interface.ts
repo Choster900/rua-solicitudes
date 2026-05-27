@@ -1,67 +1,45 @@
-import type {
-    RequestAttachment,
-    RequestPriority,
-    RequestStatus,
-} from '../../domain/request.interface'
+import type { RequestPriority } from '../../domain/request.interface'
 
-export interface CreateRequestDto {
-    requestCode?: string
-    clientName?: string
-    brandName?: string
-    productName?: string
-    requestedBy?: string
-    vendorName?: string
+export interface CreateRequestVersionDto {
     materialType?: string
     materialWeight?: string
+    closureType?: string
+    fluteType?: string
     fluteDirection?: string
     outerLiner?: string
     innerLiner?: string
     printTechnique?: string
     colorMode?: string
     pantoneReferences?: string
+    length?: number
+    width?: number
+    height?: number
+    dimensionUnit?: string
+    quantity?: number
     finishingOptions?: string[]
     deliverables?: string[]
-    dimensions?: string
-    quantity?: number
-    requiredDate?: string
-    priority?: RequestPriority
-    status?: RequestStatus
     designInstructions?: string
     visualReferences?: string
-    requireArt?: boolean
     requireDieCut?: boolean
     requireMockup?: boolean
-    attachments?: RequestAttachment[]
 }
 
-export interface UpdateRequestDto {
-    requestCode?: string
-    clientName?: string
+export interface CreateRequestSampleFileDto {
+    base64Content: string
+    mimeType: string
+    originalName: string
+    notes?: string
+}
+
+export interface CreateRequestDto {
+    clientId: string
+    title: string
     brandName?: string
-    productName?: string
-    requestedBy?: string
-    vendorName?: string
-    materialType?: string
-    materialWeight?: string
-    fluteDirection?: string
-    outerLiner?: string
-    innerLiner?: string
-    printTechnique?: string
-    colorMode?: string
-    pantoneReferences?: string
-    finishingOptions?: string[]
-    deliverables?: string[]
-    dimensions?: string
-    quantity?: number
-    requiredDate?: string
+    productName: string
     priority?: RequestPriority
-    status?: RequestStatus
-    designInstructions?: string
-    visualReferences?: string
-    requireArt?: boolean
-    requireDieCut?: boolean
-    requireMockup?: boolean
-    attachments?: RequestAttachment[]
+    requiredDate?: string
+    version?: CreateRequestVersionDto
+    sampleFile?: CreateRequestSampleFileDto
 }
 
 export interface AssignDesignerDto {

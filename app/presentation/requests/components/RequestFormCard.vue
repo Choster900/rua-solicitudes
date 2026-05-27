@@ -490,7 +490,6 @@ import {
 } from '~/presentation/shared/composables/forms/useFormValidation'
 import { useApiClient } from '~/presentation/shared/composables/useApiClient'
 import { useAppToast } from '~/presentation/shared/composables/useAppToast'
-import { useApiClient } from '~/presentation/shared/composables/useApiClient'
 import { getAuthTokenProfile } from '~/presentation/auth/utils/auth-token.util'
 import { toRequestAttachmentFromFile } from '~/presentation/requests/composables/useRequestsModule'
 import type { Client } from '~/presentation/interfaces/clients/client.interface'
@@ -515,8 +514,8 @@ const emit = defineEmits<{
 
 const apiClient = useApiClient()
 const toast = useAppToast()
-const apiClient = useApiClient()
 const attachmentInputRef = ref<HTMLInputElement | null>(null)
+const currentEmployeeCode = ref('')
 
 const accessToken = useCookie<string | null>('access_token')
 const currentUserName = computed(() => {
@@ -557,8 +556,8 @@ const formModel = reactive<DesignRequestFormModel>({
     dimensions: '',
     quantity: '',
     requiredDate: '',
-    priority: 'Media',
-    status: 'PENDING_ASSIGNMENT',
+    priority: 'MEDIUM',
+    status: 'CREATED',
     designInstructions: '',
     visualReferences: '',
     requireArt: true,

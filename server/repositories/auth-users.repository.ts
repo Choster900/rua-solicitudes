@@ -21,7 +21,7 @@ type PrismaAuthUserWithRoles = {
     fullName: string
     email: string
     phone: string
-    department: string
+    department: string | null
     status: string
     passwordHash: string
     mustChangePassword: boolean
@@ -131,7 +131,7 @@ export interface AddAuthUserInput {
     fullName: string
     email: string
     phone: string
-    department: string
+    department: string | null
     status: AuthUserRecord['status']
     passwordHash: string
     mustChangePassword: boolean
@@ -151,7 +151,7 @@ export const addAuthUser = async (payload: AddAuthUserInput) => {
             email: payload.email,
             phone: payload.phone,
             department: payload.department,
-            status: payload.status,
+            status: payload.status as 'ACTIVE' | 'INACTIVE' | 'SUSPENDED',
             passwordHash: payload.passwordHash,
             mustChangePassword: payload.mustChangePassword,
             userRoles: {
@@ -192,7 +192,9 @@ export const updateAuthUser = async (userId: string, patch: UpdateAuthUserPatch)
             ...(patch.email !== undefined ? { email: patch.email } : {}),
             ...(patch.phone !== undefined ? { phone: patch.phone } : {}),
             ...(patch.department !== undefined ? { department: patch.department } : {}),
-            ...(patch.status !== undefined ? { status: patch.status } : {}),
+            ...(patch.status !== undefined
+                ? { status: patch.status as 'ACTIVE' | 'INACTIVE' | 'SUSPENDED' }
+                : {}),
             ...(patch.passwordHash !== undefined ? { passwordHash: patch.passwordHash } : {}),
             ...(patch.mustChangePassword !== undefined
                 ? { mustChangePassword: patch.mustChangePassword }

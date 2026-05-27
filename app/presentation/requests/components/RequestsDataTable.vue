@@ -212,7 +212,9 @@ const canSubmitRow = (rowId: string) => {
         return false
     }
     const assignableStatus = ['ASSIGNED', 'IN_DESIGN', 'REJECTED'].includes(row.status)
-    const ownsRow = !props.currentDesignerId || row.assignedDesignerId === props.currentDesignerId
+    const ownsRow =
+        !props.currentDesignerId ||
+        row.assignedDesigners.some((a) => a.designerId === props.currentDesignerId)
     return assignableStatus && ownsRow
 }
 

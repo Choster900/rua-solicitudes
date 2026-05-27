@@ -46,14 +46,8 @@ const generateId = (prefix: string) => {
 }
 
 const toPriority = (sourcePriority: DesignRequest['priority']): WorkflowPriority => {
-    if (sourcePriority === 'Alta') {
-        return 'HIGH'
-    }
-
-    if (sourcePriority === 'Media') {
-        return 'MEDIUM'
-    }
-
+    if (sourcePriority === 'HIGH' || sourcePriority === 'URGENT') return 'HIGH'
+    if (sourcePriority === 'MEDIUM') return 'MEDIUM'
     return 'LOW'
 }
 
@@ -113,9 +107,10 @@ const stageLabelMap: Record<WorkflowStage, string> = {
 }
 
 const toInitialWorkflowStage = (status: DesignRequest['status']): WorkflowStage => {
-    if (status === 'APPROVED' || status === 'Aprobada') return 'APPROVED'
-    if (status === 'IN_QUALITY_REVIEW' || status === 'En revisión') return 'QUALITY_IN_REVIEW'
-    if (status === 'ASSIGNED' || status === 'En diseño') return 'DESIGN_IN_PROGRESS'
+    if (status === 'QUALITY_APPROVED' || status === 'DELIVERED_TO_SALES') return 'APPROVED'
+    if (status === 'SENT_TO_QUALITY' || status === 'QUALITY_REJECTED') return 'QUALITY_IN_REVIEW'
+    if (status === 'ASSIGNED_TO_DESIGNER' || status === 'IN_DESIGN') return 'DESIGN_IN_PROGRESS'
+    if (status === 'PENDING_DESIGN_REVIEW') return 'READY_FOR_QUALITY'
     return 'NEW'
 }
 
@@ -227,8 +222,8 @@ export const useRequestWorkflowStore = defineStore('request-workflow', {
                 requestedBy: request.requestedBy,
                 vendorName: request.vendorName,
                 priority: toPriority(request.priority),
-                requiredDate: request.requiredDate,
-                slaHours: toSlaHours(request.requiredDate),
+                requiredDate: request.requiredDate ?? '',
+                slaHours: toSlaHours(request.requiredDate ?? ''),
                 stage: toInitialWorkflowStage(request.status),
                 evidenceFiles: request.attachments.map((attachment) => ({
                     id: attachment.id,

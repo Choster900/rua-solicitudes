@@ -1,141 +1,59 @@
-import type { RequestPriority, RequestStatus } from '../../interfaces/domain/request.interface'
-import { REQUEST_PRIORITIES, REQUEST_STATUSES } from '../../interfaces/domain/request.interface'
 import {
-    findDesignRequestByCode,
     findDesignRequestById,
     updateDesignRequest,
 } from '../../repositories/design-requests.repository'
-import { parseUpdateRequestDto } from '../dtos/requests'
-
-const allowedPriorities: RequestPriority[] = [...REQUEST_PRIORITIES]
-const allowedStatuses: RequestStatus[] = [...REQUEST_STATUSES]
+import { requireSessionUser } from '../../utils/auth-session.util'
+import { REQUEST_STATUSES, REQUEST_PRIORITIES } from '../../interfaces/domain/request.interface'
 
 export default defineEventHandler(async (event) => {
-    const requestId = String(getRouterParam(event, 'id') ?? '').trim()
-    const body = parseUpdateRequestDto(await readBody(event))
+    requireSessionUser(event)
 
+    const requestId = String(getRouterParam(event, 'id') ?? '').trim()
     if (!requestId) {
-        throw createError({
-            statusCode: 400,
-            statusMessage: 'ID de solicitud inválido.',
-        })
+        throw createError({ statusCode: 400, statusMessage: 'ID de solicitud inválido.' })
     }
 
     const sourceRequest = await findDesignRequestById(requestId)
-
     if (!sourceRequest) {
-        throw createError({
-            statusCode: 404,
-            statusMessage: 'Solicitud no encontrada.',
-        })
+        throw createError({ statusCode: 404, statusMessage: 'Solicitud no encontrada.' })
     }
 
-    const requestCode = body.requestCode?.trim().toUpperCase() ?? sourceRequest.requestCode
-    const clientName = body.clientName?.trim() ?? sourceRequest.clientName
-    const brandName = body.brandName?.trim() ?? sourceRequest.brandName
-    const productName = body.productName?.trim() ?? sourceRequest.productName
-    const requestedBy = body.requestedBy?.trim() ?? sourceRequest.requestedBy
-    const vendorName = body.vendorName?.trim() ?? sourceRequest.vendorName
-    const materialType = body.materialType?.trim() ?? sourceRequest.materialType
-    const materialWeight = body.materialWeight?.trim() ?? sourceRequest.materialWeight
-    const fluteDirection = body.fluteDirection?.trim() ?? sourceRequest.fluteDirection
-    const outerLiner = body.outerLiner?.trim() ?? sourceRequest.outerLiner
-    const innerLiner = body.innerLiner?.trim() ?? sourceRequest.innerLiner
-    const printTechnique = body.printTechnique?.trim() ?? sourceRequest.printTechnique
-    const colorMode = body.colorMode?.trim() ?? sourceRequest.colorMode
-    const pantoneReferences = body.pantoneReferences?.trim() ?? sourceRequest.pantoneReferences
-    const finishingOptions = Array.isArray(body.finishingOptions)
-        ? body.finishingOptions
-        : sourceRequest.finishingOptions
-    const deliverables = Array.isArray(body.deliverables)
-        ? body.deliverables
-        : sourceRequest.deliverables
-    const dimensions = body.dimensions?.trim() ?? sourceRequest.dimensions
-    const quantity = Number(body.quantity ?? sourceRequest.quantity)
-    const requiredDate = body.requiredDate?.trim() ?? sourceRequest.requiredDate
-    const priority = body.priority ?? sourceRequest.priority
-    const status = body.status ?? sourceRequest.status
-    const designInstructions = body.designInstructions?.trim() ?? sourceRequest.designInstructions
-    const visualReferences = body.visualReferences?.trim() ?? sourceRequest.visualReferences
-    const requireArt =
-        typeof body.requireArt === 'boolean' ? body.requireArt : sourceRequest.requireArt
-    const requireDieCut =
-        typeof body.requireDieCut === 'boolean' ? body.requireDieCut : sourceRequest.requireDieCut
-    const requireMockup =
-        typeof body.requireMockup === 'boolean' ? body.requireMockup : sourceRequest.requireMockup
-    const attachments = Array.isArray(body.attachments)
-        ? body.attachments
-        : sourceRequest.attachments
+    const body = (await readBody(event)) as {
+        status?: string
+        priority?: string
+        title?: string
+        brandName?: string
+        productName?: string
+        requiredDate?: string
+    } | null
 
-    if (
-        !clientName ||
-        !productName ||
-        !requestedBy ||
-        !vendorName ||
-        !materialType ||
-        !printTechnique ||
-        !colorMode ||
-        !dimensions ||
-        !requiredDate ||
-        !Number.isFinite(quantity) ||
-        quantity <= 0
-    ) {
+    const data: Record<string, unknown> = {}
+
+    if (body?.status !== undefined) {
+        if (!REQUEST_STATUSES.includes(body.status as never)) {
+            throw createError({ statusCode: 400, statusMessage: 'Estado no válido.' })
+        }
+        data.status = body.status
+    }
+
+    if (body?.priority !== undefined) {
+        if (!REQUEST_PRIORITIES.includes(body.priority as never)) {
+            throw createError({ statusCode: 400, statusMessage: 'Prioridad no válida.' })
+        }
+        data.priority = body.priority
+    }
+
+    if (body?.title) data.title = body.title.trim()
+    if (body?.brandName !== undefined) data.brandName = body.brandName.trim()
+    if (body?.productName) data.productName = body.productName.trim()
+    if (body?.requiredDate) data.requiredDate = new Date(body.requiredDate)
+
+    if (Object.keys(data).length === 0) {
         throw createError({
             statusCode: 400,
-            statusMessage: 'Debes completar los campos requeridos para actualizar la solicitud.',
+            statusMessage: 'No se enviaron campos para actualizar.',
         })
     }
 
-    if (!allowedPriorities.includes(priority)) {
-        throw createError({
-            statusCode: 400,
-            statusMessage: 'Prioridad no válida.',
-        })
-    }
-
-    if (!allowedStatuses.includes(status)) {
-        throw createError({
-            statusCode: 400,
-            statusMessage: 'Estado no válido.',
-        })
-    }
-
-    const duplicatedRequest = await findDesignRequestByCode(requestCode)
-
-    if (duplicatedRequest && duplicatedRequest.id !== requestId) {
-        throw createError({
-            statusCode: 409,
-            statusMessage: `Ya existe una solicitud con el código ${requestCode}.`,
-        })
-    }
-
-    return await updateDesignRequest(requestId, {
-        requestCode,
-        clientName,
-        brandName,
-        productName,
-        requestedBy,
-        vendorName,
-        materialType,
-        materialWeight,
-        fluteDirection,
-        outerLiner,
-        innerLiner,
-        printTechnique,
-        colorMode,
-        pantoneReferences,
-        finishingOptions,
-        deliverables,
-        dimensions,
-        quantity: Math.floor(quantity),
-        requiredDate,
-        priority,
-        status,
-        designInstructions,
-        visualReferences,
-        requireArt,
-        requireDieCut,
-        requireMockup,
-        attachments,
-    })
+    return await updateDesignRequest(requestId, data)
 })

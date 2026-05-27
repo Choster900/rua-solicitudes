@@ -1,6 +1,6 @@
 import type { RoleCode, UserType } from '../domain/user.interface'
 
-export type AuthUserStatus = 'Activo' | 'Pendiente' | 'Bloqueado'
+export type AuthUserStatus = 'ACTIVE' | 'INACTIVE' | 'SUSPENDED'
 
 export interface AuthUserRoleAssignment {
     roleId: string
@@ -14,7 +14,7 @@ export interface AuthUserRecord {
     fullName: string
     email: string
     phone: string
-    department: string
+    department: string | null
     status: AuthUserStatus
     passwordHash: string
     mustChangePassword: boolean

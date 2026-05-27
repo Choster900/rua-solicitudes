@@ -1,4 +1,3 @@
-import { parseAssignDesignerDto } from '../../dtos/requests'
 import {
     addDesignerAssignment,
     findDesignRequestById,
@@ -6,40 +5,63 @@ import {
 import { requireRole } from '../../../utils/require-permission.util'
 
 export default defineEventHandler(async (event) => {
-    requireRole(event, ['admin', 'disenador_jefe'])
+    const sessionUser = requireRole(event, ['admin', 'disenador_jefe'])
 
     const requestId = String(getRouterParam(event, 'id') ?? '').trim()
-
     if (!requestId) {
         throw createError({ statusCode: 400, statusMessage: 'ID de solicitud inválido.' })
     }
 
-    const body = parseAssignDesignerDto(await readBody(event))
+    const body = (await readBody(event)) as { designerIds?: unknown } | null
+    const designerIds = Array.isArray(body?.designerIds)
+        ? body.designerIds.filter(
+              (id): id is string => typeof id === 'string' && id.trim().length > 0,
+          )
+        : []
+
+    if (!designerIds.length) {
+        throw createError({
+            statusCode: 400,
+            statusMessage: 'Debes enviar al menos un designerId en el arreglo designerIds.',
+        })
+    }
 
     const request = await findDesignRequestById(requestId)
-
     if (!request) {
         throw createError({ statusCode: 404, statusMessage: 'Solicitud no encontrada.' })
     }
 
-    const assignableStatuses = new Set(['PENDING_ASSIGNMENT', 'ASSIGNED'])
-
-    if (!assignableStatuses.has(request.status)) {
+    const assignableStatuses: string[] = [
+        'CREATED',
+        'PENDING_DESIGN_REVIEW',
+        'ASSIGNED_TO_DESIGNER',
+    ]
+    if (!assignableStatuses.includes(request.status)) {
         throw createError({
             statusCode: 422,
             statusMessage:
-                'Solo se pueden asignar diseñadores a solicitudes en estado Pendiente de Asignación o Asignada.',
+                'Solo se pueden asignar diseñadores a solicitudes pendientes o asignadas.',
         })
     }
 
-    const alreadyAssigned = request.assignedDesigners.some((a) => a.designerId === body.designerId)
+    const alreadyAssignedIds = new Set(
+        request.currentVersion?.assignments.map((a) => a.designerId) ?? [],
+    )
 
-    if (alreadyAssigned) {
+    const toAssign = designerIds.filter((id) => !alreadyAssignedIds.has(id))
+
+    if (!toAssign.length) {
         throw createError({
             statusCode: 409,
-            statusMessage: 'Este diseñador ya está asignado a esta solicitud.',
+            statusMessage: 'Todos los diseñadores indicados ya están asignados.',
         })
     }
 
-    return await addDesignerAssignment(requestId, body.designerId, body.designerName)
+    const results = await Promise.all(
+        toAssign.map((designerId) =>
+            addDesignerAssignment(requestId, designerId, '', sessionUser.sub),
+        ),
+    )
+
+    return { assigned: toAssign.length, skipped: designerIds.length - toAssign.length, results }
 })

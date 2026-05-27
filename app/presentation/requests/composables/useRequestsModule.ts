@@ -54,6 +54,9 @@ export const createEmptyRequestFormModel = (): DesignRequestFormModel => ({
     vendorName: '',
     materialType: '',
     materialWeight: '',
+    fluteDirection: 'Vertical',
+    outerLiner: '',
+    innerLiner: '',
     printTechnique: '',
     colorMode: '',
     pantoneReferences: '',
@@ -62,10 +65,11 @@ export const createEmptyRequestFormModel = (): DesignRequestFormModel => ({
     dimensions: '',
     quantity: '',
     requiredDate: '',
-    priority: 'Media',
-    status: 'Borrador',
+    priority: 'MEDIUM',
+    status: 'CREATED',
     designInstructions: '',
     visualReferences: '',
+    requireArt: true,
     requireDieCut: false,
     requireMockup: false,
     attachments: [],
@@ -79,6 +83,9 @@ const toRequestFormModel = (request: DesignRequest): DesignRequestFormModel => (
     vendorName: request.vendorName,
     materialType: request.materialType,
     materialWeight: request.materialWeight,
+    fluteDirection: request.fluteDirection,
+    outerLiner: request.outerLiner,
+    innerLiner: request.innerLiner,
     printTechnique: request.printTechnique,
     colorMode: request.colorMode,
     pantoneReferences: request.pantoneReferences,
@@ -86,11 +93,12 @@ const toRequestFormModel = (request: DesignRequest): DesignRequestFormModel => (
     deliverables: [...request.deliverables],
     dimensions: request.dimensions,
     quantity: request.quantity.toString(),
-    requiredDate: request.requiredDate,
+    requiredDate: request.requiredDate ?? '',
     priority: request.priority,
     status: request.status,
     designInstructions: request.designInstructions,
     visualReferences: request.visualReferences,
+    requireArt: true,
     requireDieCut: request.requireDieCut,
     requireMockup: request.requireMockup,
     attachments: [...request.attachments],
@@ -200,20 +208,22 @@ export const useRequestsModule = () => {
 
     const totalRequests = computed(() => requests.value.length)
     const draftRequests = computed(
-        () => requests.value.filter((request) => request.status === 'Borrador').length,
+        () => requests.value.filter((r) => r.status === 'CREATED').length,
     )
     const inDesignRequests = computed(
-        () => requests.value.filter((request) => request.status === 'En diseño').length,
+        () => requests.value.filter((r) => r.status === 'IN_DESIGN').length,
     )
     const highPriorityRequests = computed(
-        () => requests.value.filter((request) => request.priority === 'Alta').length,
+        () => requests.value.filter((r) => r.priority === 'HIGH').length,
     )
 
-    const NEW_REQUEST_STATUSES = new Set<string>(['Borrador', 'PENDING_ASSIGNMENT'])
+    const NEW_REQUEST_STATUSES = new Set<RequestStatus>(['CREATED', 'PENDING_DESIGN_REVIEW'])
     const pendingAssignmentRequests = computed(() =>
         requests.value.filter((r) => NEW_REQUEST_STATUSES.has(r.status)),
     )
-    const completedRequests = computed(() => requests.value.filter((r) => r.status === 'APPROVED'))
+    const completedRequests = computed(() =>
+        requests.value.filter((r) => r.status === 'QUALITY_APPROVED'),
+    )
 
     const tableRows = computed<DesignRequestTableRow[]>(() => {
         return requests.value.map((request) => ({
@@ -225,7 +235,7 @@ export const useRequestsModule = () => {
             printTechnique: request.printTechnique,
             priority: request.priority,
             status: request.status,
-            requiredDateLabel: formatDateLabel(request.requiredDate),
+            requiredDateLabel: formatDateLabel(request.requiredDate ?? ''),
             attachmentsCount: request.attachments.length.toString(),
             requestedBy: request.requestedBy,
             assignedDesigners: request.assignedDesigners,
@@ -340,12 +350,12 @@ export const useRequestsModule = () => {
         const nextCode = toRequestCode(requests.value.length + 1)
         const duplicatedPayload: DesignRequestFormModel = {
             ...toRequestFormModel(request),
-            status: 'Borrador',
+            status: 'CREATED',
         }
 
         const created = await createRequest({
             ...duplicatedPayload,
-            status: 'Borrador',
+            status: 'CREATED',
         })
 
         if (created) {
@@ -507,7 +517,7 @@ export const useRequestsModule = () => {
             printTechnique: request.printTechnique,
             priority: request.priority,
             status: request.status,
-            requiredDateLabel: formatDateLabel(request.requiredDate),
+            requiredDateLabel: formatDateLabel(request.requiredDate ?? ''),
             attachmentsCount: request.attachments.length.toString(),
             requestedBy: request.requestedBy,
             assignedDesigners: request.assignedDesigners,

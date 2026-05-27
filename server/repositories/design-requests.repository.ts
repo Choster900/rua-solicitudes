@@ -1,214 +1,258 @@
 import dayjs from 'dayjs'
 import type { Prisma } from '@prisma/client'
-import type {
-    CreateDesignRequestInput,
-    DesignRequestRecord,
-    UpdateDesignRequestInput,
-} from '../interfaces/repositories/design-request-repository.interface'
 import { prisma } from '../database/prisma'
 
-const toStringArray = (value: unknown): string[] => {
-    if (!Array.isArray(value)) {
-        return []
-    }
+// ─── Code generation ──────────────────────────────────────────────────────────
 
-    return value.filter((item) => typeof item === 'string')
-}
+export const generateRequestCode = async (): Promise<string> => {
+    const year = dayjs().year()
+    const prefix = `SOL-${year}-`
 
-const toAttachmentArray = (value: unknown): DesignRequestRecord['attachments'] => {
-    if (!Array.isArray(value)) {
-        return []
-    }
-
-    return value.filter((item): item is DesignRequestRecord['attachments'][number] => {
-        if (!item || typeof item !== 'object') {
-            return false
-        }
-
-        const attachment = item as Record<string, unknown>
-        return (
-            typeof attachment.id === 'string' &&
-            typeof attachment.name === 'string' &&
-            typeof attachment.extension === 'string' &&
-            typeof attachment.sizeKb === 'number'
-        )
+    const latest = await prisma.designRequest.findFirst({
+        where: { code: { startsWith: prefix } },
+        orderBy: { code: 'desc' },
+        select: { code: true },
     })
+
+    const lastSequence = latest ? Number.parseInt(latest.code.slice(prefix.length), 10) : 0
+
+    const next = Number.isFinite(lastSequence) ? lastSequence + 1 : 1
+    return `${prefix}${next.toString().padStart(3, '0')}`
 }
 
-type PrismaDesignRequest = {
-    id: string
-    requestCode: string
-    clientName: string
-    brandName: string
-    productName: string
-    requestedBy: string
-    vendorName: string
-    materialType: string
-    materialWeight: string
-    printTechnique: string
-    colorMode: string
-    pantoneReferences: string
-    finishingOptions: unknown
-    deliverables: unknown
-    dimensions: string
-    quantity: number
-    requiredDate: Date
-    priority: string
-    status: string
-    designInstructions: string
-    visualReferences: string
-    requireDieCut: boolean
-    requireMockup: boolean
-    attachments: unknown
-    createdAt: Date
-    designerAssignments?: Array<{ designerId: string; designerName: string }>
-}
+// ─── Read ─────────────────────────────────────────────────────────────────────
 
-const toDesignRequestRecord = (source: PrismaDesignRequest): DesignRequestRecord => {
-    return {
-        id: source.id,
-        requestCode: source.requestCode,
-        clientName: source.clientName,
-        brandName: source.brandName,
-        productName: source.productName,
-        requestedBy: source.requestedBy,
-        vendorName: source.vendorName,
-        materialType: source.materialType,
-        materialWeight: source.materialWeight,
-        printTechnique: source.printTechnique,
-        colorMode: source.colorMode,
-        pantoneReferences: source.pantoneReferences,
-        finishingOptions: toStringArray(source.finishingOptions),
-        deliverables: toStringArray(source.deliverables),
-        dimensions: source.dimensions,
-        quantity: source.quantity,
-        requiredDate: dayjs(source.requiredDate).toISOString(),
-        priority: source.priority as DesignRequestRecord['priority'],
-        status: source.status as DesignRequestRecord['status'],
-        designInstructions: source.designInstructions,
-        visualReferences: source.visualReferences,
-        requireDieCut: source.requireDieCut,
-        requireMockup: source.requireMockup,
-        attachments: toAttachmentArray(source.attachments),
-        assignedDesigners: (source.designerAssignments ?? []).map((a) => ({
-            designerId: a.designerId,
-            designerName: a.designerName,
-        })),
-        createdAt: dayjs(source.createdAt).toISOString(),
-    }
-}
+const withVersionAssignments = {
+    include: {
+        assignments: {
+            select: { designerId: true, designer: { select: { fullName: true } } },
+        },
+    },
+} as const
 
-const withAssignments = { designerAssignments: true } as const
-
-const toRequestDataPayload = (payload: CreateDesignRequestInput | UpdateDesignRequestInput) => {
-    return {
-        ...payload,
-        ...(payload.finishingOptions ? { finishingOptions: payload.finishingOptions } : {}),
-        ...(payload.deliverables ? { deliverables: payload.deliverables } : {}),
-        ...(payload.attachments ? { attachments: payload.attachments } : {}),
-        ...(payload.requiredDate ? { requiredDate: dayjs(payload.requiredDate).toDate() } : {}),
-    }
-}
-
-export const getAllDesignRequests = async () => {
-    const requests = await prisma.designRequest.findMany({
+export const getAllDesignRequests = () =>
+    prisma.designRequest.findMany({
         orderBy: { createdAt: 'desc' },
-        include: withAssignments,
+        include: {
+            client: { select: { id: true, name: true, code: true } },
+            seller: { select: { id: true, fullName: true, employeeCode: true } },
+            currentVersion: withVersionAssignments,
+        },
     })
 
-    return requests.map(toDesignRequestRecord)
-}
-
-export const findDesignRequestById = async (requestId: string) => {
-    const request = await prisma.designRequest.findUnique({
+export const findDesignRequestById = (requestId: string) =>
+    prisma.designRequest.findUnique({
         where: { id: requestId },
-        include: withAssignments,
+        include: {
+            client: { select: { id: true, name: true, code: true } },
+            seller: { select: { id: true, fullName: true, employeeCode: true } },
+            currentVersion: {
+                include: {
+                    assignments: {
+                        select: { designerId: true, designer: { select: { fullName: true } } },
+                    },
+                },
+            },
+            files: {
+                where: { isActive: true },
+                orderBy: { createdAt: 'asc' },
+            },
+        },
     })
 
-    return request ? toDesignRequestRecord(request) : null
-}
+export const findDesignRequestByCode = (code: string) =>
+    prisma.designRequest.findUnique({ where: { code } })
 
-export const findDesignRequestByCode = async (requestCode: string) => {
-    const normalizedCode = requestCode.trim()
-    const request = await prisma.designRequest.findFirst({
-        where: { requestCode: { equals: normalizedCode, mode: 'insensitive' } },
-        include: withAssignments,
-    })
+export const deleteDesignRequestById = (requestId: string) =>
+    prisma.designRequest.delete({ where: { id: requestId } })
 
-    return request ? toDesignRequestRecord(request) : null
-}
+// ─── Update ───────────────────────────────────────────────────────────────────
 
-export const createDesignRequest = async (payload: CreateDesignRequestInput) => {
-    const createdRequest = await prisma.designRequest.create({
-        data: toRequestDataPayload(payload),
-        include: withAssignments,
-    })
-
-    return toDesignRequestRecord(createdRequest)
-}
-
-export const updateDesignRequest = async (requestId: string, payload: UpdateDesignRequestInput) => {
-    const updatedRequest = await prisma.designRequest.update({
+export const updateDesignRequest = (
+    requestId: string,
+    data: Prisma.DesignRequestUncheckedUpdateInput,
+) =>
+    prisma.designRequest.update({
         where: { id: requestId },
-        data: toRequestDataPayload(payload),
-        include: withAssignments,
+        data,
+        include: {
+            client: { select: { id: true, name: true, code: true } },
+            seller: { select: { id: true, fullName: true, employeeCode: true } },
+            currentVersion: true,
+        },
     })
 
-    return toDesignRequestRecord(updatedRequest)
-}
-
-export const deleteDesignRequestById = async (requestId: string) => {
-    const deletedRequest = await prisma.designRequest.delete({
-        where: { id: requestId },
-        include: withAssignments,
-    })
-
-    return toDesignRequestRecord(deletedRequest)
-}
+// ─── Designer assignments ─────────────────────────────────────────────────────
 
 export const addDesignerAssignment = async (
     requestId: string,
     designerId: string,
-    designerName: string,
-): Promise<DesignRequestRecord> => {
-    await prisma.requestDesignerAssignment.create({
-        data: { requestId, designerId, designerName },
-    })
-
-    await prisma.designRequest.updateMany({
-        where: { id: requestId, status: { in: ['PENDING_ASSIGNMENT', 'Borrador'] } },
-        data: { status: 'ASSIGNED' },
-    })
-
-    const updated = await prisma.designRequest.findUniqueOrThrow({
+    _designerName: string,
+    assignedById: string,
+) => {
+    const request = await prisma.designRequest.findUnique({
         where: { id: requestId },
-        include: withAssignments,
+        select: { currentVersionId: true },
     })
 
-    return toDesignRequestRecord(updated)
-}
-
-export const removeDesignerAssignment = async (
-    requestId: string,
-    designerId: string,
-): Promise<DesignRequestRecord> => {
-    await prisma.requestDesignerAssignment.delete({
-        where: { requestId_designerId: { requestId, designerId } },
-    })
-
-    const remaining = await prisma.requestDesignerAssignment.count({ where: { requestId } })
-
-    if (remaining === 0) {
-        await prisma.designRequest.updateMany({
-            where: { id: requestId, status: 'ASSIGNED' },
-            data: { status: 'PENDING_ASSIGNMENT' },
-        })
+    if (!request?.currentVersionId) {
+        throw new Error('La solicitud no tiene versión activa.')
     }
 
-    const updated = await prisma.designRequest.findUniqueOrThrow({
+    return prisma.requestDesignerAssignment.create({
+        data: {
+            versionId: request.currentVersionId,
+            designerId,
+            assignedById,
+        },
+    })
+}
+
+export const removeDesignerAssignment = async (requestId: string, designerId: string) => {
+    const request = await prisma.designRequest.findUnique({
         where: { id: requestId },
-        include: withAssignments,
+        select: { currentVersionId: true },
     })
 
-    return toDesignRequestRecord(updated)
+    if (!request?.currentVersionId) {
+        throw new Error('La solicitud no tiene versión activa.')
+    }
+
+    return prisma.requestDesignerAssignment.delete({
+        where: {
+            versionId_designerId: {
+                versionId: request.currentVersionId,
+                designerId,
+            },
+        },
+    })
+}
+
+// ─── Create ───────────────────────────────────────────────────────────────────
+
+interface CreateRequestInput {
+    code: string
+    clientId: string
+    sellerId: string
+    title: string
+    brandName: string
+    productName: string
+    priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT'
+    requiredDate?: string
+    version?: {
+        materialType?: string
+        materialWeight?: string
+        closureType?: string
+        fluteType?: string
+        fluteDirection?: string
+        outerLiner?: string
+        innerLiner?: string
+        printTechnique?: string
+        colorMode?: string
+        pantoneReferences?: string
+        length?: number
+        width?: number
+        height?: number
+        dimensionUnit?: string
+        quantity?: number
+        finishingOptions?: string[]
+        deliverables?: string[]
+        designInstructions?: string
+        visualReferences?: string
+        requireDieCut?: boolean
+        requireMockup?: boolean
+    }
+    sampleFile?: {
+        uploadedById: string
+        originalName: string
+        mimeType: string
+        sizeBytes: number
+        base64Content: string
+        notes?: string
+    }
+}
+
+export const createDesignRequest = async (input: CreateRequestInput) => {
+    return prisma.$transaction(async (tx) => {
+        // 1. Crear la solicitud principal
+        const request = await tx.designRequest.create({
+            data: {
+                code: input.code,
+                clientId: input.clientId,
+                sellerId: input.sellerId,
+                title: input.title,
+                brandName: input.brandName,
+                productName: input.productName,
+                priority: input.priority,
+                status: 'CREATED',
+                requiredDate: input.requiredDate ? dayjs(input.requiredDate).toDate() : undefined,
+            },
+        })
+
+        // 2. Crear la versión inicial (v1)
+        const version = await tx.designRequestVersion.create({
+            data: {
+                requestId: request.id,
+                versionNumber: 1,
+                createdById: input.sellerId,
+                reason: 'INITIAL',
+                status: 'IN_DESIGN',
+                materialType: input.version?.materialType ?? null,
+                materialWeight: input.version?.materialWeight ?? null,
+                closureType: input.version?.closureType ?? null,
+                fluteType: input.version?.fluteType ?? null,
+                fluteDirection: input.version?.fluteDirection ?? null,
+                outerLiner: input.version?.outerLiner ?? null,
+                innerLiner: input.version?.innerLiner ?? null,
+                printTechnique: input.version?.printTechnique ?? null,
+                colorMode: input.version?.colorMode ?? null,
+                pantoneReferences: input.version?.pantoneReferences ?? null,
+                length: input.version?.length ?? null,
+                width: input.version?.width ?? null,
+                height: input.version?.height ?? null,
+                dimensionUnit: input.version?.dimensionUnit ?? 'cm',
+                quantity: input.version?.quantity ?? null,
+                finishingOptions: input.version?.finishingOptions ?? [],
+                deliverables: input.version?.deliverables ?? [],
+                designInstructions: input.version?.designInstructions ?? '',
+                visualReferences: input.version?.visualReferences ?? '',
+                requireDieCut: input.version?.requireDieCut ?? false,
+                requireMockup: input.version?.requireMockup ?? false,
+            },
+        })
+
+        // 3. Apuntar currentVersionId a la versión recién creada
+        await tx.designRequest.update({
+            where: { id: request.id },
+            data: { currentVersionId: version.id },
+        })
+
+        // 4. Guardar archivo de muestra si viene
+        let sampleFile = null
+        if (input.sampleFile) {
+            sampleFile = await tx.requestFile.create({
+                data: {
+                    requestId: request.id,
+                    versionId: version.id,
+                    uploadedById: input.sampleFile.uploadedById,
+                    origin: 'SALES',
+                    category: 'SALES_REFERENCE',
+                    originalName: input.sampleFile.originalName,
+                    mimeType: input.sampleFile.mimeType,
+                    sizeBytes: BigInt(input.sampleFile.sizeBytes),
+                    base64Content: input.sampleFile.base64Content,
+                    notes: input.sampleFile.notes ?? '',
+                },
+            })
+        }
+
+        return {
+            ...request,
+            currentVersionId: version.id,
+            currentVersion: version,
+            sampleFiles: sampleFile
+                ? [{ ...sampleFile, sizeBytes: Number(sampleFile.sizeBytes) }]
+                : [],
+        }
+    })
 }

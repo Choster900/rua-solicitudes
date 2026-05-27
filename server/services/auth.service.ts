@@ -23,23 +23,9 @@ const toRoleSummaries = (authUser: AuthUserRecord): SessionRoleSummary[] => {
     return authUser.roles.map((role) => ({ code: role.code, name: role.name }))
 }
 
-const resolvePermissionsForRoles = async (roleCodes: RoleCode[]): Promise<string[]> => {
-    if (roleCodes.length === 0) {
-        return []
-    }
-
-    const rolePermissions = await prisma.rolePermission.findMany({
-        where: {
-            role: { code: { in: roleCodes } },
-        },
-        include: { permission: { select: { code: true } } },
-    })
-
-    const codes = new Set<string>()
-    for (const rp of rolePermissions) {
-        codes.add(rp.permission.code)
-    }
-    return [...codes]
+const resolvePermissionsForRoles = async (_roleCodes: RoleCode[]): Promise<string[]> => {
+    // Permission model removed — permissions are enforced via role codes in requireRole()
+    return []
 }
 
 const buildSessionContext = async (authUser: AuthUserRecord) => {
@@ -63,7 +49,7 @@ export const loginWithSystemUser = async (
 
     const authUser = await findAuthUserByNetworkUser(normalizedNetworkUser)
 
-    if (!authUser || authUser.status !== 'Activo') {
+    if (!authUser || authUser.status !== 'ACTIVE') {
         return null
     }
 
@@ -120,7 +106,7 @@ export const changeAuthUserPassword = async (
 ): Promise<ChangePasswordResponse | null> => {
     const authUser = await findAuthUserById(input.userId)
 
-    if (!authUser || authUser.status !== 'Activo') {
+    if (!authUser || authUser.status !== 'ACTIVE') {
         return null
     }
 

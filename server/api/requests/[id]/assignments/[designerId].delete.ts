@@ -18,13 +18,11 @@ export default defineEventHandler(async (event) => {
     }
 
     const request = await findDesignRequestById(requestId)
-
     if (!request) {
         throw createError({ statusCode: 404, statusMessage: 'Solicitud no encontrada.' })
     }
 
-    const isAssigned = request.assignedDesigners.some((a) => a.designerId === designerId)
-
+    const isAssigned = request.currentVersion?.assignments.some((a) => a.designerId === designerId)
     if (!isAssigned) {
         throw createError({ statusCode: 404, statusMessage: 'Esta asignación no existe.' })
     }
