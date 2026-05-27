@@ -1,16 +1,10 @@
 import type { UserStatus } from '../../interfaces/services/users-service.interface'
-import type { UserType } from '../../interfaces/domain/user.interface'
-import { USER_STATUSES, USER_TYPES } from '../../interfaces/domain/user.interface'
+import { USER_STATUSES, isRoleCode, type RoleCode } from '../../interfaces/domain/user.interface'
 import { createAuthSystemUser } from '../../services/users.service'
 import { isDatabaseConnectionAvailable } from '../../repositories/database-health.repository'
 import { parseCreateUserDto } from '../dtos/users'
 
-const allowedUserTypes: UserType[] = [...USER_TYPES]
 const allowedStatuses: UserStatus[] = [...USER_STATUSES]
-
-const isUserType = (value: string): value is UserType => {
-    return allowedUserTypes.includes(value as UserType)
-}
 
 const isUserStatus = (value: string): value is UserStatus => {
     return allowedStatuses.includes(value as UserStatus)
@@ -22,21 +16,21 @@ export default defineEventHandler(async (event) => {
     const employeeCode = body.employeeCode?.trim().toUpperCase() ?? ''
     const fullName = body.fullName?.trim() ?? ''
     const email = body.email?.trim().toLowerCase() ?? ''
-    const rawUserType = body.userType ?? ''
+    const rawRoleCode = body.roleCode?.trim() ?? ''
     const department = body.department?.trim() ?? ''
     const rawStatus = body.status?.trim() ?? 'Pendiente'
 
-    if (!employeeCode || !fullName || !email || !rawUserType || !department) {
+    if (!employeeCode || !fullName || !email || !rawRoleCode || !department) {
         throw createError({
             statusCode: 400,
             statusMessage: 'Debes completar los campos requeridos para crear el usuario.',
         })
     }
 
-    if (!isUserType(rawUserType)) {
+    if (!isRoleCode(rawRoleCode)) {
         throw createError({
             statusCode: 400,
-            statusMessage: 'Tipo de usuario no válido.',
+            statusMessage: 'Rol no válido.',
         })
     }
 
@@ -58,7 +52,7 @@ export default defineEventHandler(async (event) => {
         })
     }
 
-    const userType: UserType = rawUserType
+    const roleCode: RoleCode = rawRoleCode
     const status: UserStatus = rawStatus
 
     const createUserResult = await createAuthSystemUser({
@@ -66,14 +60,14 @@ export default defineEventHandler(async (event) => {
         fullName,
         email,
         phone: body.phone?.trim() ?? '',
-        userType,
+        roleCode,
         department,
         status,
     })
 
     if ('error' in createUserResult) {
         throw createError({
-            statusCode: 409,
+            statusCode: createUserResult.error.code === 'INVALID_ROLE' ? 400 : 409,
             statusMessage: createUserResult.error.message,
         })
     }

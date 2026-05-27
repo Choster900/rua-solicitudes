@@ -2,6 +2,8 @@ import 'dotenv/config'
 import { Pool } from 'pg'
 import { PrismaPg } from '@prisma/adapter-pg'
 import { PrismaClient } from '@prisma/client'
+import { randomBytes, scrypt } from 'node:crypto'
+import { promisify } from 'node:util'
 
 const connectionString = process.env.SUPABASE_DB_URL
 
@@ -13,17 +15,168 @@ const pool = new Pool({ connectionString })
 const adapter = new PrismaPg(pool)
 const prisma = new PrismaClient({ adapter })
 
+const scryptAsync = promisify(scrypt)
+const KEY_LENGTH = 64
+const SALT_LENGTH = 16
+
+const hashPassword = async (plain) => {
+    const salt = randomBytes(SALT_LENGTH)
+    const derivedKey = await scryptAsync(plain, salt, KEY_LENGTH)
+    return `scrypt$${salt.toString('base64')}$${derivedKey.toString('base64')}`
+}
+
+const ROLE_CODES = {
+    ADMIN: 'admin',
+    VENDEDOR: 'vendedor',
+    DISENADOR_JEFE: 'disenador_jefe',
+    DISENADOR: 'disenador',
+    CALIDAD: 'calidad',
+}
+
 const roleSeed = [
-    { name: 'Administrador', code: 'admin', description: 'Perfil administrativo', isSystem: true },
-    { name: 'Vendedor', code: 'vendedor', description: 'Perfil comercial', isSystem: false },
+    {
+        name: 'Administrador',
+        code: ROLE_CODES.ADMIN,
+        description: 'Acceso total al sistema, gestión de usuarios y permisos.',
+        isSystem: true,
+    },
+    {
+        name: 'Vendedor',
+        code: ROLE_CODES.VENDEDOR,
+        description: 'Crea solicitudes y gestiona su cartera de clientes.',
+        isSystem: true,
+    },
+    {
+        name: 'Diseñador Jefe',
+        code: ROLE_CODES.DISENADOR_JEFE,
+        description: 'Asigna solicitudes a diseñadores y aprueba diseños.',
+        isSystem: true,
+    },
+    {
+        name: 'Diseñador',
+        code: ROLE_CODES.DISENADOR,
+        description: 'Trabaja en los diseños asignados y actualiza el workflow.',
+        isSystem: true,
+    },
     {
         name: 'Calidad',
-        code: 'calidad',
-        description: 'Perfil de control de calidad',
-        isSystem: false,
+        code: ROLE_CODES.CALIDAD,
+        description: 'Valida diseños finalizados y aprueba para producción.',
+        isSystem: true,
     },
-    { name: 'Disenador', code: 'disenador', description: 'Perfil de diseno', isSystem: false },
 ]
+
+const permissionSeed = [
+    // users
+    { resource: 'users', action: 'read', name: 'Ver usuarios', code: 'users:read' },
+    { resource: 'users', action: 'create', name: 'Crear usuarios', code: 'users:create' },
+    { resource: 'users', action: 'update', name: 'Actualizar usuarios', code: 'users:update' },
+    { resource: 'users', action: 'delete', name: 'Eliminar usuarios', code: 'users:delete' },
+    // roles
+    { resource: 'roles', action: 'read', name: 'Ver roles', code: 'roles:read' },
+    {
+        resource: 'roles',
+        action: 'manage',
+        name: 'Administrar roles y permisos',
+        code: 'roles:manage',
+    },
+    // clients
+    { resource: 'clients', action: 'read', name: 'Ver clientes', code: 'clients:read' },
+    { resource: 'clients', action: 'create', name: 'Crear clientes', code: 'clients:create' },
+    { resource: 'clients', action: 'update', name: 'Actualizar clientes', code: 'clients:update' },
+    { resource: 'clients', action: 'delete', name: 'Eliminar clientes', code: 'clients:delete' },
+    // vendors
+    { resource: 'vendors', action: 'read', name: 'Ver vendedores', code: 'vendors:read' },
+    { resource: 'vendors', action: 'create', name: 'Crear vendedores', code: 'vendors:create' },
+    {
+        resource: 'vendors',
+        action: 'update',
+        name: 'Actualizar vendedores',
+        code: 'vendors:update',
+    },
+    { resource: 'vendors', action: 'delete', name: 'Eliminar vendedores', code: 'vendors:delete' },
+    // requests
+    { resource: 'requests', action: 'read', name: 'Ver solicitudes', code: 'requests:read' },
+    { resource: 'requests', action: 'create', name: 'Crear solicitudes', code: 'requests:create' },
+    {
+        resource: 'requests',
+        action: 'update',
+        name: 'Actualizar solicitudes',
+        code: 'requests:update',
+    },
+    {
+        resource: 'requests',
+        action: 'delete',
+        name: 'Eliminar solicitudes',
+        code: 'requests:delete',
+    },
+    {
+        resource: 'requests',
+        action: 'assign',
+        name: 'Asignar diseñador a solicitud',
+        code: 'requests:assign',
+    },
+    // workflow
+    {
+        resource: 'workflow',
+        action: 'read',
+        name: 'Ver workflow de solicitudes',
+        code: 'workflow:read',
+    },
+    {
+        resource: 'workflow',
+        action: 'update',
+        name: 'Actualizar workflow',
+        code: 'workflow:update',
+    },
+    {
+        resource: 'workflow',
+        action: 'approve',
+        name: 'Aprobar etapa del workflow',
+        code: 'workflow:approve',
+    },
+    {
+        resource: 'workflow',
+        action: 'reject',
+        name: 'Rechazar etapa del workflow',
+        code: 'workflow:reject',
+    },
+]
+
+const rolePermissionMatrix = {
+    [ROLE_CODES.ADMIN]: permissionSeed.map((p) => p.code),
+    [ROLE_CODES.VENDEDOR]: [
+        'clients:read',
+        'clients:create',
+        'clients:update',
+        'vendors:read',
+        'requests:read',
+        'requests:create',
+        'requests:update',
+        'workflow:read',
+    ],
+    [ROLE_CODES.DISENADOR_JEFE]: [
+        'users:read',
+        'clients:read',
+        'vendors:read',
+        'requests:read',
+        'requests:update',
+        'requests:assign',
+        'workflow:read',
+        'workflow:update',
+        'workflow:approve',
+        'workflow:reject',
+    ],
+    [ROLE_CODES.DISENADOR]: ['clients:read', 'requests:read', 'workflow:read', 'workflow:update'],
+    [ROLE_CODES.CALIDAD]: [
+        'clients:read',
+        'requests:read',
+        'workflow:read',
+        'workflow:update',
+        'workflow:approve',
+        'workflow:reject',
+    ],
+}
 
 const authUsersSeed = [
     {
@@ -31,44 +184,55 @@ const authUsersSeed = [
         fullName: 'Carlos Ruiz',
         email: 'admin@ruasa.com.sv',
         phone: '+503 7000-0001',
-        userType: 'Administrador',
         department: 'Dirección',
         status: 'Activo',
-        password: '12345678',
+        plainPassword: '12345678',
         mustChangePassword: false,
+        roleCode: ROLE_CODES.ADMIN,
     },
     {
         employeeCode: 'EMP-1002',
         fullName: 'Andrea Martínez',
         email: 'vendedor@ruasa.com.sv',
         phone: '+503 7000-0002',
-        userType: 'Vendedor',
         department: 'Comercial',
         status: 'Activo',
-        password: '12345678',
+        plainPassword: '12345678',
         mustChangePassword: false,
+        roleCode: ROLE_CODES.VENDEDOR,
     },
     {
         employeeCode: 'EMP-1003',
         fullName: 'Elena Córdova',
         email: 'calidad@ruasa.com.sv',
         phone: '+503 7000-0003',
-        userType: 'Calidad',
         department: 'Aseguramiento',
         status: 'Activo',
-        password: '12345678',
+        plainPassword: '12345678',
         mustChangePassword: false,
+        roleCode: ROLE_CODES.CALIDAD,
     },
     {
         employeeCode: 'EMP-1004',
         fullName: 'Carlos Arévalo',
         email: 'disenador@ruasa.com.sv',
         phone: '+503 7000-0004',
-        userType: 'Diseñador',
         department: 'Preprensa',
         status: 'Activo',
-        password: '12345678',
+        plainPassword: '12345678',
         mustChangePassword: false,
+        roleCode: ROLE_CODES.DISENADOR,
+    },
+    {
+        employeeCode: 'EMP-1005',
+        fullName: 'Mariana Flores',
+        email: 'disenador.jefe@ruasa.com.sv',
+        phone: '+503 7000-0005',
+        department: 'Preprensa',
+        status: 'Activo',
+        plainPassword: '12345678',
+        mustChangePassword: false,
+        roleCode: ROLE_CODES.DISENADOR_JEFE,
     },
 ]
 
@@ -183,7 +347,7 @@ const createWorkflowFromRequest = (requestId, requestCode) => {
                 id: `audit-${requestCode}-001`,
                 requestId,
                 actorName: 'Sistema',
-                actorRole: 'Sistema',
+                actorRoleCode: 'system',
                 action: 'Solicitud registrada',
                 fromStage: null,
                 toStage: 'NEW',
@@ -193,8 +357,8 @@ const createWorkflowFromRequest = (requestId, requestCode) => {
             {
                 id: `audit-${requestCode}-002`,
                 requestId,
-                actorName: 'Jorge Quintanilla',
-                actorRole: 'Disenador',
+                actorName: 'Carlos Arévalo',
+                actorRoleCode: ROLE_CODES.DISENADOR,
                 action: 'Diseño tomado',
                 fromStage: 'NEW',
                 toStage: 'DESIGN_IN_PROGRESS',
@@ -215,12 +379,86 @@ async function seedRoles() {
     }
 }
 
-async function seedAuthUsers() {
+async function seedPermissions() {
+    for (const permission of permissionSeed) {
+        await prisma.permission.upsert({
+            where: { code: permission.code },
+            create: permission,
+            update: permission,
+        })
+    }
+}
+
+async function seedRolePermissions() {
+    for (const [roleCode, permissionCodes] of Object.entries(rolePermissionMatrix)) {
+        const role = await prisma.role.findUnique({ where: { code: roleCode } })
+        if (!role) continue
+
+        for (const permissionCode of permissionCodes) {
+            const permission = await prisma.permission.findUnique({
+                where: { code: permissionCode },
+            })
+            if (!permission) continue
+
+            await prisma.rolePermission.upsert({
+                where: {
+                    roleId_permissionId: {
+                        roleId: role.id,
+                        permissionId: permission.id,
+                    },
+                },
+                create: {
+                    roleId: role.id,
+                    permissionId: permission.id,
+                },
+                update: {},
+            })
+        }
+    }
+}
+
+async function seedAuthUsersAndRoles() {
     for (const authUser of authUsersSeed) {
-        await prisma.authUser.upsert({
+        const passwordHash = await hashPassword(authUser.plainPassword)
+
+        const saved = await prisma.authUser.upsert({
             where: { email: authUser.email },
-            create: authUser,
-            update: authUser,
+            create: {
+                employeeCode: authUser.employeeCode,
+                fullName: authUser.fullName,
+                email: authUser.email,
+                phone: authUser.phone,
+                department: authUser.department,
+                status: authUser.status,
+                passwordHash,
+                mustChangePassword: authUser.mustChangePassword,
+            },
+            update: {
+                employeeCode: authUser.employeeCode,
+                fullName: authUser.fullName,
+                phone: authUser.phone,
+                department: authUser.department,
+                status: authUser.status,
+                passwordHash,
+                mustChangePassword: authUser.mustChangePassword,
+            },
+        })
+
+        const role = await prisma.role.findUnique({ where: { code: authUser.roleCode } })
+        if (!role) continue
+
+        await prisma.userRole.upsert({
+            where: {
+                userId_roleId: {
+                    userId: saved.id,
+                    roleId: role.id,
+                },
+            },
+            create: {
+                userId: saved.id,
+                roleId: role.id,
+            },
+            update: {},
         })
     }
 }
@@ -264,7 +502,9 @@ async function seedRequestsAndWorkflow() {
 
 async function seed() {
     await seedRoles()
-    await seedAuthUsers()
+    await seedPermissions()
+    await seedRolePermissions()
+    await seedAuthUsersAndRoles()
     await seedClients()
     await seedVendors()
     await seedRequestsAndWorkflow()
@@ -274,7 +514,9 @@ seed()
     .then(async () => {
         await prisma.$disconnect()
         await pool.end()
-        console.log('Seed completado: auth, clientes, vendedores, solicitudes y workflow.')
+        console.log(
+            'Seed completado: roles, permisos, role-permissions, usuarios+roles, clientes, vendedores, solicitudes y workflow.',
+        )
     })
     .catch(async (error) => {
         await prisma.$disconnect()

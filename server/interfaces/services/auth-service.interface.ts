@@ -1,15 +1,22 @@
-import type { UserType } from '../domain/user.interface'
+import type { RoleCode, UserType } from '../domain/user.interface'
 
 export interface AuthLoginInput {
     networkUser: string
     password: string
 }
 
+export interface SessionRoleSummary {
+    code: RoleCode
+    name: UserType
+}
+
 export interface LoginTokenPayload extends Record<string, unknown> {
     sub: string
     email: string
     employeeCode: string
-    userType: UserType
+    primaryRole: RoleCode | null
+    roleCodes: RoleCode[]
+    permissionCodes: string[]
     mustChangePassword: boolean
 }
 
@@ -24,8 +31,10 @@ export interface AuthLoginResponse {
         employeeCode: string
         fullName: string
         email: string
-        userType: UserType
         department: string
+        primaryRole: SessionRoleSummary | null
+        roles: SessionRoleSummary[]
+        permissions: string[]
     }
 }
 

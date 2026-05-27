@@ -5,16 +5,10 @@ import {
     updateAuthUser,
 } from '../../repositories/auth-users.repository'
 import type { UserStatus } from '../../interfaces/services/users-service.interface'
-import type { UserType } from '../../interfaces/domain/user.interface'
-import { USER_STATUSES, USER_TYPES } from '../../interfaces/domain/user.interface'
+import { USER_STATUSES, isRoleCode, type RoleCode } from '../../interfaces/domain/user.interface'
 import { parseUpdateUserDto } from '../dtos/users'
 
-const allowedUserTypes: UserType[] = [...USER_TYPES]
 const allowedStatuses: UserStatus[] = [...USER_STATUSES]
-
-const isUserType = (value: string): value is UserType => {
-    return allowedUserTypes.includes(value as UserType)
-}
 
 const isUserStatus = (value: string): value is UserStatus => {
     return allowedStatuses.includes(value as UserStatus)
@@ -44,7 +38,7 @@ export default defineEventHandler(async (event) => {
     const fullName = body.fullName?.trim() ?? sourceUser.fullName
     const email = body.email?.trim().toLowerCase() ?? sourceUser.email
     const phone = body.phone?.trim() ?? sourceUser.phone
-    const userType = body.userType ?? sourceUser.userType
+    const rawRoleCode = body.roleCode?.trim()
     const department = body.department?.trim() ?? sourceUser.department
     const status = body.status ?? sourceUser.status
 
@@ -55,11 +49,15 @@ export default defineEventHandler(async (event) => {
         })
     }
 
-    if (!isUserType(userType)) {
-        throw createError({
-            statusCode: 400,
-            statusMessage: 'Tipo de usuario no válido.',
-        })
+    let nextRoleCodes: RoleCode[] | undefined
+    if (rawRoleCode !== undefined) {
+        if (!isRoleCode(rawRoleCode)) {
+            throw createError({
+                statusCode: 400,
+                statusMessage: 'Rol no válido.',
+            })
+        }
+        nextRoleCodes = [rawRoleCode]
     }
 
     if (!isUserStatus(status)) {
@@ -70,7 +68,6 @@ export default defineEventHandler(async (event) => {
     }
 
     const duplicatedByCode = await findAuthUserByEmployeeCode(employeeCode)
-
     if (duplicatedByCode && duplicatedByCode.id !== userId) {
         throw createError({
             statusCode: 409,
@@ -79,7 +76,6 @@ export default defineEventHandler(async (event) => {
     }
 
     const duplicatedByEmail = await findAuthUserByEmail(email)
-
     if (duplicatedByEmail && duplicatedByEmail.id !== userId) {
         throw createError({
             statusCode: 409,
@@ -87,16 +83,15 @@ export default defineEventHandler(async (event) => {
         })
     }
 
-    const updatedUser = await updateAuthUser(userId, (currentUser) => ({
-        ...currentUser,
+    const updatedUser = await updateAuthUser(userId, {
         employeeCode,
         fullName,
         email,
         phone,
-        userType,
         department,
         status,
-    }))
+        ...(nextRoleCodes ? { roleCodes: nextRoleCodes } : {}),
+    })
 
     if (!updatedUser) {
         throw createError({
@@ -105,15 +100,19 @@ export default defineEventHandler(async (event) => {
         })
     }
 
+    const primaryRole = updatedUser.roles[0] ?? null
+
     return {
         id: updatedUser.id,
         employeeCode: updatedUser.employeeCode,
         fullName: updatedUser.fullName,
         email: updatedUser.email,
         phone: updatedUser.phone,
-        userType: updatedUser.userType,
         department: updatedUser.department,
         status: updatedUser.status,
         lastAccessAt: updatedUser.lastAccessAt,
+        roles: updatedUser.roles.map((role) => ({ code: role.code, name: role.name })),
+        primaryRole: primaryRole ? { code: primaryRole.code, name: primaryRole.name } : null,
+        userType: primaryRole?.name ?? null,
     }
 })

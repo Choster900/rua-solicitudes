@@ -1,4 +1,4 @@
-import type { UserStatus, UserType } from '../domain/user.interface'
+import type { RoleCode, UserStatus, UserType } from '../domain/user.interface'
 
 export type { UserStatus }
 
@@ -7,30 +7,33 @@ export interface CreateAuthSystemUserInput {
     fullName: string
     email: string
     phone?: string
-    userType: UserType
+    roleCode: RoleCode
     department: string
     status: UserStatus
 }
 
+export interface CreatedAuthSystemUserShape {
+    id: string
+    employeeCode: string
+    fullName: string
+    email: string
+    phone: string
+    department: string
+    status: UserStatus
+    lastAccessAt: null
+    mustChangePassword: boolean
+    roles: Array<{ code: RoleCode; name: UserType }>
+    primaryRole: { code: RoleCode; name: UserType } | null
+}
+
 export interface CreateAuthSystemUserSuccess {
-    user: {
-        id: string
-        employeeCode: string
-        fullName: string
-        email: string
-        phone: string
-        userType: UserType
-        department: string
-        status: UserStatus
-        lastAccessAt: null
-        mustChangePassword: boolean
-    }
+    user: CreatedAuthSystemUserShape
     temporaryPassword: string
 }
 
 export interface CreateAuthSystemUserError {
     error: {
-        code: 'DUPLICATED_EMPLOYEE_CODE' | 'DUPLICATED_EMAIL'
+        code: 'DUPLICATED_EMPLOYEE_CODE' | 'DUPLICATED_EMAIL' | 'INVALID_ROLE'
         message: string
     }
 }

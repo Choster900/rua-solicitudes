@@ -1,11 +1,11 @@
-import type { UserStatus, UserType } from '../../domain/user.interface'
+import type { RoleCode, UserStatus } from '../../domain/user.interface'
 
 export interface CreateUserDto {
     employeeCode?: string
     fullName?: string
     email?: string
     phone?: string
-    userType?: UserType
+    roleCode?: RoleCode
     department?: string
     status?: UserStatus
 }
@@ -15,7 +15,7 @@ export interface UpdateUserDto {
     fullName?: string
     email?: string
     phone?: string
-    userType?: UserType
+    roleCode?: RoleCode
     department?: string
     status?: UserStatus
 }
