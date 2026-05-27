@@ -1,21 +1,17 @@
-export type ClientStatus = 'Activo' | 'Prospecto' | 'Inactivo'
-
 export interface Client {
-  id: string
-  code: string
-  name: string
-  taxId: string
-  segment: string
-  contactName: string
-  contactEmail: string
-  contactPhone: string
-  country: string
-  department: string
-  city: string
-  addressLine: string
-  addressReference: string
-  website: string
-  googleMapsUrl: string
-  notes: string
-  status: ClientStatus
+    id: string
+    code: string
+    name: string
+    taxId: string | null
+    contactName: string | null
+    contactEmail: string | null
+    contactPhone: string | null
+    country: string | null
+    department: string | null
+    city: string | null
+    addressLine: string | null
+    addressReference: string
+    notes: string
+    isActive: boolean
+    createdAt: string
 }

@@ -24,12 +24,15 @@ export default defineNuxtRouteMiddleware((to) => {
     let tokenValue = accessToken.value
     const isPublicPath = PUBLIC_PATHS.has(to.path)
 
-    if (tokenValue && isAuthTokenExpired(tokenValue)) {
-        accessToken.value = null
-        tokenValue = null
-
-        if (!isPublicPath) {
-            return navigateTo('/login?reason=session-expired')
+    // Limpiar tokens inválidos (expirados o con formato incorrecto sin roleCodes)
+    if (tokenValue) {
+        const roleCodes = getAuthTokenRoleCodes(tokenValue)
+        if (isAuthTokenExpired(tokenValue) || roleCodes.length === 0) {
+            accessToken.value = null
+            tokenValue = null
+            if (!isPublicPath) {
+                return navigateTo('/login?reason=session-expired')
+            }
         }
     }
 
@@ -68,12 +71,19 @@ export default defineNuxtRouteMiddleware((to) => {
             const hasAccess = allowedRoles.some((role) => authTokenHasRole(tokenValue!, role))
             if (!hasAccess) {
                 const roleCodes = getAuthTokenRoleCodes(tokenValue)
-                return navigateTo(getRoleHomePath(roleCodes))
+                const homePath = getRoleHomePath(roleCodes)
+                // Evitar loop si ya estamos en el destino
+                if (homePath !== to.path) {
+                    return navigateTo(homePath)
+                }
             }
         } else if (requiredRole) {
             if (!authTokenHasRole(tokenValue, requiredRole)) {
                 const roleCodes = getAuthTokenRoleCodes(tokenValue)
-                return navigateTo(getRoleHomePath(roleCodes))
+                const homePath = getRoleHomePath(roleCodes)
+                if (homePath !== to.path) {
+                    return navigateTo(homePath)
+                }
             }
         }
     }

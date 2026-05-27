@@ -9,8 +9,11 @@
         :selected-row-key="selectedRowKey"
         @row-click="handleRowSelect"
     >
-        <template #cell-status="{ value }">
-            <AppStatusBadge :label="String(value)" :tone="resolveStatusTone(String(value))" />
+        <template #cell-isActive="{ value }">
+            <AppStatusBadge
+                :label="value ? 'Activo' : 'Inactivo'"
+                :tone="value ? 'success' : 'danger'"
+            />
         </template>
     </AppDataTable>
 </template>
@@ -39,30 +42,13 @@ const emit = defineEmits<{
 const columns: AppDataTableColumn[] = [
     { key: 'code', label: 'Código' },
     { key: 'name', label: 'Cliente' },
-    { key: 'segment', label: 'Segmento' },
     { key: 'contactName', label: 'Contacto' },
     { key: 'contactPhone', label: 'Teléfono' },
     { key: 'location', label: 'Ubicación' },
-    { key: 'status', label: 'Estado', align: 'center' },
+    { key: 'isActive', label: 'Estado', align: 'center' },
 ]
 
 const handleRowSelect = (payload: { row: object; rowKeyValue: string | number }) => {
     emit('rowSelect', String(payload.rowKeyValue))
-}
-
-const resolveStatusTone = (status: string) => {
-    if (status === 'Activo') {
-        return 'success'
-    }
-
-    if (status === 'Prospecto') {
-        return 'warning'
-    }
-
-    if (status === 'Inactivo') {
-        return 'danger'
-    }
-
-    return 'neutral'
 }
 </script>

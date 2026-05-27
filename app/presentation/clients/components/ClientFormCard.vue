@@ -61,16 +61,6 @@
                         />
 
                         <AppTextField
-                            v-model="formModel.segment"
-                            autocomplete="off"
-                            icon="category"
-                            label="Segmento"
-                            :error="getFieldError('segment')"
-                            required
-                            @blur="handleFieldBlur('segment')"
-                        />
-
-                        <AppTextField
                             v-model="formModel.taxId"
                             autocomplete="off"
                             icon="badge"
@@ -95,36 +85,36 @@
                             <label
                                 class="block text-[0.65rem] font-label-caps uppercase text-secondary-container"
                             >
-                                Estado <span class="text-status-error">*</span>
+                                Estado
                             </label>
-                            <AppSelect
-                                v-model="formModel.status"
-                                compact
-                                :clearable="false"
-                                :input-class="
-                                    getFieldError('status')
-                                        ? '!py-2.5 border-status-error focus:ring-status-error/40'
-                                        : '!py-2.5'
-                                "
-                                icon="verified"
-                                :options="statusSelectOptions"
-                                :searchable="false"
-                                @blur="handleFieldBlur('status')"
-                            />
-                            <p v-if="getFieldError('status')" class="text-xs text-status-error">
-                                {{ getFieldError('status') }}
-                            </p>
+                            <div
+                                class="flex items-center gap-3 rounded-lg border border-outline/30 bg-surface-container-lowest/5 px-3 py-2.5"
+                            >
+                                <button
+                                    type="button"
+                                    class="relative inline-flex h-5 w-9 items-center rounded-full transition-colors"
+                                    :class="formModel.isActive ? 'bg-primary' : 'bg-outline/40'"
+                                    @click="formModel.isActive = !formModel.isActive"
+                                >
+                                    <span
+                                        class="inline-block h-3.5 w-3.5 rounded-full bg-white transition-transform"
+                                        :class="
+                                            formModel.isActive
+                                                ? 'translate-x-[18px]'
+                                                : 'translate-x-0.5'
+                                        "
+                                    />
+                                </button>
+                                <span
+                                    class="text-sm"
+                                    :class="
+                                        formModel.isActive ? 'text-white' : 'text-outline-variant'
+                                    "
+                                >
+                                    {{ formModel.isActive ? 'Activo' : 'Inactivo' }}
+                                </span>
+                            </div>
                         </div>
-
-                        <AppTextField
-                            v-model="formModel.website"
-                            autocomplete="url"
-                            icon="language"
-                            label="Sitio web"
-                            :error="getFieldError('website')"
-                            placeholder="https://cliente.com"
-                            @blur="handleFieldBlur('website')"
-                        />
 
                         <div class="space-y-1.5 md:col-span-2">
                             <label
@@ -247,47 +237,6 @@
                             </p>
                         </div>
 
-                        <div class="md:col-span-6">
-                            <article
-                                class="rounded-xl border border-outline/20 bg-surface-container-low/10 p-3"
-                            >
-                                <div class="mb-2 flex items-center justify-between gap-2">
-                                    <p class="text-xs font-semibold text-white">
-                                        Referencia en mapa
-                                    </p>
-                                    <a
-                                        class="inline-flex items-center gap-1 rounded-lg border border-outline/20 px-2.5 py-1 text-xs font-semibold text-sky-200 transition-colors hover:bg-sky-500/10 hover:text-sky-100"
-                                        :href="mapOpenUrl"
-                                        rel="noopener noreferrer"
-                                        target="_blank"
-                                    >
-                                        <span class="material-symbols-outlined text-[14px]"
-                                            >open_in_new</span
-                                        >
-                                        Ver en Google Maps
-                                    </a>
-                                </div>
-                                <iframe
-                                    class="h-48 w-full rounded-lg border border-outline/20"
-                                    loading="lazy"
-                                    referrerpolicy="no-referrer-when-downgrade"
-                                    :src="mapEmbedUrl"
-                                    title="Mapa de referencia del cliente"
-                                />
-                            </article>
-                        </div>
-
-                        <AppTextField
-                            v-model="formModel.googleMapsUrl"
-                            autocomplete="url"
-                            icon="pin_drop"
-                            label="URL Google Maps"
-                            :error="getFieldError('googleMapsUrl')"
-                            placeholder="https://maps.google.com/..."
-                            class="md:col-span-6"
-                            @blur="handleFieldBlur('googleMapsUrl')"
-                        />
-
                         <div class="space-y-1.5 md:col-span-6">
                             <label
                                 class="block text-[0.65rem] font-label-caps uppercase text-secondary-container"
@@ -360,7 +309,6 @@ import {
     type ValidationSchema,
 } from '~/presentation/shared/composables/forms/useFormValidation'
 import type { ClientFormModel } from '~/presentation/interfaces/clients/client-form.interface'
-import type { ClientStatus } from '~/presentation/interfaces/clients/client.interface'
 
 type ClientFormMode = 'create' | 'edit'
 
@@ -380,8 +328,6 @@ const emit = defineEmits<{
     submit: [model: ClientFormModel]
 }>()
 
-const statusOptions: ClientStatus[] = ['Activo', 'Prospecto', 'Inactivo']
-const statusSelectOptions = statusOptions.map((status) => ({ label: status, value: status }))
 const countrySelectOptions: AppSelectOption[] = [{ label: 'El Salvador', value: 'El Salvador' }]
 const elSalvadorDepartments = [
     'Ahuachapan',
@@ -403,13 +349,10 @@ const departmentSelectOptions: AppSelectOption[] = elSalvadorDepartments.map((de
     label: department,
     value: department,
 }))
-const mapFallbackQuery = 'El Salvador'
-
 const formModel = reactive<ClientFormModel>({
     code: '',
     name: '',
     taxId: '',
-    segment: '',
     contactName: '',
     contactEmail: '',
     contactPhone: '',
@@ -418,16 +361,13 @@ const formModel = reactive<ClientFormModel>({
     city: '',
     addressLine: '',
     addressReference: '',
-    website: '',
-    googleMapsUrl: '',
     notes: '',
-    status: 'Prospecto',
+    isActive: true,
 })
 
 const schema: ValidationSchema<ClientFormModel> = {
     name: [validationRules.required<ClientFormModel>('El nombre del cliente es requerido.')],
     taxId: [validationRules.required<ClientFormModel>('El NIT es requerido.')],
-    segment: [validationRules.required<ClientFormModel>('El segmento es requerido.')],
     contactName: [
         validationRules.required<ClientFormModel>('El nombre del contacto es requerido.'),
     ],
@@ -450,19 +390,6 @@ const schema: ValidationSchema<ClientFormModel> = {
     addressLine: [
         validationRules.required<ClientFormModel>('La dirección principal es requerida.'),
     ],
-    status: [validationRules.required<ClientFormModel>('Debes seleccionar un estado.')],
-    website: [
-        validationRules.custom<ClientFormModel, string>(
-            (value) => value.trim().length === 0 || /^https?:\/\//.test(value.trim()),
-            'El sitio web debe iniciar con http:// o https://',
-        ),
-    ],
-    googleMapsUrl: [
-        validationRules.custom<ClientFormModel, string>(
-            (value) => value.trim().length === 0 || /^https?:\/\//.test(value.trim()),
-            'La URL de Google Maps debe iniciar con http:// o https://',
-        ),
-    ],
 }
 
 const { validateAll, validateField, setFieldTouched, getFieldError, clearValidation } =
@@ -470,37 +397,6 @@ const { validateAll, validateField, setFieldTouched, getFieldError, clearValidat
 
 const cardTitle = computed(() => {
     return props.mode === 'create' ? 'Crear nuevo cliente' : 'Editar cliente'
-})
-
-const mapQuery = computed(() => {
-    if (formModel.googleMapsUrl.trim()) {
-        return formModel.googleMapsUrl.trim()
-    }
-
-    const composed = [
-        formModel.addressLine,
-        formModel.city,
-        formModel.department,
-        formModel.country,
-        formModel.name,
-    ]
-        .map((value) => value.trim())
-        .filter((value) => value.length > 0)
-        .join(', ')
-
-    return composed || mapFallbackQuery
-})
-
-const mapEmbedUrl = computed(() => {
-    return `https://www.google.com/maps?q=${encodeURIComponent(mapQuery.value)}&output=embed`
-})
-
-const mapOpenUrl = computed(() => {
-    if (formModel.googleMapsUrl.trim()) {
-        return formModel.googleMapsUrl.trim()
-    }
-
-    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery.value)}`
 })
 
 const syncFormModel = () => {

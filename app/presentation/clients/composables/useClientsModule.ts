@@ -4,7 +4,7 @@ import { useApiClient } from '~/presentation/shared/composables/useApiClient'
 import { useAppToast } from '~/presentation/shared/composables/useAppToast'
 import type { HttpClientError } from '~/presentation/interfaces/shared/http/http-client-error.interface'
 import type { ClientFormModel } from '~/presentation/interfaces/clients/client-form.interface'
-import type { Client, ClientStatus } from '~/presentation/interfaces/clients/client.interface'
+import type { Client } from '~/presentation/interfaces/clients/client.interface'
 import type { ClientTableRow } from '~/presentation/interfaces/clients/client-table-row.interface'
 import { downloadCsvFile } from '~/utils/csv/download-csv.util'
 
@@ -12,7 +12,6 @@ const requiredImportHeaders = [
     'code',
     'name',
     'tax_id',
-    'segment',
     'contact_name',
     'contact_email',
     'contact_phone',
@@ -21,19 +20,15 @@ const requiredImportHeaders = [
     'city',
     'address_line',
     'address_reference',
-    'website',
-    'google_maps_url',
-    'status',
+    'is_active',
     'notes',
 ]
-const clientStatusOptions: ClientStatus[] = ['Activo', 'Prospecto', 'Inactivo']
 const emailExpression = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 const createEmptyClientFormModel = (): ClientFormModel => ({
     code: '',
     name: '',
     taxId: '',
-    segment: '',
     contactName: '',
     contactEmail: '',
     contactPhone: '',
@@ -42,38 +37,25 @@ const createEmptyClientFormModel = (): ClientFormModel => ({
     city: '',
     addressLine: '',
     addressReference: '',
-    website: '',
-    googleMapsUrl: '',
     notes: '',
-    status: 'Prospecto',
+    isActive: true,
 })
 
 const toClientFormModel = (client: Client): ClientFormModel => ({
     code: client.code,
     name: client.name,
-    taxId: client.taxId,
-    segment: client.segment,
-    contactName: client.contactName,
-    contactEmail: client.contactEmail,
-    contactPhone: client.contactPhone,
-    country: client.country,
-    department: client.department,
-    city: client.city,
-    addressLine: client.addressLine,
+    taxId: client.taxId ?? '',
+    contactName: client.contactName ?? '',
+    contactEmail: client.contactEmail ?? '',
+    contactPhone: client.contactPhone ?? '',
+    country: client.country ?? 'El Salvador',
+    department: client.department ?? '',
+    city: client.city ?? '',
+    addressLine: client.addressLine ?? '',
     addressReference: client.addressReference,
-    website: client.website,
-    googleMapsUrl: client.googleMapsUrl,
     notes: client.notes,
-    status: client.status,
+    isActive: client.isActive,
 })
-
-const normalizeClientStatus = (value: string): ClientStatus => {
-    if (value === 'Activo' || value === 'Prospecto' || value === 'Inactivo') {
-        return value
-    }
-
-    return 'Prospecto'
-}
 
 const parseCsvLine = (line: string): string[] => {
     const values: string[] = []
@@ -112,20 +94,17 @@ const parseCsvLine = (line: string): string[] => {
 const toClientPayload = (formModel: ClientFormModel) => ({
     code: formModel.code.trim().toUpperCase() || undefined,
     name: formModel.name.trim(),
-    taxId: formModel.taxId.trim(),
-    segment: formModel.segment.trim(),
-    contactName: formModel.contactName.trim(),
-    contactEmail: formModel.contactEmail.trim().toLowerCase(),
-    contactPhone: formModel.contactPhone.trim(),
-    country: formModel.country.trim(),
-    department: formModel.department.trim(),
-    city: formModel.city.trim(),
-    addressLine: formModel.addressLine.trim(),
+    taxId: formModel.taxId.trim() || null,
+    contactName: formModel.contactName.trim() || null,
+    contactEmail: formModel.contactEmail.trim().toLowerCase() || null,
+    contactPhone: formModel.contactPhone.trim() || null,
+    country: formModel.country.trim() || null,
+    department: formModel.department.trim() || null,
+    city: formModel.city.trim() || null,
+    addressLine: formModel.addressLine.trim() || null,
     addressReference: formModel.addressReference.trim(),
-    website: formModel.website.trim(),
-    googleMapsUrl: formModel.googleMapsUrl.trim(),
     notes: formModel.notes.trim(),
-    status: formModel.status,
+    isActive: formModel.isActive,
 })
 
 const hasValidEmail = (value: string) => emailExpression.test(value.trim())
@@ -163,14 +142,12 @@ export const useClientsModule = () => {
     }
 
     const totalClients = computed(() => clients.value.length)
-    const activeClients = computed(
-        () => clients.value.filter((client) => client.status === 'Activo').length,
-    )
+    const activeClients = computed(() => clients.value.filter((client) => client.isActive).length)
     const prospectClients = computed(
-        () => clients.value.filter((client) => client.status === 'Prospecto').length,
+        () => clients.value.filter((client) => !client.isActive).length,
     )
     const inactiveClients = computed(
-        () => clients.value.filter((client) => client.status === 'Inactivo').length,
+        () => clients.value.filter((client) => !client.isActive).length,
     )
 
     const clientTableRows = computed<ClientTableRow[]>(() => {
@@ -178,12 +155,10 @@ export const useClientsModule = () => {
             id: client.id,
             code: client.code,
             name: client.name,
-            segment: client.segment,
-            contactName: client.contactName,
-            contactPhone: client.contactPhone,
-            location: `${client.city}, ${client.department}`,
-            city: client.city,
-            status: client.status,
+            contactName: client.contactName ?? '',
+            contactPhone: client.contactPhone ?? '',
+            location: [client.city, client.department].filter(Boolean).join(', '),
+            isActive: client.isActive,
         }))
     })
 
@@ -302,7 +277,6 @@ export const useClientsModule = () => {
                     code: 'CLI-900',
                     name: 'Cliente Ejemplo S.A. de C.V.',
                     tax_id: '0614-000000-000-0',
-                    segment: 'Retail',
                     contact_name: 'Contacto Ejemplo',
                     contact_email: 'contacto@cliente-ejemplo.com',
                     contact_phone: '+503 7000-0000',
@@ -311,9 +285,7 @@ export const useClientsModule = () => {
                     city: 'San Salvador',
                     address_line: 'Direccion principal del cliente',
                     address_reference: 'Referencia adicional',
-                    website: 'https://cliente-ejemplo.com',
-                    google_maps_url: 'https://maps.google.com/?q=San+Salvador',
-                    status: 'Prospecto',
+                    is_active: 'true',
                     notes: 'Notas internas del cliente',
                 },
             ],
@@ -366,7 +338,6 @@ export const useClientsModule = () => {
             const code = row[ci('code')]?.trim().toUpperCase() ?? ''
             const name = row[ci('name')]?.trim() ?? ''
             const taxId = row[ci('tax_id')]?.trim() ?? ''
-            const segment = row[ci('segment')]?.trim() ?? ''
             const contactName = row[ci('contact_name')]?.trim() ?? ''
             const contactEmail = row[ci('contact_email')]?.trim().toLowerCase() ?? ''
             const contactPhone = row[ci('contact_phone')]?.trim() ?? ''
@@ -375,15 +346,12 @@ export const useClientsModule = () => {
             const city = row[ci('city')]?.trim() ?? ''
             const addressLine = row[ci('address_line')]?.trim() ?? ''
             const addressReference = row[ci('address_reference')]?.trim() ?? ''
-            const website = row[ci('website')]?.trim() ?? ''
-            const googleMapsUrl = row[ci('google_maps_url')]?.trim() ?? ''
-            const statusValue = row[ci('status')]?.trim() ?? ''
+            const isActiveValue = row[ci('is_active')]?.trim().toLowerCase() ?? 'true'
             const notes = row[ci('notes')]?.trim() ?? ''
 
             if (
                 !code ||
                 !name ||
-                !segment ||
                 !contactName ||
                 !contactEmail ||
                 !contactPhone ||
@@ -391,7 +359,6 @@ export const useClientsModule = () => {
                 !department ||
                 !city ||
                 !addressLine ||
-                !statusValue ||
                 !hasValidEmail(contactEmail)
             ) {
                 skippedCount += 1
@@ -402,7 +369,6 @@ export const useClientsModule = () => {
                 code,
                 name,
                 taxId,
-                segment,
                 contactName,
                 contactEmail,
                 contactPhone,
@@ -411,10 +377,8 @@ export const useClientsModule = () => {
                 city,
                 addressLine,
                 addressReference,
-                website,
-                googleMapsUrl,
                 notes,
-                status: normalizeClientStatus(statusValue),
+                isActive: isActiveValue !== 'false',
             })
         }
 
@@ -491,7 +455,6 @@ export const useClientsModule = () => {
                 { key: 'code', label: 'Codigo' },
                 { key: 'name', label: 'Cliente' },
                 { key: 'taxId', label: 'NIT' },
-                { key: 'segment', label: 'Segmento' },
                 { key: 'contactName', label: 'Contacto' },
                 { key: 'contactEmail', label: 'Correo de contacto' },
                 { key: 'contactPhone', label: 'Telefono de contacto' },
@@ -500,9 +463,7 @@ export const useClientsModule = () => {
                 { key: 'city', label: 'Ciudad' },
                 { key: 'addressLine', label: 'Direccion' },
                 { key: 'addressReference', label: 'Referencia' },
-                { key: 'website', label: 'Sitio web' },
-                { key: 'googleMapsUrl', label: 'URL Google Maps' },
-                { key: 'status', label: 'Estado' },
+                { key: 'isActive', label: 'Activo' },
                 { key: 'notes', label: 'Notas' },
             ],
             clients.value,
@@ -527,7 +488,6 @@ export const useClientsModule = () => {
         handleImportSelection,
         exportClients,
         downloadImportTemplate,
-        clientStatusOptions,
         hydrateClients,
     }
 }

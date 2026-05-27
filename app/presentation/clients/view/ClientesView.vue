@@ -35,23 +35,7 @@
                                 <label
                                     class="text-[0.65rem] font-label-caps uppercase tracking-[0.12em] text-secondary-container"
                                 >
-                                    Industria
-                                </label>
-                                <AppSelect
-                                    v-model="selectedIndustry"
-                                    compact
-                                    :clearable="false"
-                                    :input-class="'!py-2.5'"
-                                    :options="industryOptions"
-                                    :searchable="false"
-                                />
-                            </div>
-
-                            <div class="min-w-0 flex-1 space-y-1">
-                                <label
-                                    class="text-[0.65rem] font-label-caps uppercase tracking-[0.12em] text-secondary-container"
-                                >
-                                    Status
+                                    Estado
                                 </label>
                                 <AppSelect
                                     v-model="selectedStatus"
@@ -67,7 +51,7 @@
                                 <label
                                     class="text-[0.65rem] font-label-caps uppercase tracking-[0.12em] text-secondary-container"
                                 >
-                                    Region
+                                    Región
                                 </label>
                                 <AppSelect
                                     v-model="selectedRegion"
@@ -91,7 +75,7 @@
                                     variant="ghost"
                                     @click="resetFilters"
                                 >
-                                    Reset Filters
+                                    Limpiar
                                 </AppButton>
                             </div>
                         </div>
@@ -293,65 +277,38 @@ const {
     hydrateClients,
 } = useClientsModule()
 
-const selectedIndustry = ref<string>('all')
 const selectedStatus = ref<string>('all')
 const selectedRegion = ref<string>('all')
 const selectedClientId = ref<string>('')
 
-const industryOptions = computed<AppSelectOption[]>(() => {
-    const segments = [
-        ...new Set(
-            clientTableRows.value
-                .map((row) => row.segment)
-                .filter((segment) => segment.trim().length > 0),
-        ),
-    ]
-    return [
-        { label: 'ALL', value: 'all' },
-        ...segments.map((segment) => ({ label: segment.toUpperCase(), value: segment })),
-    ]
-})
-
 const statusOptions: AppSelectOption[] = [
-    { label: 'All Status', value: 'all' },
-    { label: 'Activo', value: 'Activo' },
-    { label: 'Prospecto', value: 'Prospecto' },
-    { label: 'Inactivo', value: 'Inactivo' },
+    { label: 'Todos', value: 'all' },
+    { label: 'Activos', value: 'active' },
+    { label: 'Inactivos', value: 'inactive' },
 ]
 
 const regionOptions = computed<AppSelectOption[]>(() => {
     const regions = [
         ...new Set(
             clientTableRows.value
-                .map((row) => {
-                    const parts = row.location.split(',')
-                    return parts[parts.length - 1]?.trim() ?? ''
-                })
+                .map((row) => row.location.split(',').pop()?.trim() ?? '')
                 .filter((region) => region.length > 0),
         ),
     ]
-
     return [
-        { label: 'All Regions', value: 'all' },
+        { label: 'Todas las regiones', value: 'all' },
         ...regions.map((region) => ({ label: region, value: region })),
     ]
 })
 
 const filteredRows = computed(() => {
     return clientTableRows.value.filter((clientRow) => {
-        if (selectedIndustry.value !== 'all' && clientRow.segment !== selectedIndustry.value) {
-            return false
-        }
-
-        if (selectedStatus.value !== 'all' && clientRow.status !== selectedStatus.value) {
-            return false
-        }
+        if (selectedStatus.value === 'active' && !clientRow.isActive) return false
+        if (selectedStatus.value === 'inactive' && clientRow.isActive) return false
 
         if (selectedRegion.value !== 'all') {
             const region = clientRow.location.split(',').pop()?.trim() ?? ''
-            if (region !== selectedRegion.value) {
-                return false
-            }
+            if (region !== selectedRegion.value) return false
         }
 
         return true
@@ -379,7 +336,9 @@ const selectedClientName = computed(
 )
 const selectedClientCode = computed(() => selectedClientRow.value?.code ?? 'N/A')
 const selectedClientContact = computed(() => selectedClientForm.value?.contactName ?? 'N/A')
-const selectedClientStatusLabel = computed(() => selectedClientRow.value?.status ?? 'N/A')
+const selectedClientStatusLabel = computed(() =>
+    selectedClientRow.value ? (selectedClientRow.value.isActive ? 'Activo' : 'Inactivo') : 'N/A',
+)
 const selectedClientEmail = computed(() => selectedClientForm.value?.contactEmail ?? 'N/A')
 const selectedClientNotes = computed(
     () => selectedClientForm.value?.notes || 'No hay notas registradas para este cliente.',
@@ -406,7 +365,6 @@ const goToEditSelectedClient = () => {
 }
 
 const resetFilters = () => {
-    selectedIndustry.value = 'all'
     selectedStatus.value = 'all'
     selectedRegion.value = 'all'
 }
