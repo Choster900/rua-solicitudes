@@ -99,19 +99,19 @@ const selectedDesignerId = ref('')
 const errorMessage = ref('')
 const isSubmitting = ref(false)
 
-const designerOptions = computed(() => {
-    return designers.value
-        .filter((designer) => designer.status === 'Activo')
-        .map((designer) => ({
-            label: designer.fullName,
-            value: designer.id,
-        }))
-})
+const designerOptions = computed(() =>
+    designers.value.map((designer) => ({
+        label: designer.fullName,
+        value: designer.id,
+    })),
+)
 
 const loadDesigners = async () => {
     try {
         const response = await apiClient.get<Designer[]>('/users')
-        designers.value = response.data.filter((user) => user.userType === 'Diseñador')
+        designers.value = response.data.filter(
+            (user) => user.status === 'ACTIVE' && user.userType === 'Diseñador',
+        )
     } catch {
         toast.warning('No se pudo cargar la lista de diseñadores.')
     }

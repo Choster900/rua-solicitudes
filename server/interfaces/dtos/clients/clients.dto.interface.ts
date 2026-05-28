@@ -15,6 +15,7 @@ export interface CreateClientDto {
 }
 
 export interface UpdateClientDto {
+    code?: string
     name?: string
     taxId?: string
     contactName?: string

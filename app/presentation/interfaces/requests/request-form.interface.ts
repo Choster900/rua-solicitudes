@@ -1,34 +1,48 @@
-import type {
-    RequestAttachment,
-    RequestPriority,
-    RequestStatus,
-} from '~/presentation/interfaces/requests/request.interface'
+import type { RequestPriority } from '~/presentation/interfaces/requests/request.interface'
+
+export interface SampleFileInput {
+    base64Content: string
+    mimeType: string
+    originalName: string
+    notes: string
+}
 
 export interface DesignRequestFormModel {
-    clientName: string
+    // Header
+    clientId: string
+    title: string
     brandName: string
     productName: string
-    requestedBy: string
-    vendorName: string
+    priority: RequestPriority
+    requiredDate: string
+
+    // Version — material
     materialType: string
     materialWeight: string
+    fluteType: string
     fluteDirection: string
+    closureType: string
     outerLiner: string
     innerLiner: string
-    printTechnique: string
+
+    // Version — print
     colorMode: string
     pantoneReferences: string
+
+    // Version — dimensions
+    length: string
+    width: string
+    height: string
+    dimensionUnit: string
+
+    // Version — production
+    quantity: string
     finishingOptions: string[]
     deliverables: string[]
-    dimensions: string
-    quantity: string
-    requiredDate: string
-    priority: RequestPriority
-    status: RequestStatus
     designInstructions: string
-    visualReferences: string
-    requireArt: boolean
     requireDieCut: boolean
     requireMockup: boolean
-    attachments: RequestAttachment[]
+
+    // Files
+    sampleFiles: SampleFileInput[]
 }

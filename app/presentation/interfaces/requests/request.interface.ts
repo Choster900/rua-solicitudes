@@ -103,6 +103,11 @@ export interface DesignRequest {
     requireDieCut: boolean
     requireMockup: boolean
 
+    // Design checklist
+    artCompleted: boolean
+    mechanicalCompleted: boolean
+    dummyCompleted: boolean
+
     // Relations
     assignedDesigners: { designerId: string; designerName: string }[]
     sampleFiles: RequestSampleFile[]

@@ -1,7 +1,19 @@
+import dayjs from 'dayjs'
 import { requireSessionUser } from '../../utils/auth-session.util'
 import { prisma } from '../../database/prisma'
 
-const ALLOWED_STATUSES = [
+type RequestStatus =
+    | 'CREATED'
+    | 'PENDING_DESIGN_REVIEW'
+    | 'ASSIGNED_TO_DESIGNER'
+    | 'IN_DESIGN'
+    | 'SENT_TO_QUALITY'
+    | 'QUALITY_REJECTED'
+    | 'QUALITY_APPROVED'
+    | 'DELIVERED_TO_SALES'
+    | 'CANCELLED'
+
+const ALL_STATUSES: RequestStatus[] = [
     'CREATED',
     'PENDING_DESIGN_REVIEW',
     'ASSIGNED_TO_DESIGNER',
@@ -11,56 +23,64 @@ const ALLOWED_STATUSES = [
     'QUALITY_APPROVED',
     'DELIVERED_TO_SALES',
     'CANCELLED',
-] as const
+]
 
-const includeVersion = {
-    include: {
-        assignments: {
-            select: {
-                designerId: true,
-                isLeadDesigner: true,
-                status: true,
-                designer: { select: { id: true, fullName: true } },
-            },
-        },
-    },
-} as const
+const serialize = (req: any) => ({
+    id: req.id,
+    code: req.code,
+    title: req.title ?? '',
+    clientId: req.clientId,
+    clientName: req.client?.name ?? '',
+    clientCode: req.client?.code ?? '',
+    sellerId: req.sellerId,
+    sellerName: req.seller?.fullName ?? '',
+    brandName: req.brandName ?? '',
+    productName: req.productName ?? '',
+    priority: req.priority as string,
+    status: req.status as RequestStatus,
+    requiredDate: req.requiredDate ? dayjs(req.requiredDate).toISOString() : null,
+    createdAt: dayjs(req.createdAt).toISOString(),
+    assignedDesigners: (req.currentVersion?.assignments ?? []).map((a: any) => ({
+        designerId: a.designerId,
+        designerName: a.designer?.fullName ?? '',
+        isLead: Boolean(a.isLeadDesigner),
+    })),
+    artCompleted: Boolean(req.currentVersion?.artCompleted),
+    mechanicalCompleted: Boolean(req.currentVersion?.mechanicalCompleted),
+    dummyCompleted: Boolean(req.currentVersion?.dummyCompleted),
+})
 
 export default defineEventHandler(async (event) => {
     requireSessionUser(event)
 
-    const query = getQuery(event)
-
-    // ?status=CREATED,PENDING_DESIGN_REVIEW  o  ?status=QUALITY_APPROVED
-    const rawStatus = typeof query.status === 'string' ? query.status : ''
-    const requestedStatuses = rawStatus
-        .split(',')
-        .map((s) => s.trim().toUpperCase())
-        .filter((s): s is (typeof ALLOWED_STATUSES)[number] =>
-            (ALLOWED_STATUSES as readonly string[]).includes(s),
-        )
-
-    const whereStatus = requestedStatuses.length > 0 ? { status: { in: requestedStatuses } } : {}
-
     const requests = await prisma.designRequest.findMany({
-        where: whereStatus,
         orderBy: { createdAt: 'desc' },
         include: {
             client: { select: { id: true, name: true, code: true } },
-            seller: { select: { id: true, fullName: true, employeeCode: true } },
-            currentVersion: includeVersion,
+            seller: { select: { id: true, fullName: true } },
+            currentVersion: {
+                include: {
+                    assignments: {
+                        select: {
+                            designerId: true,
+                            isLeadDesigner: true,
+                            designer: { select: { id: true, fullName: true } },
+                        },
+                    },
+                },
+            },
         },
     })
 
-    // Si no viene ?status, devuelve las dos colas principales en un objeto agrupado
-    if (!rawStatus) {
-        return {
-            pendingAssignment: requests.filter((r) =>
-                ['CREATED', 'PENDING_DESIGN_REVIEW', 'ASSIGNED_TO_DESIGNER'].includes(r.status),
-            ),
-            qualityApproved: requests.filter((r) => r.status === 'QUALITY_APPROVED'),
-        }
+    const grouped = Object.fromEntries(ALL_STATUSES.map((s) => [s, []])) as Record<
+        RequestStatus,
+        ReturnType<typeof serialize>[]
+    >
+
+    for (const req of requests) {
+        const status = req.status as RequestStatus
+        grouped[status]?.push(serialize(req))
     }
 
-    return requests
+    return grouped
 })

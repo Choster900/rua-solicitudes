@@ -26,6 +26,7 @@ export default defineEventHandler(async (event) => {
     }
 
     const name = body.name?.trim() ?? sourceClient.name
+    const code = body.code?.trim().toUpperCase() ?? sourceClient.code
     const taxId = body.taxId?.trim() ?? sourceClient.taxId
     const contactName = body.contactName?.trim() ?? sourceClient.contactName
     const contactEmail = body.contactEmail?.trim().toLowerCase() ?? sourceClient.contactEmail
@@ -56,6 +57,7 @@ export default defineEventHandler(async (event) => {
     }
 
     return await updateClient(clientId, {
+        code,
         name,
         taxId,
         contactName,

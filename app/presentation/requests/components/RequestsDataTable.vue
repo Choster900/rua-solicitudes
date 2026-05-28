@@ -165,14 +165,6 @@ const columns: AppDataTableColumn[] = [
     { key: 'requiredDateLabel', label: 'Entrega solicitada' },
     { key: 'attachmentsCount', label: 'Adjuntos', align: 'center' },
     { key: 'requestedBy', label: 'Solicitado por' },
-    {
-        key: 'actions',
-        label: 'Acciones',
-        searchable: false,
-        align: 'right',
-        headerClassName: 'w-[50px]',
-        cellClassName: 'w-[50px]',
-    },
 ]
 
 const toggleActionsMenu = (rowId: string) => {

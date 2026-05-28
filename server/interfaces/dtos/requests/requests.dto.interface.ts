@@ -39,7 +39,7 @@ export interface CreateRequestDto {
     priority?: RequestPriority
     requiredDate?: string
     version?: CreateRequestVersionDto
-    sampleFile?: CreateRequestSampleFileDto
+    sampleFiles?: CreateRequestSampleFileDto[]
 }
 
 export interface AssignDesignerDto {

@@ -20,6 +20,7 @@
         </header>
 
         <form class="space-y-4" @submit.prevent="handleSubmit">
+            <!-- Información General -->
             <section
                 class="rounded-xl border border-[#21405B] bg-surface-container-lowest/5 px-5 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
             >
@@ -29,15 +30,6 @@
                 </div>
 
                 <div class="mt-4 grid gap-3 lg:grid-cols-3">
-                    <AppTextField
-                        v-model="formModel.requestedBy"
-                        label="Solicitado por"
-                        :error="getFieldError('requestedBy')"
-                        :readonly="mode === 'create'"
-                        required
-                        @blur="handleFieldBlur('requestedBy')"
-                    />
-
                     <div class="space-y-1.5">
                         <label
                             class="block text-[0.65rem] font-label-caps uppercase text-secondary-container"
@@ -46,10 +38,10 @@
                             <span class="text-status-error">*</span>
                         </label>
                         <AppSelect
-                            v-model="formModel.clientName"
+                            v-model="formModel.clientId"
                             :clearable="false"
                             :input-class="
-                                getFieldError('clientName')
+                                getFieldError('clientId')
                                     ? 'border-status-error focus:ring-status-error/40'
                                     : ''
                             "
@@ -58,12 +50,21 @@
                                 isLoadingClients ? 'Cargando clientes...' : 'Seleccione Cliente...'
                             "
                             :searchable="true"
-                            @blur="handleFieldBlur('clientName')"
+                            @blur="handleFieldBlur('clientId')"
                         />
-                        <p v-if="getFieldError('clientName')" class="text-xs text-status-error">
-                            {{ getFieldError('clientName') }}
+                        <p v-if="getFieldError('clientId')" class="text-xs text-status-error">
+                            {{ getFieldError('clientId') }}
                         </p>
                     </div>
+
+                    <AppTextField
+                        v-model="formModel.title"
+                        label="Título"
+                        :error="getFieldError('title')"
+                        placeholder="Descripción breve de la solicitud"
+                        required
+                        @blur="handleFieldBlur('title')"
+                    />
 
                     <AppTextField
                         v-model="formModel.productName"
@@ -73,9 +74,36 @@
                         required
                         @blur="handleFieldBlur('productName')"
                     />
+
+                    <AppTextField
+                        v-model="formModel.brandName"
+                        label="Marca"
+                        placeholder="Nombre de la marca"
+                    />
+
+                    <div class="space-y-1.5">
+                        <label
+                            class="block text-[0.65rem] font-label-caps uppercase text-secondary-container"
+                        >
+                            Prioridad
+                        </label>
+                        <AppSelect
+                            v-model="formModel.priority"
+                            :clearable="false"
+                            :options="priorityOptions"
+                            :searchable="false"
+                        />
+                    </div>
+
+                    <AppTextField
+                        v-model="formModel.requiredDate"
+                        label="Fecha de entrega"
+                        type="date"
+                    />
                 </div>
             </section>
 
+            <!-- Especificaciones Técnicas -->
             <section
                 class="rounded-xl border border-[#21405B] bg-surface-container-lowest/5 px-5 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
             >
@@ -89,12 +117,25 @@
                         <p
                             class="text-[0.85rem] uppercase tracking-[0.14em] text-secondary-container"
                         >
-                            Medidas de la caja (MM)
+                            Medidas de la caja
                         </p>
-                        <div class="mt-3 grid gap-3 md:grid-cols-3">
-                            <AppTextField v-model="measures.length" placeholder="L  Largo" />
-                            <AppTextField v-model="measures.width" placeholder="W  Ancho" />
-                            <AppTextField v-model="measures.height" placeholder="H  Alto" />
+                        <div class="mt-3 grid gap-3 md:grid-cols-4">
+                            <AppTextField v-model="formModel.length" placeholder="L  Largo" />
+                            <AppTextField v-model="formModel.width" placeholder="W  Ancho" />
+                            <AppTextField v-model="formModel.height" placeholder="H  Alto" />
+                            <div class="space-y-1.5">
+                                <label
+                                    class="block text-[0.65rem] font-label-caps uppercase text-secondary-container"
+                                >
+                                    Unidad
+                                </label>
+                                <AppSelect
+                                    v-model="formModel.dimensionUnit"
+                                    :clearable="false"
+                                    :options="dimensionUnitOptions"
+                                    :searchable="false"
+                                />
+                            </div>
                         </div>
                     </div>
 
@@ -112,7 +153,7 @@
                                 Tipo de cierre
                             </label>
                             <AppSelect
-                                v-model="closureType"
+                                v-model="formModel.closureType"
                                 :clearable="false"
                                 :options="closureTypeOptions"
                                 :searchable="false"
@@ -136,7 +177,7 @@
                                         Flauta
                                     </label>
                                     <AppSelect
-                                        v-model="material.flute"
+                                        v-model="formModel.fluteType"
                                         :clearable="false"
                                         :options="fluteOptions"
                                         :searchable="false"
@@ -144,13 +185,13 @@
                                 </div>
 
                                 <AppTextField
-                                    v-model="material.ect"
+                                    v-model="materialEct"
                                     label="ECT"
                                     placeholder="Ej: 32"
                                 />
 
                                 <AppTextField
-                                    v-model="material.caliber"
+                                    v-model="materialCaliber"
                                     label="Calibre"
                                     placeholder="mm"
                                 />
@@ -162,7 +203,7 @@
                                         Dirección flauta
                                     </label>
                                     <AppSelect
-                                        v-model="material.fluteDirection"
+                                        v-model="formModel.fluteDirection"
                                         :clearable="false"
                                         :options="fluteDirectionOptions"
                                         :searchable="false"
@@ -170,13 +211,13 @@
                                 </div>
 
                                 <AppTextField
-                                    v-model="material.outerLiner"
+                                    v-model="formModel.outerLiner"
                                     label="Liner Externo"
                                     placeholder="Gramos/Tipo"
                                 />
 
                                 <AppTextField
-                                    v-model="material.innerLiner"
+                                    v-model="formModel.innerLiner"
                                     label="Liner Interno"
                                     placeholder="Gramos/Tipo"
                                 />
@@ -210,6 +251,7 @@
                 </div>
             </section>
 
+            <!-- Prototipos y Validaciones -->
             <section
                 class="rounded-xl border border-[#21405B] bg-surface-container-lowest/5 px-5 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
             >
@@ -218,34 +260,7 @@
                     <h3 class="text-base font-semibold text-white">Prototipos y Validaciones</h3>
                 </div>
 
-                <div class="mt-4 grid gap-2 sm:grid-cols-2 md:grid-cols-3">
-                    <button
-                        class="w-full rounded-md border px-3 py-2 text-left transition-colors"
-                        :class="
-                            prototypeFlags.requireArt
-                                ? 'border-white bg-primary/20 text-white'
-                                : 'border-outline/30 bg-surface-container-lowest/20 text-outline-variant hover:text-white'
-                        "
-                        type="button"
-                        @click="prototypeFlags.requireArt = !prototypeFlags.requireArt"
-                    >
-                        <span class="flex items-center gap-2.5">
-                            <span
-                                class="inline-flex h-7 w-7 items-center justify-center rounded-md border border-primary/20 bg-primary/10"
-                            >
-                                <span class="material-symbols-outlined text-[15px]">palette</span>
-                            </span>
-                            <span>
-                                <span class="block text-sm font-medium leading-tight"
-                                    >Solicita Arte</span
-                                >
-                                <span class="text-[0.68rem] uppercase tracking-[0.12em]"
-                                    >Diseño Gráfico</span
-                                >
-                            </span>
-                        </span>
-                    </button>
-
+                <div class="mt-4 grid gap-2 sm:grid-cols-2 md:grid-cols-2">
                     <button
                         class="w-full rounded-md border px-3 py-2 text-left transition-colors"
                         :class="
@@ -306,7 +321,9 @@
                 </div>
             </section>
 
+            <!-- Archivos e instrucciones -->
             <section class="grid gap-3 lg:grid-cols-2">
+                <!-- Archivo de muestra -->
                 <article
                     class="relative overflow-hidden rounded-xl border border-[#21405B] bg-surface-container-lowest/5 px-4 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
                 >
@@ -324,9 +341,7 @@
                                     >cloud_upload</span
                                 >
                             </span>
-                            <h3 class="text-base font-semibold text-white">
-                                Archivos y Referencias
-                            </h3>
+                            <h3 class="text-base font-semibold text-white">Archivo de Muestra</h3>
                         </div>
                         <span
                             class="rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-primary-fixed-dim"
@@ -342,61 +357,67 @@
                     </p>
 
                     <input
-                        ref="attachmentInputRef"
-                        accept=".jpg,.jpeg,.png,.pdf,.eps,.ai,.ia,.svg"
+                        ref="fileInputRef"
+                        accept=".jpg,.jpeg,.png,.pdf,.eps,.ai,.svg"
                         class="hidden"
                         multiple
                         type="file"
-                        @change="handleAttachmentSelection"
+                        @change="handleFileSelection"
                     />
 
                     <button
-                        class="mt-2.5 flex min-h-[170px] w-full flex-col items-center justify-center rounded-lg border border-dashed border-[#4E6780] bg-surface-container-lowest/5 px-4 text-center transition-colors hover:border-primary/70 hover:bg-[#10283E]"
+                        class="mt-2.5 flex min-h-[80px] w-full flex-col items-center justify-center rounded-lg border border-dashed border-[#4E6780] bg-surface-container-lowest/5 px-4 text-center transition-colors hover:border-primary/70 hover:bg-[#10283E]"
                         type="button"
-                        @click="openAttachmentPicker"
+                        @click="fileInputRef?.click()"
                     >
                         <span
-                            class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-primary/30 bg-primary/10 text-primary-fixed-dim"
+                            class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-primary/30 bg-primary/10 text-primary-fixed-dim"
                         >
                             <span class="material-symbols-outlined text-[20px]">upload_file</span>
                         </span>
-                        <p class="mt-2 text-sm font-medium text-white">
-                            Arrastra tus archivos o haz clic para cargar
+                        <p class="mt-1.5 text-sm font-medium text-white">
+                            Haz clic para agregar archivos
                         </p>
-                        <div class="mt-2 flex flex-wrap justify-center gap-1.5">
+                        <div class="mt-1.5 flex flex-wrap justify-center gap-1.5">
                             <span
+                                v-for="ext in ['AI', 'PDF', 'PNG', 'JPG', 'SVG']"
+                                :key="ext"
                                 class="rounded-md border border-outline/30 bg-surface-container-lowest/25 px-2 py-0.5 text-[10px] uppercase tracking-[0.08em] text-outline-variant"
-                                >AI</span
                             >
-                            <span
-                                class="rounded-md border border-outline/30 bg-surface-container-lowest/25 px-2 py-0.5 text-[10px] uppercase tracking-[0.08em] text-outline-variant"
-                                >PDF</span
-                            >
-                            <span
-                                class="rounded-md border border-outline/30 bg-surface-container-lowest/25 px-2 py-0.5 text-[10px] uppercase tracking-[0.08em] text-outline-variant"
-                                >PSD</span
-                            >
-                            <span
-                                class="rounded-md border border-outline/30 bg-surface-container-lowest/25 px-2 py-0.5 text-[10px] uppercase tracking-[0.08em] text-outline-variant"
-                                >PNG</span
-                            >
+                                {{ ext }}
+                            </span>
                         </div>
                     </button>
 
-                    <div v-if="formModel.attachments.length" class="mt-3 grid gap-2 sm:grid-cols-2">
-                        <article
-                            v-for="attachment in formModel.attachments"
-                            :key="attachment.id"
-                            class="rounded-lg border border-outline/25 bg-surface-container-lowest/25 px-3 py-2"
+                    <div v-if="formModel.sampleFiles.length" class="mt-3 space-y-2">
+                        <div
+                            v-for="(file, index) in formModel.sampleFiles"
+                            :key="index"
+                            class="space-y-1.5 rounded-lg border border-outline/25 bg-surface-container-lowest/25 px-3 py-2"
                         >
-                            <p class="truncate text-sm font-semibold text-white">
-                                {{ attachment.name }}
-                            </p>
-                            <p class="text-xs text-outline-variant">
-                                {{ attachment.extension.toUpperCase() }} ·
-                                {{ attachment.sizeKb }} KB
-                            </p>
-                        </article>
+                            <div class="flex items-center justify-between">
+                                <div class="min-w-0">
+                                    <p class="truncate text-sm font-semibold text-white">
+                                        {{ file.originalName }}
+                                    </p>
+                                    <p class="text-xs text-outline-variant">{{ file.mimeType }}</p>
+                                </div>
+                                <button
+                                    class="ml-2 flex-shrink-0 text-outline-variant hover:text-rose-300"
+                                    type="button"
+                                    title="Quitar archivo"
+                                    @click="removeFile(index)"
+                                >
+                                    <span class="material-symbols-outlined text-[18px]">close</span>
+                                </button>
+                            </div>
+                            <textarea
+                                v-model="file.notes"
+                                class="w-full rounded-lg border border-outline/30 bg-surface-container-lowest/5 px-3 py-1.5 text-xs text-white outline-none transition-colors placeholder:text-outline-variant/80 focus:border-primary"
+                                rows="2"
+                                placeholder="Notas sobre este archivo..."
+                            />
+                        </div>
                     </div>
 
                     <p
@@ -406,6 +427,7 @@
                     </p>
                 </article>
 
+                <!-- Instrucciones adicionales -->
                 <article
                     class="relative overflow-hidden rounded-xl border border-[#21405B] bg-surface-container-lowest/5 px-4 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
                 >
@@ -463,7 +485,7 @@
             </section>
 
             <footer class="flex flex-wrap justify-end gap-2 border-t border-outline/20 pt-3">
-                <AppButton size="lg" variant="ghost" @click="$emit('cancel')"> Cancelar </AppButton>
+                <AppButton size="lg" variant="ghost" @click="$emit('cancel')">Cancelar</AppButton>
                 <AppButton
                     icon="send"
                     icon-position="left"
@@ -490,8 +512,6 @@ import {
 } from '~/presentation/shared/composables/forms/useFormValidation'
 import { useApiClient } from '~/presentation/shared/composables/useApiClient'
 import { useAppToast } from '~/presentation/shared/composables/useAppToast'
-import { getAuthTokenProfile } from '~/presentation/auth/utils/auth-token.util'
-import { toRequestAttachmentFromFile } from '~/presentation/requests/composables/useRequestsModule'
 import type { Client } from '~/presentation/interfaces/clients/client.interface'
 import type { DesignRequestFormModel } from '~/presentation/interfaces/requests/request-form.interface'
 
@@ -502,9 +522,7 @@ interface RequestFormCardProps {
     model: DesignRequestFormModel
 }
 
-defineOptions({
-    name: 'RequestFormCard',
-})
+defineOptions({ name: 'RequestFormCard' })
 
 const props = defineProps<RequestFormCardProps>()
 const emit = defineEmits<{
@@ -514,78 +532,49 @@ const emit = defineEmits<{
 
 const apiClient = useApiClient()
 const toast = useAppToast()
-const attachmentInputRef = ref<HTMLInputElement | null>(null)
-const currentEmployeeCode = ref('')
-
-const accessToken = useCookie<string | null>('access_token')
-const currentUserName = computed(() => {
-    const token = accessToken.value
-    return token ? (getAuthTokenProfile(token)?.fullName ?? '') : ''
-})
+const fileInputRef = ref<HTMLInputElement | null>(null)
 const clientOptions = ref<AppSelectOption[]>([])
 const isLoadingClients = ref(false)
 
-onMounted(async () => {
-    isLoadingClients.value = true
-    try {
-        const response = await apiClient.get<Array<{ name: string; code: string }>>('/clients')
-        clientOptions.value = response.data.map((c) => ({ label: c.name, value: c.name }))
-    } catch {
-        toast.error('No se pudieron cargar los clientes.')
-    } finally {
-        isLoadingClients.value = false
-    }
-})
+// ECT / Caliber are split from materialWeight for UX
+const materialEct = ref('')
+const materialCaliber = ref('')
 
 const formModel = reactive<DesignRequestFormModel>({
-    clientName: '',
+    clientId: '',
+    title: '',
     brandName: '',
     productName: '',
-    requestedBy: '',
-    vendorName: '',
-    materialType: '',
+    priority: 'MEDIUM',
+    requiredDate: '',
+    materialType: 'C',
     materialWeight: '',
+    fluteType: 'C',
     fluteDirection: 'Vertical',
+    closureType: 'Tapa y Fondo',
     outerLiner: '',
     innerLiner: '',
-    printTechnique: '',
-    colorMode: '',
+    colorMode: 'CMYK',
     pantoneReferences: '',
-    finishingOptions: [],
-    deliverables: [],
-    dimensions: '',
-    quantity: '',
-    requiredDate: '',
-    priority: 'MEDIUM',
-    status: 'CREATED',
-    designInstructions: '',
-    visualReferences: '',
-    requireArt: true,
-    requireDieCut: false,
-    requireMockup: false,
-    attachments: [],
-})
-
-const measures = reactive({
     length: '',
     width: '',
     height: '',
+    dimensionUnit: 'cm',
+    quantity: '',
+    finishingOptions: [],
+    deliverables: [],
+    designInstructions: '',
+    requireDieCut: false,
+    requireMockup: false,
+    sampleFiles: [],
 })
 
-const material = reactive({
-    flute: 'C',
-    ect: '',
-    caliber: '',
-    fluteDirection: 'Vertical',
-    outerLiner: '',
-    innerLiner: '',
-})
-
-const prototypeFlags = reactive({
-    requireArt: formModel.requireArt,
-})
-
-const closureType = ref('Tapa y Fondo')
+const priorityOptions: AppSelectOption[] = [
+    { label: 'Baja', value: 'LOW' },
+    { label: 'Media', value: 'MEDIUM' },
+    { label: 'Alta', value: 'HIGH' },
+    { label: 'Urgente', value: 'URGENT' },
+]
 
 const closureTypeOptions: AppSelectOption[] = [
     { label: 'Tapa y Fondo', value: 'Tapa y Fondo' },
@@ -604,19 +593,18 @@ const fluteDirectionOptions: AppSelectOption[] = [
     { label: 'Horizontal', value: 'Horizontal' },
 ]
 
+const dimensionUnitOptions: AppSelectOption[] = [
+    { label: 'cm', value: 'cm' },
+    { label: 'mm', value: 'mm' },
+    { label: 'in', value: 'in' },
+]
+
 const finishingChoices = ['Barniz UV', 'Laminado Mate', 'Hot Stamping', 'Relieve']
 
-const allowedExtensions = new Set(['jpg', 'jpeg', 'png', 'pdf', 'eps', 'ai', 'ia', 'svg'])
-
 const schema: ValidationSchema<DesignRequestFormModel> = {
-    clientName: [validationRules.required<DesignRequestFormModel>('El cliente es requerido.')],
+    clientId: [validationRules.required<DesignRequestFormModel>('El cliente es requerido.')],
+    title: [validationRules.required<DesignRequestFormModel>('El título es requerido.')],
     productName: [validationRules.required<DesignRequestFormModel>('El producto es requerido.')],
-    requestedBy: [validationRules.required<DesignRequestFormModel>('El solicitante es requerido.')],
-    designInstructions: [
-        validationRules.required<DesignRequestFormModel>(
-            'Las instrucciones para diseño son requeridas.',
-        ),
-    ],
 }
 
 const { validateAll, validateField, setFieldTouched, getFieldError, clearValidation } =
@@ -626,142 +614,92 @@ const cardTitle = computed(() => (props.mode === 'create' ? 'Nueva Solicitud' : 
 
 const requestCodePreview = computed(() => {
     const year = new Date().getFullYear()
-    return `REQ-${year}-0892`
+    return `SOL-${year}-???`
 })
+
 const instructionLength = computed(() => formModel.designInstructions.trim().length)
-
-const syncDerivedFieldsFromModel = () => {
-    const dimensionMatch = formModel.dimensions.match(/([^x]+)x([^x]+)x([^x]+)/i)
-    if (dimensionMatch) {
-        measures.length = dimensionMatch[1]?.trim() || ''
-        measures.width = dimensionMatch[2]?.trim() || ''
-        measures.height = dimensionMatch[3]?.trim() || ''
-    }
-
-    const [ect = '', caliber = ''] = formModel.materialWeight.split('/').map((item) => item.trim())
-    material.ect = ect
-    material.caliber = caliber
-    material.flute = formModel.materialType || 'C'
-    material.fluteDirection = formModel.fluteDirection || 'Vertical'
-    material.outerLiner = formModel.outerLiner
-    material.innerLiner = formModel.innerLiner
-    closureType.value = formModel.printTechnique || 'Tapa y Fondo'
-    prototypeFlags.requireArt = formModel.requireArt
-}
-
-const applyRequestedByDefault = () => {
-    if (props.mode !== 'create') {
-        return
-    }
-
-    if (!formModel.requestedBy.trim() && currentEmployeeCode.value) {
-        formModel.requestedBy = currentEmployeeCode.value
-    }
-}
-
-const syncFormModel = () => {
-    Object.assign(formModel, {
-        ...props.model,
-        finishingOptions: [...props.model.finishingOptions],
-        deliverables: [...props.model.deliverables],
-        attachments: [...props.model.attachments],
-    })
-    syncDerivedFieldsFromModel()
-    applyRequestedByDefault()
-}
-
-const hydrateClients = async () => {
-    try {
-        const response = await apiClient.get<Client[]>('/clients')
-        const nextOptions = response.data
-            .map((client) => client.name.trim())
-            .filter(Boolean)
-            .sort((left, right) => left.localeCompare(right, 'es'))
-            .map((name) => ({ label: name, value: name }))
-
-        clientOptions.value = [{ label: 'Seleccione Cliente...', value: '' }, ...nextOptions]
-    } catch {
-        toast.warning('No fue posible cargar los clientes guardados.')
-    }
-}
-
-const hydrateCurrentUser = async () => {
-    try {
-        const response = await apiClient.get<{ id: string; employeeCode?: string }>('/auth/me')
-        currentEmployeeCode.value = response.data.employeeCode?.trim() || response.data.id.trim()
-        applyRequestedByDefault()
-    } catch {
-        currentEmployeeCode.value = ''
-    }
-}
 
 const handleFieldBlur = (field: keyof DesignRequestFormModel) => {
     setFieldTouched(field)
     validateField(field)
 }
 
-const openAttachmentPicker = () => {
-    attachmentInputRef.value?.click()
-}
-
-const handleAttachmentSelection = (event: Event) => {
-    const target = event.target as HTMLInputElement
-    const selectedFiles = target.files ? Array.from(target.files) : []
-
-    if (!selectedFiles.length) {
-        return
-    }
-
-    const validAttachments = selectedFiles
-        .filter((file) => {
-            const extension = file.name.split('.').pop()?.toLowerCase() ?? ''
-            return allowedExtensions.has(extension)
-        })
-        .map((file) => toRequestAttachmentFromFile(file))
-
-    const invalidCount = selectedFiles.length - validAttachments.length
-
-    formModel.attachments = [...formModel.attachments, ...validAttachments]
-
-    if (invalidCount > 0) {
-        toast.warning(`Se ignoraron ${invalidCount} archivo(s) con formato no permitido.`)
-    }
-
-    target.value = ''
-}
-
 const toggleFinishingOption = (option: string) => {
     if (formModel.finishingOptions.includes(option)) {
         formModel.finishingOptions = formModel.finishingOptions.filter((item) => item !== option)
-        return
+    } else {
+        formModel.finishingOptions = [...formModel.finishingOptions, option]
     }
-
-    formModel.finishingOptions = [...formModel.finishingOptions, option]
 }
 
-const normalizeFormBeforeSubmit = () => {
-    formModel.brandName = formModel.brandName || formModel.clientName || 'Sin marca'
-    formModel.vendorName = formModel.vendorName || formModel.requestedBy || 'Sin asignar'
-    formModel.materialType = material.flute
-    formModel.materialWeight = [material.ect, material.caliber].filter(Boolean).join(' / ')
-    formModel.fluteDirection = material.fluteDirection
-    formModel.outerLiner = material.outerLiner.trim()
-    formModel.innerLiner = material.innerLiner.trim()
-    formModel.printTechnique = closureType.value
-    formModel.colorMode = formModel.pantoneReferences.trim() ? 'Pantone' : 'CMYK'
-    formModel.dimensions = `${measures.length} x ${measures.width} x ${measures.height}`
-    formModel.quantity = formModel.quantity || '1'
-    formModel.requiredDate = formModel.requiredDate || new Date().toISOString().slice(0, 10)
-    formModel.deliverables = [
-        prototypeFlags.requireArt ? 'Arte final' : '',
-        formModel.requireMockup ? 'Mockup 3D' : '',
-        formModel.requireDieCut ? 'Plano de troquel' : '',
-    ].filter(Boolean)
-    formModel.requireArt = prototypeFlags.requireArt
+const handleFileSelection = (event: Event) => {
+    const target = event.target as HTMLInputElement
+    const files = target.files ? Array.from(target.files) : []
+    if (!files.length) return
+
+    files.forEach((file) => {
+        const reader = new FileReader()
+        reader.onload = () => {
+            const result = reader.result as string
+            const base64Content = result.split(',')[1] ?? ''
+            formModel.sampleFiles.push({
+                base64Content,
+                mimeType: file.type,
+                originalName: file.name,
+                notes: '',
+            })
+        }
+        reader.readAsDataURL(file)
+    })
+    target.value = ''
+}
+
+const removeFile = (index: number) => {
+    formModel.sampleFiles.splice(index, 1)
+}
+
+const syncMaterialWeight = () => {
+    formModel.materialWeight = [materialEct.value, materialCaliber.value]
+        .filter(Boolean)
+        .join(' / ')
+}
+
+watch([materialEct, materialCaliber], syncMaterialWeight)
+
+const syncFormModel = () => {
+    Object.assign(formModel, {
+        ...props.model,
+        finishingOptions: [...props.model.finishingOptions],
+        deliverables: [...props.model.deliverables],
+        sampleFiles: [...(props.model.sampleFiles ?? [])],
+    })
+    // Parse materialWeight back to ECT / Caliber fields
+    const parts = formModel.materialWeight.split('/').map((s) => s.trim())
+    materialEct.value = parts[0] ?? ''
+    materialCaliber.value = parts[1] ?? ''
+}
+
+const hydrateClients = async () => {
+    isLoadingClients.value = true
+    try {
+        const response = await apiClient.get<Client[]>('/clients')
+        const sorted = [...response.data].sort((a, b) => a.name.localeCompare(b.name, 'es'))
+        clientOptions.value = sorted.map((c) => ({ label: c.name, value: c.id }))
+    } catch {
+        toast.warning('No fue posible cargar los clientes guardados.')
+    } finally {
+        isLoadingClients.value = false
+    }
 }
 
 const handleSubmit = () => {
-    normalizeFormBeforeSubmit()
+    syncMaterialWeight()
+
+    // Build deliverables from prototype flags
+    formModel.deliverables = [
+        formModel.requireMockup ? 'Mockup 3D' : '',
+        formModel.requireDieCut ? 'Plano de troquel' : '',
+    ].filter(Boolean)
 
     if (!validateAll()) {
         toast.error('Completa los campos requeridos para continuar.')
@@ -776,15 +714,12 @@ watch(
     () => props.model,
     () => {
         syncFormModel()
-        if (props.mode === 'create') {
-            formModel.requestedBy = currentUserName.value
-        }
         clearValidation()
     },
     { immediate: true, deep: true },
 )
 
 onMounted(() => {
-    void Promise.all([hydrateClients(), hydrateCurrentUser()])
+    void hydrateClients()
 })
 </script>

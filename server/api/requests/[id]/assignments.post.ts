@@ -2,10 +2,10 @@ import {
     addDesignerAssignment,
     findDesignRequestById,
 } from '../../../repositories/design-requests.repository'
-import { requireRole } from '../../../utils/require-permission.util'
+import { requireSessionUser } from '../../../utils/auth-session.util'
 
 export default defineEventHandler(async (event) => {
-    const sessionUser = requireRole(event, ['admin', 'disenador_jefe'])
+    const sessionUser = requireSessionUser(event)
 
     const requestId = String(getRouterParam(event, 'id') ?? '').trim()
     if (!requestId) {

@@ -1,8 +1,8 @@
 <template>
     <AppShellLayout screen-title="Biblioteca de Clientes">
         <section class="-my-6 -mr-6">
-            <div class="grid min-h-[calc(100vh-64px)] grid-cols-5 gap-0">
-                <article class="col-span-3 border-r border-outline/20 p-5 lg:p-6">
+            <div class="grid min-h-[calc(100vh-64px)] grid-cols-10 gap-0">
+                <article class="col-span-7 border-r border-outline/20 p-5 lg:p-6">
                     <header class="space-y-4 pb-4">
                         <div class="flex flex-wrap items-center justify-between gap-3">
                             <h1 class="text-3xl font-headline-md font-semibold text-white">
@@ -91,153 +91,116 @@
                 </article>
 
                 <aside
-                    class="col-span-2 h-full border-l border-outline/20 bg-surface-container-low/15 p-5 lg:p-6"
+                    class="col-span-3 flex h-full flex-col gap-0 border-l border-outline/20 bg-surface-container-low/15"
                 >
+                    <!-- Acciones -->
                     <div
-                        class="flex items-center justify-between gap-2 border-b border-outline/20 pb-4"
+                        class="flex items-center justify-between gap-1 border-b border-outline/20 px-3 py-2.5"
                     >
-                        <AppButton size="md" variant="ghost" @click="goToEditSelectedClient">
-                            Editar Perfil
-                        </AppButton>
-                        <AppButton size="md" variant="primary"> Historial </AppButton>
+                        <div class="flex items-center gap-1">
+                            <AppButton
+                                icon="edit"
+                                size="sm"
+                                variant="ghost"
+                                :disabled="!selectedClientRow"
+                                @click="goToEditSelectedClient"
+                            >
+                                Editar
+                            </AppButton>
+                            <AppButton
+                                icon="delete"
+                                size="sm"
+                                variant="ghost"
+                                :disabled="!selectedClientRow"
+                                class="text-status-error"
+                                @click="handleDeleteSelectedClient"
+                            >
+                                Eliminar
+                            </AppButton>
+                        </div>
+                        <AppButton size="sm" variant="primary">Historial</AppButton>
                     </div>
 
-                    <div class="mt-5 text-center">
-                        <h2 class="text-3xl font-headline-md font-semibold text-slate-100">
+                    <!-- Nombre y código -->
+                    <div class="border-b border-outline/20 px-3 py-3 text-center">
+                        <h2 class="truncate text-base font-semibold text-slate-100">
                             {{ selectedClientName }}
                         </h2>
-                        <p class="mt-1 text-xl text-outline-variant">
-                            ID: {{ selectedClientCode }}
-                        </p>
+                        <p class="mt-0.5 text-xs text-outline-variant">{{ selectedClientCode }}</p>
                     </div>
 
-                    <div
-                        class="mt-5 grid grid-cols-3 overflow-hidden rounded-lg border border-outline/20"
-                    >
-                        <article
-                            class="border-r border-outline/20 bg-surface-container-low/20 p-3 text-center"
+                    <!-- Stats -->
+                    <div class="grid grid-cols-3 border-b border-outline/20">
+                        <div
+                            class="border-r border-outline/20 bg-surface-container-low/20 px-2 py-2 text-center"
                         >
-                            <p
-                                class="text-[0.65rem] uppercase tracking-[0.13em] text-outline-variant"
-                            >
-                                Ordenes Totales
+                            <p class="text-[0.6rem] uppercase tracking-wide text-outline-variant">
+                                Clientes
                             </p>
-                            <p class="mt-1 text-3xl font-semibold text-slate-100">
+                            <p class="mt-0.5 text-lg font-semibold text-slate-100">
                                 {{ totalClients }}
                             </p>
-                        </article>
-                        <article class="border-r border-outline/20 bg-primary/10 p-3 text-center">
-                            <p
-                                class="text-[0.65rem] uppercase tracking-[0.13em] text-primary-fixed-dim"
-                            >
-                                Solicitudes Activas
+                        </div>
+                        <div class="border-r border-outline/20 bg-primary/10 px-2 py-2 text-center">
+                            <p class="text-[0.6rem] uppercase tracking-wide text-primary-fixed-dim">
+                                Activos
                             </p>
-                            <p class="mt-1 text-3xl font-semibold text-primary-fixed-dim">
+                            <p class="mt-0.5 text-lg font-semibold text-primary-fixed-dim">
                                 {{ activeClients }}
                             </p>
-                        </article>
-                        <article class="bg-amber-500/15 p-3 text-center">
-                            <p class="text-[0.65rem] uppercase tracking-[0.13em] text-amber-200">
-                                Pendientes de Aprobacion
+                        </div>
+                        <div class="bg-amber-500/15 px-2 py-2 text-center">
+                            <p class="text-[0.6rem] uppercase tracking-wide text-amber-200">
+                                Inactivos
                             </p>
-                            <p class="mt-1 text-3xl font-semibold text-amber-200">
+                            <p class="mt-0.5 text-lg font-semibold text-amber-200">
                                 {{ prospectClients }}
                             </p>
-                        </article>
+                        </div>
                     </div>
 
-                    <section class="mt-6 border-t border-outline/20 pt-4">
-                        <h3
-                            class="text-[0.75rem] font-label-caps uppercase tracking-[0.14em] text-primary-fixed-dim"
+                    <!-- Contacto -->
+                    <div class="space-y-2 border-b border-outline/20 px-3 py-3">
+                        <p
+                            class="text-[0.6rem] font-semibold uppercase tracking-wider text-primary-fixed-dim"
                         >
-                            Informacion de Contacto
-                        </h3>
-                        <div class="mt-3 grid grid-cols-2 gap-4">
+                            Contacto
+                        </p>
+                        <div class="space-y-1.5">
                             <div>
-                                <p
-                                    class="text-[0.65rem] font-label-caps uppercase text-outline-variant"
-                                >
-                                    Contacto
-                                </p>
-                                <p class="mt-1 text-lg text-slate-100">
+                                <p class="text-[0.6rem] uppercase text-outline-variant">Nombre</p>
+                                <p class="truncate text-sm text-slate-100">
                                     {{ selectedClientContact }}
                                 </p>
                             </div>
                             <div>
-                                <p
-                                    class="text-[0.65rem] font-label-caps uppercase text-outline-variant"
-                                >
-                                    Encargado
+                                <p class="text-[0.6rem] uppercase text-outline-variant">Email</p>
+                                <p class="truncate text-sm text-slate-100">
+                                    {{ selectedClientEmail }}
                                 </p>
-                                <p class="mt-1 text-lg text-slate-100">
+                            </div>
+                            <div>
+                                <p class="text-[0.6rem] uppercase text-outline-variant">Estado</p>
+                                <p class="text-sm text-slate-100">
                                     {{ selectedClientStatusLabel }}
                                 </p>
                             </div>
                         </div>
-                        <div class="mt-3">
-                            <p
-                                class="text-[0.65rem] font-label-caps uppercase text-outline-variant"
-                            >
-                                Email
-                            </p>
-                            <p class="mt-1 break-all text-lg text-slate-100">
-                                {{ selectedClientEmail }}
-                            </p>
-                        </div>
-                    </section>
+                    </div>
 
-                    <section class="mt-6 border-t border-outline/20 pt-4">
-                        <h3
-                            class="text-[0.75rem] font-label-caps uppercase tracking-[0.14em] text-primary-fixed-dim"
+                    <!-- Notas -->
+                    <div class="px-3 py-3">
+                        <p
+                            class="text-[0.6rem] font-semibold uppercase tracking-wider text-primary-fixed-dim"
                         >
                             Notas
-                        </h3>
-                        <blockquote
-                            class="mt-3 border-l-4 border-amber-300 pl-3 text-2xl italic leading-relaxed text-slate-300 lg:text-[1.45rem]"
+                        </p>
+                        <p
+                            class="mt-1.5 text-xs italic leading-relaxed text-slate-300 line-clamp-4"
                         >
                             {{ selectedClientNotes }}
-                        </blockquote>
-                    </section>
-
-                    <section class="mt-6 border-t border-outline/20 pt-4">
-                        <h3
-                            class="text-[0.75rem] font-label-caps uppercase tracking-[0.14em] text-primary-fixed-dim"
-                        >
-                            Solicitudes Recientes
-                        </h3>
-                        <div
-                            class="mt-3 divide-y divide-outline/20 rounded-lg border border-outline/20 bg-surface-container-low/10"
-                        >
-                            <article class="flex items-center justify-between gap-3 px-3 py-2.5">
-                                <div>
-                                    <p class="text-lg font-semibold text-slate-100">
-                                        #SOL-9921: Die-cut optimization
-                                    </p>
-                                    <p class="text-sm text-outline-variant">Submitted 2 days ago</p>
-                                </div>
-                                <span
-                                    class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-amber-400 text-deep-navy"
-                                >
-                                    <span class="material-symbols-outlined text-[16px]"
-                                        >more_horiz</span
-                                    >
-                                </span>
-                            </article>
-                            <article class="flex items-center justify-between gap-3 px-3 py-2.5">
-                                <div>
-                                    <p class="text-lg font-semibold text-slate-100">
-                                        #SOL-9840: Batch-B Calibration
-                                    </p>
-                                    <p class="text-sm text-outline-variant">Completed Oct 28</p>
-                                </div>
-                                <span
-                                    class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-emerald-400 text-deep-navy"
-                                >
-                                    <span class="material-symbols-outlined text-[16px]">check</span>
-                                </span>
-                            </article>
-                        </div>
-                    </section>
+                        </p>
+                    </div>
                 </aside>
             </div>
 
@@ -272,6 +235,7 @@ const {
     prospectClients,
     clientTableRows,
     getClientFormModelById,
+    deleteClient,
     handleImportSelection,
     exportClients,
     hydrateClients,
@@ -362,6 +326,14 @@ const goToEditSelectedClient = () => {
     }
 
     goToEditClient(selectedClientRow.value.id)
+}
+
+const handleDeleteSelectedClient = async () => {
+    if (!selectedClientRow.value) {
+        return
+    }
+
+    await deleteClient(selectedClientRow.value.id)
 }
 
 const resetFilters = () => {

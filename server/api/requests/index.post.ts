@@ -28,17 +28,14 @@ export default defineEventHandler(async (event) => {
         })
     }
 
-    // Calcular sizeBytes del base64 si viene archivo
-    const sampleFileInput = body.sampleFile
-        ? {
-              uploadedById: sessionUser.sub,
-              originalName: body.sampleFile.originalName,
-              mimeType: body.sampleFile.mimeType,
-              base64Content: body.sampleFile.base64Content,
-              notes: body.sampleFile.notes ?? '',
-              sizeBytes: Math.round((body.sampleFile.base64Content.length * 3) / 4),
-          }
-        : undefined
+    const sampleFilesInput = (body.sampleFiles ?? []).map((file) => ({
+        uploadedById: sessionUser.sub,
+        originalName: file.originalName,
+        mimeType: file.mimeType,
+        base64Content: file.base64Content,
+        notes: file.notes ?? '',
+        sizeBytes: Math.round((file.base64Content.length * 3) / 4),
+    }))
 
     const result = await createDesignRequest({
         code,
@@ -50,7 +47,7 @@ export default defineEventHandler(async (event) => {
         priority: body.priority ?? 'MEDIUM',
         requiredDate: body.requiredDate,
         version: body.version,
-        sampleFile: sampleFileInput,
+        sampleFiles: sampleFilesInput,
     })
 
     return result

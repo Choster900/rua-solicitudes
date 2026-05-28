@@ -16,7 +16,7 @@ const versionSchema = Joi.object({
     width: Joi.number().positive().optional(),
     height: Joi.number().positive().optional(),
     dimensionUnit: Joi.string().trim().valid('cm', 'mm', 'in').optional(),
-    quantity: Joi.number().integer().positive().optional(),
+    quantity: Joi.number().integer().min(0).optional(),
     finishingOptions: Joi.array().items(Joi.string().trim()).optional(),
     deliverables: Joi.array().items(Joi.string().trim()).optional(),
     designInstructions: Joi.string().trim().allow('').optional(),
@@ -49,7 +49,7 @@ export const createRequestDtoSchema = Joi.object<CreateRequestDto>({
     priority: Joi.string().valid('LOW', 'MEDIUM', 'HIGH', 'URGENT').optional(),
     requiredDate: Joi.string().isoDate().optional(),
     version: versionSchema.optional(),
-    sampleFile: sampleFileSchema.optional(),
+    sampleFiles: Joi.array().items(sampleFileSchema).optional(),
 })
 
 export const assignDesignerDtoSchema = Joi.object<AssignDesignerDto>({

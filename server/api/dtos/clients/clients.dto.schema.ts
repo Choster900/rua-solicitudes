@@ -26,6 +26,7 @@ export const createClientDtoSchema = Joi.object<CreateClientDto>({
 })
 
 export const updateClientDtoSchema = Joi.object<UpdateClientDto>({
+    code: optionalText,
     name: optionalText,
     taxId: optionalText,
     contactName: optionalText,

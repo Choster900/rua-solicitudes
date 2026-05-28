@@ -1,54 +1,90 @@
 <template>
     <AppShellLayout screen-title="Bandeja Diseño">
-        <section class="space-y-5">
-            <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                <article
-                    class="rounded-xl border border-outline/20 bg-surface-container-lowest/5 px-4 py-3"
+        <section class="grid h-full gap-0 xl:grid-cols-[minmax(0,70%),minmax(0,30%)]">
+            <!-- ── Lista ─────────────────────────────────────────────── -->
+            <article class="flex min-h-0 flex-col border-r border-outline/20">
+                <!-- Stats -->
+                <div
+                    class="grid grid-cols-2 gap-3 border-b border-outline/20 px-4 py-3 md:grid-cols-4"
                 >
-                    <p class="text-xs uppercase tracking-[0.12em] text-outline-variant">Artes</p>
-                    <p class="mt-1 text-3xl font-semibold text-white">{{ artsCount }}</p>
-                </article>
-                <article
-                    class="rounded-xl border border-outline/20 bg-surface-container-lowest/5 px-4 py-3"
-                >
-                    <p class="text-xs uppercase tracking-[0.12em] text-outline-variant">Dummies</p>
-                    <p class="mt-1 text-3xl font-semibold text-white">{{ dummiesCount }}</p>
-                </article>
-                <article
-                    class="rounded-xl border border-outline/20 bg-surface-container-lowest/5 px-4 py-3"
-                >
-                    <p class="text-xs uppercase tracking-[0.12em] text-outline-variant">
-                        Mecánicos
-                    </p>
-                    <p class="mt-1 text-3xl font-semibold text-white">{{ mechanicsCount }}</p>
-                </article>
-                <article
-                    class="rounded-xl border border-outline/20 bg-surface-container-lowest/5 px-4 py-3"
-                >
-                    <p class="text-xs uppercase tracking-[0.12em] text-outline-variant">
-                        Pendientes Calidad
-                    </p>
-                    <p class="mt-1 text-3xl font-semibold text-white">{{ pendingQualityCount }}</p>
-                </article>
-            </div>
+                    <div
+                        class="rounded-xl border border-outline/20 bg-surface-container-lowest/5 px-4 py-3"
+                    >
+                        <p class="text-xs uppercase tracking-[0.12em] text-outline-variant">
+                            Sin asignar
+                        </p>
+                        <p class="mt-1 text-3xl font-semibold text-white">{{ unassignedCount }}</p>
+                    </div>
+                    <div
+                        class="rounded-xl border border-outline/20 bg-surface-container-lowest/5 px-4 py-3"
+                    >
+                        <p class="text-xs uppercase tracking-[0.12em] text-outline-variant">
+                            En diseño
+                        </p>
+                        <p class="mt-1 text-3xl font-semibold text-white">{{ inDesignCount }}</p>
+                    </div>
+                    <div
+                        class="rounded-xl border border-outline/20 bg-surface-container-lowest/5 px-4 py-3"
+                    >
+                        <p class="text-xs uppercase tracking-[0.12em] text-outline-variant">
+                            En calidad
+                        </p>
+                        <p class="mt-1 text-3xl font-semibold text-white">{{ inQualityCount }}</p>
+                    </div>
+                    <div
+                        class="rounded-xl border border-outline/20 bg-surface-container-lowest/5 px-4 py-3"
+                    >
+                        <p class="text-xs uppercase tracking-[0.12em] text-outline-variant">
+                            Alta prioridad
+                        </p>
+                        <p class="mt-1 text-3xl font-semibold text-white">
+                            {{ highPriorityRequests }}
+                        </p>
+                    </div>
+                </div>
 
-            <article
-                class="overflow-hidden rounded-xl border border-outline/20 bg-surface-container-lowest/5"
-            >
-                <header
-                    class="flex items-center justify-between border-b border-outline/20 px-4 py-3"
+                <!-- Status filter tabs -->
+                <div
+                    class="flex gap-1 overflow-x-auto border-b border-outline/20 px-4 pt-3 pb-0 scrollbar-hide"
                 >
-                    <h2 class="text-xs uppercase tracking-[0.12em] text-secondary-container">
-                        Solicitudes en Proceso
-                    </h2>
-                    <AppButton size="sm" variant="ghost" @click="triggerImport">
-                        Filtros
-                    </AppButton>
+                    <button
+                        v-for="tab in statusTabs"
+                        :key="tab.key"
+                        :class="[
+                            'flex shrink-0 items-center gap-1.5 rounded-t-lg px-3 py-2 text-xs font-semibold uppercase tracking-widest transition-colors',
+                            activeFilter === tab.key
+                                ? 'border-b-2 border-primary text-primary'
+                                : 'text-outline-variant hover:text-white',
+                        ]"
+                        type="button"
+                        @click="activeFilter = tab.key"
+                    >
+                        {{ tab.label }}
+                        <span
+                            class="rounded-full px-1.5 py-0.5 text-[10px] font-bold"
+                            :class="
+                                activeFilter === tab.key
+                                    ? 'bg-primary/20 text-primary'
+                                    : 'bg-outline/20 text-outline-variant'
+                            "
+                            >{{ tab.count }}</span
+                        >
+                    </button>
+                </div>
+
+                <!-- Table header -->
+                <header
+                    class="flex items-center justify-between border-b border-outline/20 px-4 py-2"
+                >
+                    <p class="text-xs text-outline-variant">
+                        {{ filteredRows.length }} solicitudes
+                    </p>
                 </header>
 
-                <div class="overflow-x-auto">
+                <!-- Table -->
+                <div class="flex-1 overflow-auto">
                     <table class="min-w-full">
-                        <thead>
+                        <thead class="sticky top-0 z-10 bg-[#0B1E30]">
                             <tr
                                 class="border-b border-outline/20 text-left text-xs uppercase tracking-[0.08em] text-outline-variant"
                             >
@@ -57,20 +93,24 @@
                                 <th class="px-4 py-3">Producto</th>
                                 <th class="px-4 py-3">Diseñador</th>
                                 <th class="px-4 py-3 text-center">Arte</th>
-                                <th class="px-4 py-3 text-center">Dummie</th>
                                 <th class="px-4 py-3 text-center">Mecánico</th>
+                                <th class="px-4 py-3 text-center">Dummie</th>
                                 <th class="px-4 py-3 text-center">Estado</th>
+                                <th class="px-4 py-3 text-center">Prioridad</th>
                                 <th class="px-4 py-3 text-center">Acciones</th>
-                                <th class="px-4 py-3 text-center">Enviar</th>
                             </tr>
                         </thead>
 
                         <tbody>
                             <tr
-                                v-for="(row, index) in displayRows"
+                                v-for="row in filteredRows"
                                 :key="row.id"
-                                class="border-b border-outline/15 transition-colors hover:bg-surface-container-low/10"
-                                :class="selectedRequestId === row.id ? 'bg-primary/10' : ''"
+                                class="cursor-pointer border-b border-outline/15 transition-colors hover:bg-surface-container-low/10"
+                                :class="
+                                    selectedRequestId === row.id
+                                        ? 'bg-primary/10 hover:bg-primary/15'
+                                        : ''
+                                "
                                 @click="selectedRequestId = row.id"
                             >
                                 <td class="px-4 py-3 text-sm font-semibold text-white">
@@ -82,126 +122,210 @@
                                 <td class="px-4 py-3 text-sm text-outline-variant">
                                     {{ row.productName }}
                                 </td>
-                                <td class="px-4 py-3" @click.stop>
-                                    <div class="flex flex-col gap-1">
-                                        <div
-                                            v-if="row.assignedDesigners.length"
-                                            class="flex flex-wrap gap-1"
-                                        >
-                                            <span
-                                                v-for="a in row.assignedDesigners"
-                                                :key="a.designerId"
-                                                class="inline-flex items-center gap-0.5 rounded-full bg-primary/15 px-2 py-0.5 text-[11px] text-primary-fixed-dim"
-                                            >
-                                                {{ a.designerName }}
-                                                <button
-                                                    v-if="isJefe"
-                                                    type="button"
-                                                    class="ml-0.5 leading-none text-outline-variant hover:text-red-400"
-                                                    title="Quitar asignación"
-                                                    @click.stop="
-                                                        onRemoveDesigner(row.id, a.designerId)
-                                                    "
-                                                >
-                                                    ×
-                                                </button>
-                                            </span>
-                                        </div>
-                                        <select
-                                            v-if="
-                                                isJefe &&
-                                                (row.status === 'PENDING_ASSIGNMENT' ||
-                                                    row.status === 'ASSIGNED') &&
-                                                getAvailableDesigners(row).length > 0
-                                            "
-                                            value=""
-                                            class="w-full rounded-md border border-outline/30 bg-surface-container-lowest/20 px-2 py-1 text-xs text-outline-variant focus:border-primary focus:outline-none"
-                                            @change="onAssignDesigner(row.id, $event)"
-                                        >
-                                            <option value="" class="bg-[#0D1E2E]">
-                                                + Asignar...
-                                            </option>
-                                            <option
-                                                v-for="designer in getAvailableDesigners(row)"
-                                                :key="designer.id"
-                                                :value="designer.id"
-                                                class="bg-[#0D1E2E] text-white"
-                                            >
-                                                {{ designer.fullName }}
-                                            </option>
-                                        </select>
+                                <td class="px-4 py-3 text-sm" @click.stop>
+                                    <div
+                                        v-if="row.assignedDesigners.length"
+                                        class="flex flex-wrap gap-1"
+                                    >
                                         <span
-                                            v-if="!row.assignedDesigners.length && !isJefe"
-                                            class="text-sm text-outline-variant/50"
-                                            >—</span
+                                            v-for="a in row.assignedDesigners"
+                                            :key="a.designerId"
+                                            class="inline-flex items-center gap-1 rounded-full bg-primary/15 px-2 py-0.5 text-[11px] text-primary-fixed-dim"
                                         >
+                                            {{ a.designerName }}
+                                            <button
+                                                v-if="isJefe"
+                                                type="button"
+                                                class="leading-none text-outline-variant hover:text-red-400"
+                                                title="Quitar asignación"
+                                                @click.stop="onRemoveDesigner(row.id, a.designerId)"
+                                            >
+                                                ×
+                                            </button>
+                                        </span>
+                                    </div>
+                                    <span v-else class="text-xs text-outline-variant/50"
+                                        >Sin asignar</span
+                                    >
+                                </td>
+                                <!-- Arte -->
+                                <td class="px-4 py-3 text-center" @click.stop>
+                                    <button
+                                        v-if="canToggleChecklist(row)"
+                                        class="inline-flex items-center justify-center transition-colors"
+                                        :class="
+                                            getChecklist(row.id).artCompleted
+                                                ? 'text-emerald-400 hover:text-emerald-300'
+                                                : 'text-outline-variant hover:text-white'
+                                        "
+                                        type="button"
+                                        title="Alternar Arte"
+                                        @click="handleToggleChecklist(row.id, 'art')"
+                                    >
+                                        <span class="material-symbols-outlined text-[22px]">
+                                            {{
+                                                getChecklist(row.id).artCompleted
+                                                    ? 'check_box'
+                                                    : 'check_box_outline_blank'
+                                            }}
+                                        </span>
+                                    </button>
+                                    <span
+                                        v-else
+                                        :class="
+                                            getChecklist(row.id).artCompleted
+                                                ? 'text-emerald-400'
+                                                : 'text-outline-variant/30'
+                                        "
+                                        class="text-sm"
+                                    >
+                                        {{ getChecklist(row.id).artCompleted ? '✓' : '—' }}
+                                    </span>
+                                </td>
+
+                                <!-- Mecánico -->
+                                <td class="px-4 py-3 text-center" @click.stop>
+                                    <button
+                                        v-if="canToggleChecklist(row)"
+                                        class="inline-flex items-center justify-center transition-colors"
+                                        :class="
+                                            getChecklist(row.id).mechanicalCompleted
+                                                ? 'text-emerald-400 hover:text-emerald-300'
+                                                : 'text-outline-variant hover:text-white'
+                                        "
+                                        type="button"
+                                        title="Alternar Mecánico"
+                                        @click="handleToggleChecklist(row.id, 'mechanical')"
+                                    >
+                                        <span class="material-symbols-outlined text-[22px]">
+                                            {{
+                                                getChecklist(row.id).mechanicalCompleted
+                                                    ? 'check_box'
+                                                    : 'check_box_outline_blank'
+                                            }}
+                                        </span>
+                                    </button>
+                                    <span
+                                        v-else
+                                        :class="
+                                            getChecklist(row.id).mechanicalCompleted
+                                                ? 'text-emerald-400'
+                                                : 'text-outline-variant/30'
+                                        "
+                                        class="text-sm"
+                                    >
+                                        {{ getChecklist(row.id).mechanicalCompleted ? '✓' : '—' }}
+                                    </span>
+                                </td>
+
+                                <!-- Dummie -->
+                                <td class="px-4 py-3 text-center" @click.stop>
+                                    <button
+                                        v-if="canToggleChecklist(row)"
+                                        class="inline-flex items-center justify-center transition-colors"
+                                        :class="
+                                            getChecklist(row.id).dummyCompleted
+                                                ? 'text-emerald-400 hover:text-emerald-300'
+                                                : 'text-outline-variant hover:text-white'
+                                        "
+                                        type="button"
+                                        title="Alternar Dummie"
+                                        @click="handleToggleChecklist(row.id, 'dummy')"
+                                    >
+                                        <span class="material-symbols-outlined text-[22px]">
+                                            {{
+                                                getChecklist(row.id).dummyCompleted
+                                                    ? 'check_box'
+                                                    : 'check_box_outline_blank'
+                                            }}
+                                        </span>
+                                    </button>
+                                    <span
+                                        v-else
+                                        :class="
+                                            getChecklist(row.id).dummyCompleted
+                                                ? 'text-emerald-400'
+                                                : 'text-outline-variant/30'
+                                        "
+                                        class="text-sm"
+                                    >
+                                        {{ getChecklist(row.id).dummyCompleted ? '✓' : '—' }}
+                                    </span>
+                                </td>
+
+                                <td class="px-4 py-3 text-center">
+                                    <span
+                                        class="inline-flex rounded-md border px-2.5 py-0.5 text-xs font-semibold"
+                                        :class="resolveStatusClass(row.status)"
+                                        >{{ resolveStatusLabel(row.status) }}</span
+                                    >
+                                </td>
+                                <td class="px-4 py-3 text-center">
+                                    <span
+                                        class="inline-flex rounded-md border px-2.5 py-0.5 text-xs font-semibold"
+                                        :class="resolvePriorityClass(row.priority)"
+                                        >{{ resolvePriorityLabel(row.priority) }}</span
+                                    >
+                                </td>
+                                <td class="px-4 py-3 text-center" @click.stop>
+                                    <div class="flex items-center justify-center gap-1">
+                                        <!-- Asignar / Reasignar (solo jefe) -->
+                                        <button
+                                            v-if="isJefe && isAssignable(row.status)"
+                                            class="inline-flex items-center gap-1 rounded-md border border-sky-500/40 bg-sky-500/10 px-2 py-1 text-xs text-sky-300 transition-colors hover:bg-sky-500/20"
+                                            type="button"
+                                            :title="
+                                                row.assignedDesigners.length
+                                                    ? 'Reasignar diseñador'
+                                                    : 'Asignar diseñador'
+                                            "
+                                            @click="openAssignModal(row.id)"
+                                        >
+                                            <span class="material-symbols-outlined text-[14px]"
+                                                >person_add</span
+                                            >
+                                            {{
+                                                row.assignedDesigners.length
+                                                    ? 'Reasignar'
+                                                    : 'Asignar'
+                                            }}
+                                        </button>
+
+                                        <!-- Enviar a calidad (diseñador o jefe) -->
+                                        <button
+                                            v-if="canSendToQuality(row)"
+                                            class="inline-flex items-center gap-1 rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-1 text-xs text-amber-300 transition-colors hover:bg-amber-500/20"
+                                            type="button"
+                                            title="Enviar a calidad"
+                                            @click="sendToQualityReview(row.id)"
+                                        >
+                                            <span class="material-symbols-outlined text-[14px]"
+                                                >send</span
+                                            >
+                                            Calidad
+                                        </button>
+
+                                        <!-- Ver detalle -->
+                                        <button
+                                            class="inline-flex h-7 w-7 items-center justify-center rounded-md border border-outline/30 text-outline-variant transition-colors hover:border-white/30 hover:text-white"
+                                            type="button"
+                                            title="Ver detalle"
+                                            @click="goToEditRequest(row.id)"
+                                        >
+                                            <span class="material-symbols-outlined text-[15px]"
+                                                >visibility</span
+                                            >
+                                        </button>
                                     </div>
                                 </td>
-                                <td class="px-4 py-3 text-center">
-                                    <span
-                                        class="inline-flex h-5 w-5 items-center justify-center rounded border border-outline/40"
-                                        :class="
-                                            isStepChecked(index, 0)
-                                                ? 'bg-primary text-white border-primary'
-                                                : ''
-                                        "
-                                        >{{ isStepChecked(index, 0) ? '✓' : '' }}</span
-                                    >
-                                </td>
-                                <td class="px-4 py-3 text-center">
-                                    <span
-                                        class="inline-flex h-5 w-5 items-center justify-center rounded border border-outline/40"
-                                        :class="
-                                            isStepChecked(index, 1)
-                                                ? 'bg-primary text-white border-primary'
-                                                : ''
-                                        "
-                                        >{{ isStepChecked(index, 1) ? '✓' : '' }}</span
-                                    >
-                                </td>
-                                <td class="px-4 py-3 text-center">
-                                    <span
-                                        class="inline-flex h-5 w-5 items-center justify-center rounded border border-outline/40"
-                                        :class="
-                                            isStepChecked(index, 2)
-                                                ? 'bg-primary text-white border-primary'
-                                                : ''
-                                        "
-                                        >{{ isStepChecked(index, 2) ? '✓' : '' }}</span
-                                    >
-                                </td>
-                                <td class="px-4 py-3 text-center">
-                                    <span
-                                        class="inline-flex rounded-md border px-3 py-1 text-xs font-semibold"
-                                        :class="resolveStatusClass(row.status)"
-                                        >{{ row.status }}</span
-                                    >
-                                </td>
-                                <td class="px-4 py-3 text-center">
-                                    <button
-                                        class="text-outline-variant hover:text-white"
-                                        type="button"
-                                        title="Ver"
-                                        @click.stop="goToEditRequest(row.id)"
-                                    >
-                                        <span class="material-symbols-outlined text-[18px]"
-                                            >visibility</span
-                                        >
-                                    </button>
-                                </td>
-                                <td class="px-4 py-3 text-center">
-                                    <button
-                                        v-if="row.status === 'ASSIGNED'"
-                                        class="text-primary hover:text-blue-200"
-                                        type="button"
-                                        title="Enviar a calidad"
-                                        @click.stop="sendToQualityReview(row.id)"
-                                    >
-                                        <span class="material-symbols-outlined text-[18px]"
-                                            >send</span
-                                        >
-                                    </button>
-                                    <span v-else class="text-outline-variant/30">—</span>
+                            </tr>
+
+                            <tr v-if="!filteredRows.length">
+                                <td
+                                    colspan="7"
+                                    class="px-4 py-12 text-center text-sm text-outline-variant"
+                                >
+                                    No hay solicitudes para el filtro seleccionado.
                                 </td>
                             </tr>
                         </tbody>
@@ -209,247 +333,323 @@
                 </div>
             </article>
 
-            <div class="flex items-center justify-between">
-                <h3 class="text-3xl font-semibold text-white">
-                    Expediente de Solicitud:
-                    <span class="text-amber-300">{{
-                        selectedRow?.requestCode || 'SOL-0000-000'
-                    }}</span>
-                </h3>
-                <AppButton
-                    icon="print"
-                    icon-position="left"
-                    size="md"
-                    variant="ghost"
-                    @click="exportRequests"
-                >
-                    Imprimir Expediente
-                </AppButton>
-            </div>
+            <!-- ── Expediente Histórico ──────────────────────────────── -->
+            <aside
+                class="-mr-6 -my-6 flex h-[calc(100%+3rem)] flex-col self-stretch border-l border-outline/20 bg-surface-container-lowest/5"
+            >
+                <header class="border-b border-outline/20 px-4 py-4">
+                    <h2 class="text-xl font-semibold text-slate-200">Expediente Histórico</h2>
+                    <div class="mt-2 grid gap-1.5">
+                        <p
+                            class="inline-flex w-fit rounded bg-primary/10 px-2 py-0.5 font-mono text-xs text-primary-fixed-dim"
+                        >
+                            {{ selectedRow?.requestCode || 'SOL-0000-000' }}
+                        </p>
+                        <p class="text-base text-slate-300">
+                            {{ selectedRow?.clientName || 'Selecciona una solicitud' }}
+                        </p>
+                    </div>
+                </header>
 
-            <section class="grid gap-4 xl:grid-cols-3">
-                <article
-                    class="rounded-xl border border-outline/20 bg-surface-container-lowest/5 p-4"
-                >
-                    <h4 class="mb-3 text-xs uppercase tracking-[0.12em] text-secondary-container">
-                        Historial de Comentarios
-                    </h4>
-                    <ol class="relative space-y-3 pl-5">
-                        <span
-                            class="pointer-events-none absolute bottom-2 left-[7px] top-2 w-px bg-white/70"
-                        />
-                        <li class="relative">
+                <div class="min-h-0 flex-1 space-y-4 overflow-auto px-4 py-4">
+                    <!-- Estado y prioridad -->
+                    <section v-if="selectedRow">
+                        <div class="flex flex-wrap gap-2">
                             <span
-                                class="absolute -left-5 top-2 h-3 w-3 rounded-full bg-primary ring-2 ring-deep-navy"
-                            />
-                            <article
-                                class="rounded-lg border border-outline/20 bg-surface-container-lowest/25 p-3 text-sm text-outline-variant"
+                                class="inline-flex rounded-md border px-3 py-1 text-xs font-semibold"
+                                :class="resolveStatusClass(selectedRow.status)"
                             >
-                                <p class="font-semibold text-white">Ing. Carlos Ruiz</p>
-                                <p
-                                    class="text-[11px] uppercase tracking-[0.08em] text-primary-fixed-dim"
-                                >
-                                    24/05/2024 · 10:30 AM
-                                </p>
-                                <p class="mt-1">
-                                    Revisión de material aprobada. Proceder con el arte final.
-                                </p>
-                            </article>
-                        </li>
-                        <li class="relative">
+                                {{ resolveStatusLabel(selectedRow.status) }}
+                            </span>
                             <span
-                                class="absolute -left-5 top-2 h-3 w-3 rounded-full bg-white/70 ring-2 ring-deep-navy"
-                            />
-                            <article
-                                class="rounded-lg border border-outline/20 bg-surface-container-lowest/25 p-3 text-sm text-outline-variant"
+                                class="inline-flex rounded-md border px-3 py-1 text-xs font-semibold"
+                                :class="resolvePriorityClass(selectedRow.priority)"
                             >
-                                <p class="font-semibold text-white">Arq. Sofía Méndez</p>
-                                <p
-                                    class="text-[11px] uppercase tracking-[0.08em] text-primary-fixed-dim"
-                                >
-                                    23/05/2024 · 04:15 PM
-                                </p>
-                                <p class="mt-1">
-                                    Se requiere confirmación del acabado para impresión.
-                                </p>
-                            </article>
-                        </li>
-                    </ol>
-                </article>
+                                {{ resolvePriorityLabel(selectedRow.priority) }}
+                            </span>
+                        </div>
+                    </section>
 
-                <article
-                    class="rounded-xl border border-outline/20 bg-surface-container-lowest/5 p-4"
-                >
-                    <h4 class="mb-3 text-xs uppercase tracking-[0.12em] text-secondary-container">
-                        Verificaciones de Calidad
-                    </h4>
-                    <ol class="relative space-y-3 pl-5">
-                        <span
-                            class="pointer-events-none absolute bottom-2 left-[7px] top-2 w-px bg-white/70"
-                        />
-                        <li class="relative">
-                            <span
-                                class="absolute -left-5 top-2 h-3 w-3 rounded-full bg-emerald-300 ring-2 ring-deep-navy"
-                            />
-                            <article
-                                class="flex items-center justify-between rounded-lg border border-emerald-500/35 bg-emerald-500/10 px-3.5 py-3 text-[0.95rem] text-emerald-200"
+                    <!-- Detalles -->
+                    <section v-if="selectedRow" class="border-t border-outline/20 pt-3">
+                        <h3
+                            class="mb-2 text-[11px] uppercase tracking-[0.12em] text-secondary-container"
+                        >
+                            Detalles
+                        </h3>
+                        <div class="grid gap-2 text-sm">
+                            <div v-if="selectedRequest?.title">
+                                <p class="text-[10px] uppercase text-outline-variant">Título</p>
+                                <p class="text-slate-200">{{ selectedRequest.title }}</p>
+                            </div>
+                            <div v-if="selectedRow.productName && selectedRow.productName !== '—'">
+                                <p class="text-[10px] uppercase text-outline-variant">Producto</p>
+                                <p class="text-slate-200">{{ selectedRow.productName }}</p>
+                            </div>
+                            <div v-if="selectedRow.requestedBy">
+                                <p class="text-[10px] uppercase text-outline-variant">
+                                    Solicitado por
+                                </p>
+                                <p class="text-slate-200">{{ selectedRow.requestedBy }}</p>
+                            </div>
+                            <div
+                                v-if="
+                                    selectedRow.requiredDateLabel &&
+                                    selectedRow.requiredDateLabel !== '—'
+                                "
                             >
-                                <span class="inline-flex items-center gap-2">
-                                    <span class="material-symbols-outlined text-[18px]"
-                                        >straighten</span
+                                <p class="text-[10px] uppercase text-outline-variant">
+                                    Entrega solicitada
+                                </p>
+                                <p class="text-slate-200">{{ selectedRow.requiredDateLabel }}</p>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Especificaciones técnicas -->
+                    <section v-if="selectedRequest" class="border-t border-outline/20 pt-3">
+                        <h3
+                            class="mb-2 text-[11px] uppercase tracking-[0.12em] text-secondary-container"
+                        >
+                            Especificaciones
+                        </h3>
+                        <div class="grid gap-2 text-sm">
+                            <div v-if="selectedRequest.materialType">
+                                <p class="text-[10px] uppercase text-outline-variant">
+                                    Material / Flauta
+                                </p>
+                                <p class="text-slate-200">
+                                    {{ selectedRequest.materialType }} —
+                                    {{ selectedRequest.fluteType || '—' }}
+                                </p>
+                            </div>
+                            <div v-if="selectedRequest.closureType">
+                                <p class="text-[10px] uppercase text-outline-variant">
+                                    Tipo de cierre
+                                </p>
+                                <p class="text-slate-200">{{ selectedRequest.closureType }}</p>
+                            </div>
+                            <div v-if="selectedRequest.colorMode">
+                                <p class="text-[10px] uppercase text-outline-variant">Color</p>
+                                <p class="text-slate-200">
+                                    {{ selectedRequest.colorMode }}
+                                    <span v-if="selectedRequest.pantoneReferences">
+                                        — {{ selectedRequest.pantoneReferences }}</span
                                     >
-                                    <span>Validación de Medidas</span>
-                                </span>
-                                <span class="text-xs font-semibold uppercase tracking-[0.08em]"
-                                    >Aprobado</span
-                                >
-                            </article>
-                        </li>
-                        <li class="relative">
-                            <span
-                                class="absolute -left-5 top-2 h-3 w-3 rounded-full bg-emerald-300 ring-2 ring-deep-navy"
-                            />
-                            <article
-                                class="flex items-center justify-between rounded-lg border border-emerald-500/35 bg-emerald-500/10 px-3.5 py-3 text-[0.95rem] text-emerald-200"
+                                </p>
+                            </div>
+                            <div
+                                v-if="
+                                    selectedRequest.length ||
+                                    selectedRequest.width ||
+                                    selectedRequest.height
+                                "
                             >
-                                <span class="inline-flex items-center gap-2">
-                                    <span class="material-symbols-outlined text-[18px]"
-                                        >layers</span
-                                    >
-                                    <span>Gramaje de Sustrato</span>
-                                </span>
-                                <span class="text-xs font-semibold uppercase tracking-[0.08em]"
-                                    >Aprobado</span
-                                >
-                            </article>
-                        </li>
-                        <li class="relative">
-                            <span
-                                class="absolute -left-5 top-2 h-3 w-3 rounded-full bg-amber-300 ring-2 ring-deep-navy"
-                            />
-                            <article
-                                class="flex items-center justify-between rounded-lg border border-amber-500/35 bg-amber-500/10 px-3.5 py-3 text-[0.95rem] text-amber-200"
+                                <p class="text-[10px] uppercase text-outline-variant">Medidas</p>
+                                <p class="text-slate-200">
+                                    {{ selectedRequest.length || '?' }} ×
+                                    {{ selectedRequest.width || '?' }} ×
+                                    {{ selectedRequest.height || '?' }}
+                                    {{ selectedRequest.dimensionUnit }}
+                                </p>
+                            </div>
+                            <div v-if="selectedRequest.quantity">
+                                <p class="text-[10px] uppercase text-outline-variant">Cantidad</p>
+                                <p class="text-slate-200">
+                                    {{ selectedRequest.quantity.toLocaleString('es-SV') }} unidades
+                                </p>
+                            </div>
+                            <div v-if="selectedRequest.finishingOptions?.length">
+                                <p class="text-[10px] uppercase text-outline-variant">Acabados</p>
+                                <p class="text-slate-200">
+                                    {{ selectedRequest.finishingOptions.join(', ') }}
+                                </p>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Diseñadores asignados -->
+                    <section v-if="selectedRow" class="border-t border-outline/20 pt-3">
+                        <h3
+                            class="mb-2 text-[11px] uppercase tracking-[0.12em] text-secondary-container"
+                        >
+                            Diseñadores asignados
+                        </h3>
+                        <div
+                            v-if="!selectedRow.assignedDesigners.length"
+                            class="text-xs text-outline-variant"
+                        >
+                            Sin asignar
+                        </div>
+                        <ul v-else class="space-y-1">
+                            <li
+                                v-for="d in selectedRow.assignedDesigners"
+                                :key="d.designerId"
+                                class="flex items-center gap-2 text-sm text-slate-200"
                             >
-                                <span class="inline-flex items-center gap-2">
-                                    <span class="material-symbols-outlined text-[18px]"
-                                        >palette</span
-                                    >
-                                    <span>Prueba de Color CMYK</span>
-                                </span>
-                                <span class="text-xs font-semibold uppercase tracking-[0.08em]"
-                                    >Pendiente</span
-                                >
-                            </article>
-                        </li>
-                    </ol>
-                </article>
-
-                <article
-                    class="rounded-xl border border-outline/20 bg-surface-container-lowest/5 p-4"
-                >
-                    <h4 class="mb-3 text-xs uppercase tracking-[0.12em] text-secondary-container">
-                        Trazabilidad del Proceso
-                    </h4>
-                    <ol class="space-y-5">
-                        <li class="relative flex gap-3">
-                            <div class="relative flex w-10 shrink-0 justify-center">
                                 <span
-                                    class="z-10 inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm font-semibold text-white"
-                                    >1</span
+                                    class="material-symbols-outlined text-[15px] text-primary-fixed-dim"
+                                    >design_services</span
                                 >
-                                <span class="absolute top-8 h-[56px] w-px bg-primary/30" />
-                            </div>
-                            <div class="pt-0.5">
-                                <p class="font-semibold text-white">Solicitud Creada</p>
-                                <p class="text-xs text-outline-variant">
-                                    20/05/2024 - Sistema Central
-                                </p>
-                                <p class="mt-1 text-sm text-outline-variant">
-                                    Ingreso manual por Depto. ventas.
-                                </p>
-                            </div>
-                        </li>
+                                {{ d.designerName }}
+                            </li>
+                        </ul>
+                        <button
+                            v-if="isJefe && selectedRow && isAssignable(selectedRow.status)"
+                            class="mt-2 inline-flex items-center gap-1.5 rounded-md border border-sky-500/40 bg-sky-500/10 px-3 py-1.5 text-xs text-sky-300 transition-colors hover:bg-sky-500/20"
+                            type="button"
+                            @click="openAssignModal(selectedRow.id)"
+                        >
+                            <span class="material-symbols-outlined text-[14px]">person_add</span>
+                            {{
+                                selectedRow.assignedDesigners.length
+                                    ? 'Reasignar diseñador'
+                                    : 'Asignar diseñador'
+                            }}
+                        </button>
+                    </section>
 
-                        <li class="relative flex gap-3">
-                            <div class="relative flex w-10 shrink-0 justify-center">
+                    <!-- Entregables -->
+                    <section v-if="selectedRequest" class="border-t border-outline/20 pt-3">
+                        <h3
+                            class="mb-2 text-[11px] uppercase tracking-[0.12em] text-secondary-container"
+                        >
+                            Entregables
+                        </h3>
+                        <div class="grid gap-1.5 text-xs">
+                            <p
+                                class="flex items-center justify-between border-b border-outline/20 pb-1"
+                                :class="
+                                    selectedRequest.requireMockup
+                                        ? 'text-emerald-200'
+                                        : 'text-outline-variant'
+                                "
+                            >
+                                <span>Dummie / Mockup</span>
+                                <span>{{ selectedRequest.requireMockup ? '✓' : '—' }}</span>
+                            </p>
+                            <p
+                                class="flex items-center justify-between"
+                                :class="
+                                    selectedRequest.requireDieCut
+                                        ? 'text-emerald-200'
+                                        : 'text-outline-variant'
+                                "
+                            >
+                                <span>Mecánico / Troquel</span>
+                                <span>{{ selectedRequest.requireDieCut ? '✓' : '—' }}</span>
+                            </p>
+                        </div>
+                    </section>
+
+                    <!-- Instrucciones -->
+                    <section
+                        v-if="selectedRequest?.designInstructions"
+                        class="border-t border-outline/20 pt-3"
+                    >
+                        <h3
+                            class="mb-2 text-[11px] uppercase tracking-[0.12em] text-secondary-container"
+                        >
+                            Instrucciones
+                        </h3>
+                        <p class="text-sm text-slate-300">
+                            {{ selectedRequest.designInstructions }}
+                        </p>
+                    </section>
+
+                    <!-- Archivos adjuntos -->
+                    <section
+                        v-if="selectedRequest?.sampleFiles?.length"
+                        class="border-t border-outline/20 pt-3"
+                    >
+                        <h3
+                            class="mb-2 text-[11px] uppercase tracking-[0.12em] text-secondary-container"
+                        >
+                            Archivos ({{ selectedRequest.sampleFiles.length }})
+                        </h3>
+                        <ul class="space-y-1">
+                            <li
+                                v-for="f in selectedRequest.sampleFiles"
+                                :key="f.id"
+                                class="flex items-center gap-2 text-xs text-slate-300"
+                            >
                                 <span
-                                    class="z-10 inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm font-semibold text-white"
-                                    >2</span
+                                    class="material-symbols-outlined text-[14px] text-primary-fixed-dim"
+                                    >attach_file</span
                                 >
-                                <span class="absolute top-8 h-[56px] w-px bg-primary/30" />
-                            </div>
-                            <div class="pt-0.5">
-                                <p class="font-semibold text-white">Asignación a Diseño</p>
-                                <p class="text-xs text-outline-variant">
-                                    21/05/2024 - Ing. Carlos Ruiz
-                                </p>
-                                <p class="mt-1 text-sm text-outline-variant">
-                                    Asignado a Equipo de Artes Finales.
-                                </p>
-                            </div>
-                        </li>
+                                <span class="truncate">{{ f.originalName }}</span>
+                            </li>
+                        </ul>
+                    </section>
 
-                        <li class="relative flex gap-3">
-                            <div class="relative flex w-10 shrink-0 justify-center">
-                                <span
-                                    class="z-10 inline-flex h-8 w-8 items-center justify-center rounded-full bg-amber-400 text-sm font-semibold text-white"
-                                    >3</span
-                                >
-                            </div>
-                            <div class="pt-0.5">
-                                <p class="font-semibold text-white">En Desarrollo</p>
-                                <p class="text-xs uppercase tracking-[0.08em] text-amber-300">
-                                    Proceso actual
-                                </p>
-                                <p class="mt-1 text-sm text-outline-variant">
-                                    Fase de maquetación y dummie físico.
-                                </p>
-                            </div>
-                        </li>
-                    </ol>
-                </article>
-            </section>
+                    <!-- Placeholder vacío -->
+                    <div
+                        v-if="!selectedRow"
+                        class="flex flex-col items-center justify-center py-12 text-center"
+                    >
+                        <span class="material-symbols-outlined text-3xl text-outline-variant"
+                            >article</span
+                        >
+                        <p class="mt-2 text-xs text-outline-variant">
+                            Selecciona una solicitud para ver su expediente.
+                        </p>
+                    </div>
+                </div>
 
-            <input
-                ref="importInputRef"
-                accept=".csv,.xlsx,.xls"
-                class="hidden"
-                type="file"
-                @change="handleImportSelection"
-            />
-
-            <AssignDesignerModal
-                ref="assignModalRef"
-                :initial-designer-id="
-                    assignRequestSnapshot?.assignedDesigners[0]?.designerId ?? null
-                "
-                :open="isAssignModalOpen"
-                :request-code="assignRequestSnapshot?.requestCode ?? ''"
-                @close="closeAssignModal"
-                @confirm="confirmAssignment"
-            />
-
-            <WorkflowDecisionModal
-                confirm-label="Aprobar solicitud"
-                confirm-tone="primary"
-                :description="`Confirma la aprobación de calidad${reviewModalTitleSuffix}.`"
-                :open="isApproveModalOpen"
-                title="Aprobar en calidad"
-                @close="closeApproveModal"
-                @confirm="confirmApprove"
-            />
-
-            <WorkflowDecisionModal
-                confirm-label="Rechazar y crear nueva versión"
-                confirm-tone="danger"
-                :description="`Indica el motivo de rechazo${reviewModalTitleSuffix}. Se creará una nueva versión y volverá al diseñador.`"
-                :open="isRejectModalOpen"
-                require-comment
-                title="Rechazar en calidad"
-                @close="closeRejectModal"
-                @confirm="confirmReject"
-            />
+                <footer class="grid grid-cols-2 gap-2 border-t border-outline/20 px-4 py-3">
+                    <AppButton
+                        size="md"
+                        variant="ghost"
+                        :disabled="!selectedRow"
+                        @click="goToEditRequest(selectedRow?.id ?? '')"
+                    >
+                        Ver detalle
+                    </AppButton>
+                    <AppButton size="md" variant="ghost" @click="exportRequests">
+                        Exportar
+                    </AppButton>
+                </footer>
+            </aside>
         </section>
+
+        <!-- Modales -->
+        <input
+            ref="importInputRef"
+            accept=".csv,.xlsx,.xls"
+            class="hidden"
+            type="file"
+            @change="handleImportSelection"
+        />
+
+        <AssignDesignerModal
+            ref="assignModalRef"
+            :initial-designer-id="assignRequestSnapshot?.assignedDesigners[0]?.designerId ?? null"
+            :open="isAssignModalOpen"
+            :request-code="assignRequestSnapshot?.requestCode ?? ''"
+            @close="closeAssignModal"
+            @confirm="confirmAssignment"
+        />
+
+        <WorkflowDecisionModal
+            confirm-label="Aprobar solicitud"
+            confirm-tone="primary"
+            :description="`Confirma la aprobación de calidad${reviewModalTitleSuffix}.`"
+            :open="isApproveModalOpen"
+            title="Aprobar en calidad"
+            @close="closeApproveModal"
+            @confirm="confirmApprove"
+        />
+
+        <WorkflowDecisionModal
+            confirm-label="Rechazar y crear nueva versión"
+            confirm-tone="danger"
+            :description="`Indica el motivo de rechazo${reviewModalTitleSuffix}. Se creará una nueva versión y volverá al diseñador.`"
+            :open="isRejectModalOpen"
+            require-comment
+            title="Rechazar en calidad"
+            @close="closeRejectModal"
+            @confirm="confirmReject"
+        />
     </AppShellLayout>
 </template>
 
@@ -458,14 +658,17 @@ import { computed, ref } from 'vue'
 import AppShellLayout from '~/presentation/shared/components/layout/AppShellLayout.vue'
 import AppButton from '~/presentation/shared/components/ui/AppButton.vue'
 import AssignDesignerModal from '~/presentation/requests/components/AssignDesignerModal.vue'
-import RequestsDataTable from '~/presentation/requests/components/RequestsDataTable.vue'
 import WorkflowDecisionModal from '~/presentation/request-workflow/components/WorkflowDecisionModal.vue'
 import { useRequestsModule } from '~/presentation/requests/composables/useRequestsModule'
 import { useApiClient } from '~/presentation/shared/composables/useApiClient'
+import {
+    REQUEST_STATUS_LABELS,
+    REQUEST_PRIORITY_LABELS,
+    type RequestStatus,
+    type RequestPriority,
+} from '~/presentation/interfaces/requests/request.interface'
 
-defineOptions({
-    name: 'DesignQueueView',
-})
+defineOptions({ name: 'DesignQueueView' })
 
 interface Designer {
     id: string
@@ -479,20 +682,17 @@ const {
     importInputRef,
     isJefe,
     isDisenador,
-    draftRequests,
-    inDesignRequests,
     highPriorityRequests,
     tableRows,
     myAssignedRows,
-    sendToDesign,
     sendToQualityReview,
     approveQualityReview,
     rejectQualityReview,
     assignDesigner,
     removeDesignerAssignment,
-    duplicateRequest,
     findRequestById,
-    triggerImport,
+    currentUserId,
+    toggleChecklist,
     handleImportSelection,
     exportRequests,
     hydrateRequests,
@@ -500,55 +700,77 @@ const {
 
 const selectedRequestId = ref('')
 const designers = ref<Designer[]>([])
+const activeFilter = ref<'all' | RequestStatus>('all')
+
+// ── Row sources ───────────────────────────────────────────────────────────────
 
 const sourceRows = computed(() => (isDisenador.value ? myAssignedRows.value : tableRows.value))
-const displayRows = computed(() => sourceRows.value.slice(0, 50))
-const selectedRow = computed(() => {
-    const match = displayRows.value.find((row) => row.id === selectedRequestId.value)
-    return match ?? displayRows.value[0] ?? null
+
+const filteredRows = computed(() => {
+    if (activeFilter.value === 'all') return sourceRows.value
+    return sourceRows.value.filter((r) => r.status === activeFilter.value)
 })
 
-const getAvailableDesigners = (row: { assignedDesigners: { designerId: string }[] }) => {
-    const assignedIds = new Set(row.assignedDesigners.map((a) => a.designerId))
-    return designers.value.filter((d) => !assignedIds.has(d.id))
-}
+// ── Status filter tabs ────────────────────────────────────────────────────────
 
-const onAssignDesigner = (requestId: string, event: Event) => {
-    const select = event.target as HTMLSelectElement
-    const designerId = select.value
-    if (!designerId) return
-    const designer = designers.value.find((d) => d.id === designerId)
-    if (designer) {
-        void assignDesigner(requestId, designer.id, designer.fullName)
-        select.value = ''
-    }
-}
+const STATUS_TAB_ORDER: RequestStatus[] = [
+    'CREATED',
+    'PENDING_DESIGN_REVIEW',
+    'ASSIGNED_TO_DESIGNER',
+    'IN_DESIGN',
+    'SENT_TO_QUALITY',
+    'QUALITY_REJECTED',
+    'QUALITY_APPROVED',
+    'DELIVERED_TO_SALES',
+    'CANCELLED',
+]
 
-const onRemoveDesigner = (requestId: string, designerId: string) => {
-    void removeDesignerAssignment(requestId, designerId)
-}
+const statusTabs = computed(() => {
+    const all = { key: 'all' as const, label: 'Todas', count: sourceRows.value.length }
+    const byStatus = STATUS_TAB_ORDER.map((status) => ({
+        key: status,
+        label: REQUEST_STATUS_LABELS[status],
+        count: sourceRows.value.filter((r) => r.status === status).length,
+    })).filter((tab) => tab.count > 0)
+    return [all, ...byStatus]
+})
 
-const artsCount = computed(() => inDesignRequests.value)
-const dummiesCount = computed(() => draftRequests.value)
-const mechanicsCount = computed(() => highPriorityRequests.value)
-const pendingQualityCount = computed(
-    () => tableRows.value.filter((row) => row.status !== 'APPROVED').length,
+// ── Selected row / request ────────────────────────────────────────────────────
+
+const selectedRow = computed(() => {
+    const match = filteredRows.value.find((row) => row.id === selectedRequestId.value)
+    return match ?? filteredRows.value[0] ?? null
+})
+
+const selectedRequest = computed(() =>
+    selectedRow.value ? findRequestById(selectedRow.value.id) : null,
 )
 
-const goToEditRequest = (requestId: string) => {
-    void router.push(`/solicitudes/${requestId}/editar`)
-}
+// ── Stats ─────────────────────────────────────────────────────────────────────
 
-const WORKFLOW_STEPS = ['Arte final', 'Mockup 3D', 'Plano de troquel']
+const unassignedCount = computed(
+    () =>
+        sourceRows.value.filter((r) => ['CREATED', 'PENDING_DESIGN_REVIEW'].includes(r.status))
+            .length,
+)
+const inDesignCount = computed(
+    () =>
+        sourceRows.value.filter((r) => ['ASSIGNED_TO_DESIGNER', 'IN_DESIGN'].includes(r.status))
+            .length,
+)
+const inQualityCount = computed(
+    () =>
+        sourceRows.value.filter((r) => ['SENT_TO_QUALITY', 'QUALITY_REJECTED'].includes(r.status))
+            .length,
+)
 
-const isStepChecked = (rowIndex: number, stepIndex: number): boolean => {
-    const row = displayRows.value[rowIndex]
-    if (!row) return false
-    const step = WORKFLOW_STEPS[stepIndex]
-    return Array.isArray(row.assignedDesigners) && row.assignedDesigners.length > 0
-        ? ['IN_QUALITY_REVIEW', 'QUALITY_APPROVED', 'APPROVED'].includes(row.status)
-        : false
-}
+// ── Labels & classes ──────────────────────────────────────────────────────────
+
+const resolveStatusLabel = (status: string) =>
+    REQUEST_STATUS_LABELS[status as RequestStatus] ?? status
+
+const resolvePriorityLabel = (priority: string) =>
+    REQUEST_PRIORITY_LABELS[priority as RequestPriority] ?? priority
 
 const STATUS_CLASSES: Record<string, string> = {
     CREATED: 'border-outline/40 text-outline-variant',
@@ -558,17 +780,86 @@ const STATUS_CLASSES: Record<string, string> = {
     SENT_TO_QUALITY: 'border-purple-400/40 bg-purple-400/10 text-purple-300',
     QUALITY_REJECTED: 'border-red-400/40 bg-red-400/10 text-red-300',
     QUALITY_APPROVED: 'border-emerald-400/40 bg-emerald-400/10 text-emerald-300',
-    APPROVED: 'border-emerald-400/40 bg-emerald-400/10 text-emerald-300',
     DELIVERED_TO_SALES: 'border-teal-400/40 bg-teal-400/10 text-teal-300',
     CANCELLED: 'border-outline/30 bg-outline/5 text-outline-variant',
 }
 
-const resolveStatusClass = (status: string): string =>
+const resolveStatusClass = (status: string) =>
     STATUS_CLASSES[status] ?? 'border-outline/40 text-outline-variant'
+
+const PRIORITY_CLASSES: Record<string, string> = {
+    URGENT: 'border-red-500/40 bg-red-500/10 text-red-300',
+    HIGH: 'border-amber-500/40 bg-amber-500/10 text-amber-300',
+    MEDIUM: 'border-blue-400/40 bg-blue-400/10 text-blue-300',
+    LOW: 'border-outline/40 text-outline-variant',
+}
+
+const resolvePriorityClass = (priority: string) =>
+    PRIORITY_CLASSES[priority] ?? 'border-outline/40 text-outline-variant'
+
+// ── Business rules ────────────────────────────────────────────────────────────
+
+const ASSIGNABLE_STATUSES: RequestStatus[] = [
+    'CREATED',
+    'PENDING_DESIGN_REVIEW',
+    'ASSIGNED_TO_DESIGNER',
+    'QUALITY_REJECTED',
+]
+
+const isAssignable = (status: string) => ASSIGNABLE_STATUSES.includes(status as RequestStatus)
+
+const canSendToQuality = (row: { status: string; assignedDesigners: { designerId: string }[] }) => {
+    const sendableStatuses: RequestStatus[] = [
+        'ASSIGNED_TO_DESIGNER',
+        'IN_DESIGN',
+        'QUALITY_REJECTED',
+    ]
+    if (!sendableStatuses.includes(row.status as RequestStatus)) return false
+    if (isJefe.value) return true
+    return row.assignedDesigners.some((a) => a.designerId === currentUserId.value)
+}
+
+// ── Checklist ─────────────────────────────────────────────────────────────────
+
+const getChecklist = (rowId: string) => {
+    const r = findRequestById(rowId)
+    return {
+        artCompleted: r?.artCompleted ?? false,
+        mechanicalCompleted: r?.mechanicalCompleted ?? false,
+        dummyCompleted: r?.dummyCompleted ?? false,
+    }
+}
+
+const canToggleChecklist = (row: { id: string; assignedDesigners: { designerId: string }[] }) => {
+    if (isJefe.value) return true
+    if (!isDisenador.value) return false
+    return row.assignedDesigners.some((a) => a.designerId === currentUserId.value)
+}
+
+const handleToggleChecklist = (requestId: string, item: 'art' | 'mechanical' | 'dummy') => {
+    void toggleChecklist(requestId, item)
+}
+
+// ── Table actions ─────────────────────────────────────────────────────────────
+
+const getAvailableDesigners = (row: { assignedDesigners: { designerId: string }[] }) => {
+    const assignedIds = new Set(row.assignedDesigners.map((a) => a.designerId))
+    return designers.value.filter((d) => !assignedIds.has(d.id))
+}
+
+const onRemoveDesigner = (requestId: string, designerId: string) => {
+    void removeDesignerAssignment(requestId, designerId)
+}
+
+const goToEditRequest = (requestId: string) => {
+    if (requestId) void router.push(`/solicitudes/${requestId}/editar`)
+}
+
+// ── Assign designer modal ─────────────────────────────────────────────────────
 
 const assignModalRef = ref<InstanceType<typeof AssignDesignerModal> | null>(null)
 const isAssignModalOpen = ref(false)
-const assignRequestId = ref<string>('')
+const assignRequestId = ref('')
 const assignRequestSnapshot = computed(() =>
     assignRequestId.value ? findRequestById(assignRequestId.value) : null,
 )
@@ -589,18 +880,16 @@ const confirmAssignment = async (designerId: string, designerName: string) => {
         closeAssignModal()
         return
     }
-
     const succeeded = await assignDesigner(assignRequestId.value, designerId, designerName)
     assignModalRef.value?.resetSubmitting()
-
-    if (succeeded) {
-        closeAssignModal()
-    }
+    if (succeeded) closeAssignModal()
 }
+
+// ── Quality review modals ─────────────────────────────────────────────────────
 
 const isApproveModalOpen = ref(false)
 const isRejectModalOpen = ref(false)
-const reviewRequestId = ref<string>('')
+const reviewRequestId = ref('')
 const reviewRequestSnapshot = computed(() =>
     reviewRequestId.value ? findRequestById(reviewRequestId.value) : null,
 )
@@ -608,17 +897,12 @@ const reviewModalTitleSuffix = computed(() =>
     reviewRequestSnapshot.value ? ` · ${reviewRequestSnapshot.value.requestCode}` : '',
 )
 
-const handleSubmitToQuality = async (requestId: string) => {
-    await sendToQualityReview(requestId)
-}
-
-const handleApprove = (requestId: string) => {
-    reviewRequestId.value = requestId
-    isApproveModalOpen.value = true
-}
-
 const closeApproveModal = () => {
     isApproveModalOpen.value = false
+    reviewRequestId.value = ''
+}
+const closeRejectModal = () => {
+    isRejectModalOpen.value = false
     reviewRequestId.value = ''
 }
 
@@ -628,19 +912,7 @@ const confirmApprove = async () => {
         return
     }
     const succeeded = await approveQualityReview(reviewRequestId.value)
-    if (succeeded) {
-        closeApproveModal()
-    }
-}
-
-const openRejectModal = (requestId: string) => {
-    reviewRequestId.value = requestId
-    isRejectModalOpen.value = true
-}
-
-const closeRejectModal = () => {
-    isRejectModalOpen.value = false
-    reviewRequestId.value = ''
+    if (succeeded) closeApproveModal()
 }
 
 const confirmReject = async () => {
@@ -649,36 +921,30 @@ const confirmReject = async () => {
         return
     }
     const succeeded = await rejectQualityReview(reviewRequestId.value)
-    if (succeeded) {
-        closeRejectModal()
-    }
+    if (succeeded) closeRejectModal()
 }
+
+// ── Mount ─────────────────────────────────────────────────────────────────────
 
 onMounted(async () => {
     await hydrateRequests()
 
-    const first = tableRows.value[0]
-    if (first) {
-        selectedRequestId.value = first.id
-    }
+    const first = filteredRows.value[0]
+    if (first) selectedRequestId.value = first.id
 
     if (isJefe.value) {
         try {
             const response = await apiClient.get<Designer[]>('/users/designers')
             designers.value = response.data
         } catch {
-            // designers list is non-critical, silently ignore
+            // non-critical
         }
     }
 })
 
 useHead(() => ({
     title: 'RUASA ERP - Bandeja Diseño',
-    htmlAttrs: {
-        lang: 'es',
-    },
-    bodyAttrs: {
-        class: 'font-body-md overflow-hidden bg-deep-navy text-on-surface-variant',
-    },
+    htmlAttrs: { lang: 'es' },
+    bodyAttrs: { class: 'font-body-md overflow-hidden bg-deep-navy text-on-surface-variant' },
 }))
 </script>

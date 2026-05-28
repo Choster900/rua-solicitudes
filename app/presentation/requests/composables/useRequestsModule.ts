@@ -9,7 +9,6 @@ import type { HttpClientError } from '~/presentation/interfaces/shared/http/http
 import type { DesignRequestFormModel } from '~/presentation/interfaces/requests/request-form.interface'
 import type {
     DesignRequest,
-    RequestAttachment,
     RequestStatus,
 } from '~/presentation/interfaces/requests/request.interface'
 import type { DesignRequestTableRow } from '~/presentation/interfaces/requests/request-table-row.interface'
@@ -47,108 +46,93 @@ const toSafeNumber = (value: string) => {
 }
 
 export const createEmptyRequestFormModel = (): DesignRequestFormModel => ({
-    clientName: '',
+    clientId: '',
+    title: '',
     brandName: '',
     productName: '',
-    requestedBy: '',
-    vendorName: '',
-    materialType: '',
+    priority: 'MEDIUM',
+    requiredDate: '',
+    materialType: 'C',
     materialWeight: '',
+    fluteType: 'C',
     fluteDirection: 'Vertical',
+    closureType: 'Tapa y Fondo',
     outerLiner: '',
     innerLiner: '',
-    printTechnique: '',
-    colorMode: '',
+    colorMode: 'CMYK',
     pantoneReferences: '',
+    length: '',
+    width: '',
+    height: '',
+    dimensionUnit: 'cm',
+    quantity: '',
     finishingOptions: [],
     deliverables: [],
-    dimensions: '',
-    quantity: '',
-    requiredDate: '',
-    priority: 'MEDIUM',
-    status: 'CREATED',
     designInstructions: '',
-    visualReferences: '',
-    requireArt: true,
     requireDieCut: false,
     requireMockup: false,
-    attachments: [],
+    sampleFiles: [],
 })
 
 const toRequestFormModel = (request: DesignRequest): DesignRequestFormModel => ({
-    clientName: request.clientName,
+    clientId: request.clientId,
+    title: request.title,
     brandName: request.brandName,
     productName: request.productName,
-    requestedBy: request.requestedBy,
-    vendorName: request.vendorName,
+    priority: request.priority,
+    requiredDate: request.requiredDate ?? '',
     materialType: request.materialType,
     materialWeight: request.materialWeight,
+    fluteType: request.fluteType,
     fluteDirection: request.fluteDirection,
+    closureType: request.closureType,
     outerLiner: request.outerLiner,
     innerLiner: request.innerLiner,
-    printTechnique: request.printTechnique,
     colorMode: request.colorMode,
     pantoneReferences: request.pantoneReferences,
+    length: request.length?.toString() ?? '',
+    width: request.width?.toString() ?? '',
+    height: request.height?.toString() ?? '',
+    dimensionUnit: 'cm',
+    quantity: request.quantity.toString(),
     finishingOptions: [...request.finishingOptions],
     deliverables: [...request.deliverables],
-    dimensions: request.dimensions,
-    quantity: request.quantity.toString(),
-    requiredDate: request.requiredDate ?? '',
-    priority: request.priority,
-    status: request.status,
     designInstructions: request.designInstructions,
-    visualReferences: request.visualReferences,
-    requireArt: true,
     requireDieCut: request.requireDieCut,
     requireMockup: request.requireMockup,
-    attachments: [...request.attachments],
+    sampleFiles: [],
 })
 
-const toRequestPayload = (sourceModel: DesignRequestFormModel, requestCode: string) => ({
-    requestCode,
-    clientName: sourceModel.clientName.trim(),
+const toRequestPayload = (sourceModel: DesignRequestFormModel) => ({
+    clientId: sourceModel.clientId,
+    title: sourceModel.title.trim(),
     brandName: sourceModel.brandName.trim(),
     productName: sourceModel.productName.trim(),
-    requestedBy: sourceModel.requestedBy.trim(),
-    vendorName: sourceModel.vendorName.trim(),
-    materialType: sourceModel.materialType,
-    materialWeight: sourceModel.materialWeight.trim(),
-    printTechnique: sourceModel.printTechnique,
-    colorMode: sourceModel.colorMode,
-    pantoneReferences: sourceModel.pantoneReferences.trim(),
-    finishingOptions: [...sourceModel.finishingOptions],
-    deliverables: [...sourceModel.deliverables],
-    dimensions: sourceModel.dimensions.trim(),
-    quantity: toSafeNumber(sourceModel.quantity),
-    requiredDate: sourceModel.requiredDate,
     priority: sourceModel.priority,
-    status: sourceModel.status,
-    designInstructions: sourceModel.designInstructions.trim(),
-    visualReferences: sourceModel.visualReferences.trim(),
-    requireDieCut: sourceModel.requireDieCut,
-    requireMockup: sourceModel.requireMockup,
-    attachments: [...sourceModel.attachments],
+    requiredDate: sourceModel.requiredDate || null,
+    version: {
+        materialType: sourceModel.materialType,
+        materialWeight: sourceModel.materialWeight.trim(),
+        fluteType: sourceModel.fluteType,
+        fluteDirection: sourceModel.fluteDirection,
+        closureType: sourceModel.closureType,
+        outerLiner: sourceModel.outerLiner.trim(),
+        innerLiner: sourceModel.innerLiner.trim(),
+        colorMode: sourceModel.colorMode,
+        pantoneReferences: sourceModel.pantoneReferences.trim(),
+        length: toSafeNumber(sourceModel.length) || undefined,
+        width: toSafeNumber(sourceModel.width) || undefined,
+        height: toSafeNumber(sourceModel.height) || undefined,
+        dimensionUnit: sourceModel.dimensionUnit,
+        quantity: toSafeNumber(sourceModel.quantity) || undefined,
+        finishingOptions: [...sourceModel.finishingOptions],
+        deliverables: [...sourceModel.deliverables],
+        designInstructions: sourceModel.designInstructions.trim(),
+        requireDieCut: sourceModel.requireDieCut,
+        requireMockup: sourceModel.requireMockup,
+    },
+    sampleFiles: sourceModel.sampleFiles,
 })
-
-const getAttachmentId = () => {
-    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-        return crypto.randomUUID()
-    }
-
-    return `${Date.now()}-${Math.floor(Math.random() * 10000)}`
-}
-
-export const toRequestAttachmentFromFile = (file: File): RequestAttachment => {
-    const extension = file.name.split('.').pop()?.toLowerCase() ?? 'archivo'
-    const sizeKb = Math.max(1, Math.round(file.size / 1024))
-
-    return {
-        id: `att-${getAttachmentId()}`,
-        name: file.name,
-        extension,
-        sizeKb,
-    }
-}
 
 let hydratePromise: Promise<void> | null = null
 
@@ -236,7 +220,7 @@ export const useRequestsModule = () => {
             priority: request.priority,
             status: request.status,
             requiredDateLabel: formatDateLabel(request.requiredDate ?? ''),
-            attachmentsCount: request.attachments.length.toString(),
+            attachmentsCount: request.sampleFiles.length.toString(),
             requestedBy: request.requestedBy,
             assignedDesigners: request.assignedDesigners,
         }))
@@ -257,13 +241,10 @@ export const useRequestsModule = () => {
     }
 
     const createRequest = async (formModel: DesignRequestFormModel) => {
-        const nextSequence = requests.value.length + 1
-        const nextCode = toRequestCode(nextSequence)
-
         try {
             const response = await apiClient.post<DesignRequest>(
                 '/requests',
-                toRequestPayload(formModel, nextCode),
+                toRequestPayload(formModel),
             )
             requests.value = [response.data, ...requests.value]
             workflowStore.upsertFromDesignRequest(response.data)
@@ -289,7 +270,7 @@ export const useRequestsModule = () => {
         try {
             const response = await apiClient.put<DesignRequest>(
                 `/requests/${requestId}`,
-                toRequestPayload(formModel, existingRequest.requestCode),
+                toRequestPayload(formModel),
             )
 
             requests.value = requests.value.map((request) => {
@@ -348,15 +329,7 @@ export const useRequestsModule = () => {
         }
 
         const nextCode = toRequestCode(requests.value.length + 1)
-        const duplicatedPayload: DesignRequestFormModel = {
-            ...toRequestFormModel(request),
-            status: 'CREATED',
-        }
-
-        const created = await createRequest({
-            ...duplicatedPayload,
-            status: 'CREATED',
-        })
+        const created = await createRequest(toRequestFormModel(request))
 
         if (created) {
             toast.success(`Solicitud duplicada como ${nextCode}`)
@@ -518,7 +491,7 @@ export const useRequestsModule = () => {
             priority: request.priority,
             status: request.status,
             requiredDateLabel: formatDateLabel(request.requiredDate ?? ''),
-            attachmentsCount: request.attachments.length.toString(),
+            attachmentsCount: request.sampleFiles.length.toString(),
             requestedBy: request.requestedBy,
             assignedDesigners: request.assignedDesigners,
         }))
@@ -542,14 +515,10 @@ export const useRequestsModule = () => {
         }
 
         try {
-            const response = await apiClient.post<DesignRequest>(
-                `/requests/${requestId}/assignments`,
-                { designerId, designerName },
-            )
-            requests.value = requests.value.map((item) =>
-                item.id === requestId ? response.data : item,
-            )
-            workflowStore.upsertFromDesignRequest(response.data)
+            await apiClient.post(`/requests/${requestId}/assignments`, {
+                designerIds: [designerId],
+            })
+            await hydrateRequests(true)
             toast.success(`${designerName} asignado a ${request.requestCode}`)
             return true
         } catch (error) {
@@ -558,6 +527,36 @@ export const useRequestsModule = () => {
                 ?.statusMessage
             toast.error(statusMessage || 'No se pudo asignar el diseñador.')
             return false
+        }
+    }
+
+    const toggleChecklist = async (requestId: string, item: 'art' | 'mechanical' | 'dummy') => {
+        try {
+            const response = await apiClient.patch<{
+                newValue: boolean
+                checklist: {
+                    artCompleted: boolean
+                    mechanicalCompleted: boolean
+                    dummyCompleted: boolean
+                }
+            }>(`/requests/${requestId}/checklist/${item}`)
+
+            requests.value = requests.value.map((r) => {
+                if (r.id !== requestId) return r
+                return {
+                    ...r,
+                    artCompleted: response.data.checklist.artCompleted,
+                    mechanicalCompleted: response.data.checklist.mechanicalCompleted,
+                    dummyCompleted: response.data.checklist.dummyCompleted,
+                }
+            })
+            return response.data.newValue
+        } catch (error) {
+            const httpError = error as HttpClientError
+            const statusMessage = (httpError.details as { statusMessage?: string } | null)
+                ?.statusMessage
+            toast.error(statusMessage || 'No se pudo actualizar el checklist.')
+            return null
         }
     }
 
@@ -610,6 +609,7 @@ export const useRequestsModule = () => {
         approveQualityReview,
         rejectQualityReview,
         assignDesigner,
+        toggleChecklist,
         removeDesignerAssignment,
         findRequestById,
         getFormModelById,

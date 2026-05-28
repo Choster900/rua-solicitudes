@@ -162,14 +162,14 @@ interface CreateRequestInput {
         requireDieCut?: boolean
         requireMockup?: boolean
     }
-    sampleFile?: {
+    sampleFiles?: {
         uploadedById: string
         originalName: string
         mimeType: string
         sizeBytes: number
         base64Content: string
         notes?: string
-    }
+    }[]
 }
 
 export const createDesignRequest = async (input: CreateRequestInput) => {
@@ -227,32 +227,33 @@ export const createDesignRequest = async (input: CreateRequestInput) => {
             data: { currentVersionId: version.id },
         })
 
-        // 4. Guardar archivo de muestra si viene
-        let sampleFile = null
-        if (input.sampleFile) {
-            sampleFile = await tx.requestFile.create({
-                data: {
-                    requestId: request.id,
-                    versionId: version.id,
-                    uploadedById: input.sampleFile.uploadedById,
-                    origin: 'SALES',
-                    category: 'SALES_REFERENCE',
-                    originalName: input.sampleFile.originalName,
-                    mimeType: input.sampleFile.mimeType,
-                    sizeBytes: BigInt(input.sampleFile.sizeBytes),
-                    base64Content: input.sampleFile.base64Content,
-                    notes: input.sampleFile.notes ?? '',
-                },
-            })
-        }
+        // 4. Guardar archivos de muestra si vienen
+        const savedFiles = input.sampleFiles?.length
+            ? await Promise.all(
+                  input.sampleFiles.map((file) =>
+                      tx.requestFile.create({
+                          data: {
+                              requestId: request.id,
+                              versionId: version.id,
+                              uploadedById: file.uploadedById,
+                              origin: 'SALES',
+                              category: 'SALES_REFERENCE',
+                              originalName: file.originalName,
+                              mimeType: file.mimeType,
+                              sizeBytes: BigInt(file.sizeBytes),
+                              base64Content: file.base64Content,
+                              notes: file.notes ?? '',
+                          },
+                      }),
+                  ),
+              )
+            : []
 
         return {
             ...request,
             currentVersionId: version.id,
             currentVersion: version,
-            sampleFiles: sampleFile
-                ? [{ ...sampleFile, sizeBytes: Number(sampleFile.sizeBytes) }]
-                : [],
+            sampleFiles: savedFiles.map((f) => ({ ...f, sizeBytes: Number(f.sizeBytes) })),
         }
     })
 }

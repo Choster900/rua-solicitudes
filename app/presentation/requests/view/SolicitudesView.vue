@@ -2,13 +2,14 @@
     <AppShellLayout screen-title="Solicitudes">
         <section class="h-full">
             <div class="grid h-full gap-4 xl:grid-cols-[minmax(0,70%),minmax(0,30%)]">
+                <!-- ── Lista ──────────────────────────────────────────── -->
                 <article class="min-h-0 border-r border-outline/20 pr-0 xl:pr-0">
                     <header
                         class="flex flex-wrap items-start justify-between gap-4 border-b border-outline/20 px-4 py-4"
                     >
                         <div>
                             <h1 class="text-[1.8rem] font-headline-md font-semibold text-white">
-                                {{ isVendedor ? 'Mis Solicitudes' : 'Historial General' }}
+                                Solicitudes
                             </h1>
                             <p
                                 class="mt-2 text-xs uppercase tracking-[0.12em] text-secondary-container"
@@ -19,17 +20,7 @@
                                 {{ activeRows.length }} registros encontrados.
                             </p>
                         </div>
-
                         <div class="flex items-center gap-2">
-                            <AppButton
-                                icon="print"
-                                icon-position="left"
-                                size="md"
-                                variant="primary"
-                                @click="exportRequests"
-                            >
-                                Imprimir Todo
-                            </AppButton>
                             <AppButton
                                 icon="add"
                                 size="md"
@@ -41,10 +32,10 @@
                         </div>
                     </header>
 
-                    <!-- Tabs para vendedor -->
-                    <div v-if="isVendedor" class="flex gap-1 border-b border-outline/20 px-4 pt-3">
+                    <!-- Tabs -->
+                    <div class="flex gap-1 border-b border-outline/20 px-4 pt-3">
                         <button
-                            v-for="tab in vendedorTabs"
+                            v-for="tab in tabs"
                             :key="tab.key"
                             :class="[
                                 'flex items-center gap-1.5 rounded-t-lg px-4 py-2 text-xs font-semibold uppercase tracking-widest transition-colors',
@@ -53,7 +44,10 @@
                                     : 'text-outline-variant hover:text-white',
                             ]"
                             type="button"
-                            @click="activeTab = tab.key"
+                            @click="
+                                activeTab = tab.key
+                                selectedId = ''
+                            "
                         >
                             {{ tab.label }}
                             <span
@@ -72,17 +66,18 @@
                     <div class="min-h-0 px-4 py-3">
                         <RequestsDataTable
                             :rows="activeRows"
-                            @delete-request="removeRequest"
-                            @duplicate-request="duplicateRequest"
                             @edit-request="goToEditRequest"
-                            @reject-request="openRejectModal"
+                            @delete-request="handleDeleteRequest"
+                            @duplicate-request="handleDuplicateRequest"
+                            @assign-designer="handleAssignDesigner"
                             @submit-to-quality="handleSubmitToQuality"
-                            @assign-designer="openAssignModal"
-                            @approve-request="handleApprove"
+                            @approve-request="handleApproveRequest"
+                            @reject-request="handleRejectRequest"
                         />
                     </div>
                 </article>
 
+                <!-- ── Expediente histórico ────────────────────────────── -->
                 <aside
                     class="-mr-6 -my-6 flex h-[calc(100%+3rem)] flex-col self-stretch border-l border-outline/20 bg-surface-container-lowest/5"
                 >
@@ -92,202 +87,167 @@
                             <p
                                 class="inline-flex w-fit rounded bg-primary/10 px-2 py-0.5 font-mono text-xs text-primary-fixed-dim"
                             >
-                                {{ selectedRow?.requestCode || 'SOL-0000-000' }}
+                                {{ selected?.requestCode || 'SOL-0000-000' }}
                             </p>
                             <p class="text-base text-slate-300">
-                                {{ selectedRow?.clientName || 'Cliente sin seleccionar' }}
+                                {{ selected?.clientName || 'Selecciona una solicitud' }}
                             </p>
                         </div>
                     </header>
 
                     <div class="min-h-0 flex-1 space-y-4 overflow-auto px-4 py-4">
-                        <section>
+                        <!-- Estado y prioridad -->
+                        <section v-if="selected">
+                            <div class="flex flex-wrap gap-2">
+                                <AppStatusBadge
+                                    :label="resolveStatusLabel(selected.status)"
+                                    :tone="resolveStatusTone(selected.status)"
+                                />
+                                <AppStatusBadge
+                                    :label="resolvePriorityLabel(selected.priority)"
+                                    :tone="resolvePriorityTone(selected.priority)"
+                                />
+                            </div>
+                        </section>
+
+                        <!-- Datos del cliente y solicitante -->
+                        <section v-if="selected" class="border-t border-outline/20 pt-3">
                             <h3
                                 class="mb-2 text-[11px] uppercase tracking-[0.12em] text-secondary-container"
                             >
-                                Registro de Cambios
+                                Detalles
                             </h3>
-                            <ol class="relative space-y-2.5">
-                                <span
-                                    class="pointer-events-none absolute bottom-1 left-[4px] top-1 w-px bg-white/70"
-                                />
-                                <li class="relative flex gap-2.5">
-                                    <span
-                                        class="relative z-10 mt-1 h-2.5 w-2.5 rounded-full bg-primary ring-2 ring-[#152A40]"
-                                    />
-                                    <div>
-                                        <p class="text-sm text-slate-200">Cierre de Solicitud</p>
-                                        <p class="text-xs text-outline-variant">
-                                            Por:
-                                            <span class="text-primary-fixed-dim">Admin_User</span>
-                                        </p>
-                                        <p
-                                            class="text-[10px] uppercase tracking-[0.08em] text-outline-variant"
-                                        >
-                                            20 NOV 2023 · 14:30
-                                        </p>
-                                    </div>
-                                </li>
-                                <li class="relative flex gap-2.5">
-                                    <span
-                                        class="relative z-10 mt-1 h-2.5 w-2.5 rounded-full bg-white/70 ring-2 ring-[#152A40]"
-                                    />
-                                    <div>
-                                        <p class="text-sm text-slate-300">
-                                            Aprobación de Control de Calidad
-                                        </p>
-                                        <p class="text-xs text-outline-variant">
-                                            Por:
-                                            <span class="text-primary-fixed-dim"
-                                                >C_Lead_Carlos</span
-                                            >
-                                        </p>
-                                    </div>
-                                </li>
-                                <li class="relative flex gap-2.5">
-                                    <span
-                                        class="relative z-10 mt-1 h-2.5 w-2.5 rounded-full bg-white/70 ring-2 ring-[#152A40]"
-                                    />
-                                    <div>
-                                        <p class="text-sm text-slate-300">
-                                            Actualización de Arte Final v2.1
-                                        </p>
-                                        <p class="text-xs text-outline-variant">
-                                            Por:
-                                            <span class="text-primary-fixed-dim"
-                                                >Design_Unit_04</span
-                                            >
-                                        </p>
-                                    </div>
-                                </li>
-                            </ol>
+                            <div class="grid gap-2 text-sm">
+                                <div v-if="selected.productName">
+                                    <p class="text-[10px] uppercase text-outline-variant">
+                                        Producto
+                                    </p>
+                                    <p class="text-slate-200">{{ selected.productName }}</p>
+                                </div>
+                                <div v-if="selected.requestedBy">
+                                    <p class="text-[10px] uppercase text-outline-variant">
+                                        Solicitado por
+                                    </p>
+                                    <p class="text-slate-200">{{ selected.requestedBy }}</p>
+                                </div>
+                                <div v-if="selected.requiredDateLabel !== '—'">
+                                    <p class="text-[10px] uppercase text-outline-variant">
+                                        Entrega solicitada
+                                    </p>
+                                    <p class="text-slate-200">{{ selected.requiredDateLabel }}</p>
+                                </div>
+                            </div>
                         </section>
 
-                        <section>
+                        <!-- Diseñadores asignados -->
+                        <section v-if="selected" class="border-t border-outline/20 pt-3">
+                            <h3
+                                class="mb-2 text-[11px] uppercase tracking-[0.12em] text-secondary-container"
+                            >
+                                Diseñadores asignados
+                            </h3>
+                            <div
+                                v-if="selected.assignedDesigners.length === 0"
+                                class="text-xs text-outline-variant"
+                            >
+                                Sin asignar
+                            </div>
+                            <ul v-else class="space-y-1">
+                                <li
+                                    v-for="d in selected.assignedDesigners"
+                                    :key="d.designerId"
+                                    class="flex items-center gap-2 text-sm text-slate-200"
+                                >
+                                    <span
+                                        class="material-symbols-outlined text-[15px] text-primary-fixed-dim"
+                                        >design_services</span
+                                    >
+                                    {{ d.designerName }}
+                                </li>
+                            </ul>
+                        </section>
+
+                        <!-- Verificación de Calidad (checklist) -->
+                        <section v-if="selectedSummary" class="border-t border-outline/20 pt-3">
                             <h3
                                 class="mb-2 text-[11px] uppercase tracking-[0.12em] text-secondary-container"
                             >
                                 Verificación de Calidad
                             </h3>
-                            <article
-                                class="mb-3 overflow-hidden rounded-lg border border-outline/25 bg-surface-container-lowest/25 p-2"
-                            >
-                                <div
-                                    class="mb-1 text-[10px] uppercase tracking-[0.08em] text-outline-variant"
-                                >
-                                    ÚLTIMO ARTE REALIZADO
-                                </div>
-                                <div
-                                    class="flex h-28 items-center justify-center rounded-md border border-outline/20 bg-[#0D1E2E]/75"
-                                >
-                                    <span
-                                        class="material-symbols-outlined text-2xl text-outline-variant"
-                                        >image</span
-                                    >
-                                </div>
-                            </article>
                             <div class="grid gap-1.5 text-xs">
                                 <p
-                                    class="flex items-center justify-between border-b border-outline/20 pb-1 text-outline-variant"
+                                    class="flex items-center justify-between border-b border-outline/20 pb-1"
+                                    :class="
+                                        selectedSummary.artCompleted
+                                            ? 'text-emerald-200'
+                                            : 'text-outline-variant'
+                                    "
                                 >
-                                    <span>Medidas</span>
-                                    <span class="text-emerald-300">✓</span>
+                                    <span>Arte</span>
+                                    <span>{{ selectedSummary.artCompleted ? '✓' : '—' }}</span>
                                 </p>
                                 <p
-                                    class="flex items-center justify-between border-b border-outline/20 pb-1 text-outline-variant"
+                                    class="flex items-center justify-between border-b border-outline/20 pb-1"
+                                    :class="
+                                        selectedSummary.mechanicalCompleted
+                                            ? 'text-emerald-200'
+                                            : 'text-outline-variant'
+                                    "
                                 >
-                                    <span>Sustrato</span>
-                                    <span class="text-emerald-300">✓</span>
-                                </p>
-                                <p
-                                    class="flex items-center justify-between border-b border-outline/20 pb-1 text-outline-variant"
-                                >
-                                    <span>Dummie</span>
-                                    <span class="text-emerald-300">✓</span>
-                                </p>
-                                <p class="flex items-center justify-between text-outline-variant">
                                     <span>Mecánico</span>
-                                    <span class="text-emerald-300">✓</span>
+                                    <span>{{
+                                        selectedSummary.mechanicalCompleted ? '✓' : '—'
+                                    }}</span>
+                                </p>
+                                <p
+                                    class="flex items-center justify-between"
+                                    :class="
+                                        selectedSummary.dummyCompleted
+                                            ? 'text-emerald-200'
+                                            : 'text-outline-variant'
+                                    "
+                                >
+                                    <span>Dummy</span>
+                                    <span>{{ selectedSummary.dummyCompleted ? '✓' : '—' }}</span>
                                 </p>
                             </div>
                         </section>
 
-                        <section>
-                            <h3
-                                class="mb-2 text-[11px] uppercase tracking-[0.12em] text-secondary-container"
+                        <!-- Placeholder vacío -->
+                        <div
+                            v-if="!selected"
+                            class="flex flex-col items-center justify-center py-12 text-center"
+                        >
+                            <span class="material-symbols-outlined text-3xl text-outline-variant"
+                                >article</span
                             >
-                                Historial de Comentarios
-                            </h3>
-                            <article
-                                class="rounded-lg border border-outline/25 bg-surface-container-lowest/25 p-2.5"
-                            >
-                                <p
-                                    class="text-[10px] uppercase tracking-[0.08em] text-primary-fixed-dim"
-                                >
-                                    QC_Lead_Carlos · 19 NOV
-                                </p>
-                                <p class="mt-1 text-xs italic text-outline-variant">
-                                    Se validaron las dimensiones del panel frontal. Todo cumple con
-                                    la normativa ISO-9001.
-                                </p>
-                            </article>
-                        </section>
+                            <p class="mt-2 text-xs text-outline-variant">
+                                Selecciona una solicitud para ver su expediente.
+                            </p>
+                        </div>
                     </div>
 
                     <footer class="grid grid-cols-2 gap-2 border-t border-outline/20 px-4 py-3">
-                        <AppButton size="md" variant="ghost" @click="triggerImport">
-                            Ver Archivos
+                        <AppButton
+                            size="md"
+                            variant="ghost"
+                            :disabled="!selected"
+                            @click="goToEditRequest(selected?.id ?? '')"
+                        >
+                            Ver detalle
                         </AppButton>
                         <AppButton
-                            icon="download"
+                            icon="add"
                             icon-position="left"
                             size="md"
                             variant="primary"
-                            @click="exportRequests"
+                            @click="goToCreateRequest"
                         >
-                            Exportar PDF
+                            Nueva
                         </AppButton>
                     </footer>
                 </aside>
             </div>
-
-            <input
-                ref="importInputRef"
-                accept=".csv,.xlsx,.xls"
-                class="hidden"
-                type="file"
-                @change="handleImportSelection"
-            />
-
-            <AssignDesignerModal
-                ref="assignModalRef"
-                :initial-designer-id="assignRequestSnapshot?.assignedDesignerId ?? null"
-                :open="isAssignModalOpen"
-                :request-code="assignRequestSnapshot?.requestCode ?? ''"
-                @close="closeAssignModal"
-                @confirm="confirmAssignment"
-            />
-
-            <WorkflowDecisionModal
-                confirm-label="Aprobar solicitud"
-                confirm-tone="primary"
-                :description="`Confirma la aprobación de calidad${reviewModalTitleSuffix}. Puedes agregar un comentario opcional.`"
-                :open="isApproveModalOpen"
-                title="Aprobar en calidad"
-                @close="closeApproveModal"
-                @confirm="confirmApprove"
-            />
-
-            <WorkflowDecisionModal
-                confirm-label="Rechazar y crear nueva versión"
-                confirm-tone="danger"
-                :description="`Indica el motivo de rechazo${reviewModalTitleSuffix}. Se creará una nueva versión y volverá al diseñador.`"
-                :open="isRejectModalOpen"
-                require-comment
-                title="Rechazar en calidad"
-                @close="closeRejectModal"
-                @confirm="confirmReject"
-            />
         </section>
     </AppShellLayout>
 </template>
@@ -296,172 +256,174 @@
 import { computed, ref } from 'vue'
 import AppShellLayout from '~/presentation/shared/components/layout/AppShellLayout.vue'
 import AppButton from '~/presentation/shared/components/ui/AppButton.vue'
+import AppStatusBadge from '~/presentation/shared/components/ui/AppStatusBadge.vue'
 import RequestsDataTable from '~/presentation/requests/components/RequestsDataTable.vue'
-import AssignDesignerModal from '~/presentation/requests/components/AssignDesignerModal.vue'
-import WorkflowDecisionModal from '~/presentation/request-workflow/components/WorkflowDecisionModal.vue'
-import { useRequestsModule } from '~/presentation/requests/composables/useRequestsModule'
-import { useSessionUser } from '~/presentation/shared/composables/useSessionUser'
+import { useRequestsByStatus } from '~/presentation/requests/composables/useRequestsByStatus'
+import type { DesignRequestTableRow } from '~/presentation/interfaces/requests/request-table-row.interface'
+import type { RequestSummary } from '~/presentation/interfaces/requests/request-summary.interface'
+import {
+    REQUEST_STATUS_LABELS,
+    REQUEST_PRIORITY_LABELS,
+    type RequestStatus,
+    type RequestPriority,
+} from '~/presentation/interfaces/requests/request.interface'
 
-defineOptions({
-    name: 'SolicitudesView',
-})
+defineOptions({ name: 'SolicitudesView' })
 
 const router = useRouter()
-const {
-    importInputRef,
-    isVendedor,
-    totalRequests,
-    tableRows,
-    pendingAssignmentRows,
-    completedRows,
-    removeRequest,
-    duplicateRequest,
-    assignDesigner,
-    sendToQualityReview,
-    approveQualityReview,
-    rejectQualityReview,
-    findRequestById,
-    triggerImport,
-    handleImportSelection,
-    exportRequests,
-    hydrateRequests,
-} = useRequestsModule()
+const { grouped, allRequests, totalCount, isLoading, hydrate, countByStatus } =
+    useRequestsByStatus()
 
-const { sessionUser, hydrateSession, isDesignLead, isDesigner, isQuality } = useSessionUser()
+const selectedId = ref('')
 
-const assignRequestId = ref('')
-const isAssignModalOpen = ref(false)
-const assignModalRef = ref<InstanceType<typeof AssignDesignerModal> | null>(null)
-const reviewRequestId = ref('')
-const isApproveModalOpen = ref(false)
-const isRejectModalOpen = ref(false)
+// ── Tabs ──────────────────────────────────────────────────────────────────────
 
-const assignRequestSnapshot = computed(() => {
-    if (!assignRequestId.value) return null
-    const req = findRequestById(assignRequestId.value)
-    if (!req) return null
-    return {
-        assignedDesignerId: req.assignedDesigners[0]?.designerId ?? null,
-        requestCode: req.requestCode,
-    }
-})
+type TabKey = 'all' | 'unassigned' | 'done'
 
-const reviewModalTitleSuffix = computed(() => {
-    if (!reviewRequestId.value) return ''
-    const req = findRequestById(reviewRequestId.value)
-    return req ? ` de ${req.requestCode}` : ''
-})
+const activeTab = ref<TabKey>('all')
 
-type VendedorTab = 'pending' | 'completed'
-const activeTab = ref<VendedorTab>('pending')
-
-const vendedorTabs = computed(() => [
+const tabs = computed(() => [
+    { key: 'all' as TabKey, label: 'Todas', count: totalCount.value },
     {
-        key: 'pending' as VendedorTab,
-        label: 'Sin Asignar',
-        count: pendingAssignmentRows.value.length,
+        key: 'unassigned' as TabKey,
+        label: 'Sin asignar',
+        count: countByStatus(['CREATED', 'PENDING_DESIGN_REVIEW']).value,
     },
-    { key: 'completed' as VendedorTab, label: 'Completadas', count: completedRows.value.length },
+    {
+        key: 'done' as TabKey,
+        label: 'Completadas',
+        count: countByStatus(['QUALITY_APPROVED', 'DELIVERED_TO_SALES']).value,
+    },
 ])
 
-const activeRows = computed(() => {
-    if (!isVendedor.value) return tableRows.value
-    return activeTab.value === 'pending' ? pendingAssignmentRows.value : completedRows.value
+const TAB_STATUSES: Record<TabKey, RequestStatus[]> = {
+    all: [
+        'CREATED',
+        'PENDING_DESIGN_REVIEW',
+        'ASSIGNED_TO_DESIGNER',
+        'IN_DESIGN',
+        'SENT_TO_QUALITY',
+        'QUALITY_REJECTED',
+        'QUALITY_APPROVED',
+        'DELIVERED_TO_SALES',
+        'CANCELLED',
+    ],
+    unassigned: ['CREATED', 'PENDING_DESIGN_REVIEW'],
+    done: ['QUALITY_APPROVED', 'DELIVERED_TO_SALES'],
+}
+
+// ── Mapeo RequestSummary → DesignRequestTableRow ──────────────────────────────
+
+const formatDate = (iso: string | null) => {
+    if (!iso) return '—'
+    return new Intl.DateTimeFormat('es-SV', { dateStyle: 'medium' }).format(new Date(iso))
+}
+
+const toTableRow = (req: RequestSummary): DesignRequestTableRow => ({
+    id: req.id,
+    requestCode: req.code,
+    clientName: req.clientName,
+    productName: req.productName || req.brandName || '—',
+    materialType: '—',
+    printTechnique: '—',
+    priority: req.priority,
+    status: req.status,
+    requiredDateLabel: formatDate(req.requiredDate),
+    attachmentsCount: '0',
+    requestedBy: req.sellerName,
+    assignedDesigners: req.assignedDesigners.map((d) => ({
+        designerId: d.designerId,
+        designerName: d.designerName,
+    })),
 })
 
-const selectedRow = computed(() => activeRows.value[0] ?? null)
+const activeRows = computed<DesignRequestTableRow[]>(() =>
+    TAB_STATUSES[activeTab.value].flatMap((s) => grouped.value[s] ?? []).map(toTableRow),
+)
 
-const goToCreateRequest = () => {
-    void router.push('/solicitudes/nueva')
-}
+// ── Selección y expediente ────────────────────────────────────────────────────
 
-const goToEditRequest = (requestId: string) => {
-    void router.push(`/solicitudes/${requestId}/editar`)
-}
-
-const openAssignModal = (requestId: string) => {
-    assignRequestId.value = requestId
-    isAssignModalOpen.value = true
-}
-
-const closeAssignModal = () => {
-    isAssignModalOpen.value = false
-    assignRequestId.value = ''
-    assignModalRef.value?.resetSubmitting()
-}
-
-const confirmAssignment = async (designerId: string, designerName: string) => {
-    if (!assignRequestId.value) {
-        closeAssignModal()
-        return
-    }
-
-    const succeeded = await assignDesigner(assignRequestId.value, designerId, designerName)
-    assignModalRef.value?.resetSubmitting()
-
-    if (succeeded) {
-        closeAssignModal()
-    }
-}
-
-const handleSubmitToQuality = async (requestId: string) => {
-    await sendToQualityReview(requestId)
-}
-
-const handleApprove = (requestId: string) => {
-    reviewRequestId.value = requestId
-    isApproveModalOpen.value = true
-}
-
-const closeApproveModal = () => {
-    isApproveModalOpen.value = false
-    reviewRequestId.value = ''
-}
-
-const confirmApprove = async () => {
-    if (!reviewRequestId.value) {
-        closeApproveModal()
-        return
-    }
-    const succeeded = await approveQualityReview(reviewRequestId.value)
-    if (succeeded) {
-        closeApproveModal()
-    }
-}
-
-const openRejectModal = (requestId: string) => {
-    reviewRequestId.value = requestId
-    isRejectModalOpen.value = true
-}
-
-const closeRejectModal = () => {
-    isRejectModalOpen.value = false
-    reviewRequestId.value = ''
-}
-
-const confirmReject = async () => {
-    if (!reviewRequestId.value) {
-        closeRejectModal()
-        return
-    }
-    const succeeded = await rejectQualityReview(reviewRequestId.value)
-    if (succeeded) {
-        closeRejectModal()
-    }
-}
-
-onMounted(() => {
-    void hydrateSession()
-    void hydrateRequests()
+const selectedSummary = computed<RequestSummary | null>(() => {
+    if (!selectedId.value)
+        return activeRows.value.length > 0
+            ? (allRequests.value.find((r) => r.id === activeRows.value[0]!.id) ?? null)
+            : null
+    return allRequests.value.find((r) => r.id === selectedId.value) ?? null
 })
+
+const selected = computed<DesignRequestTableRow | null>(() => {
+    const summary = selectedSummary.value
+    return summary ? toTableRow(summary) : null
+})
+
+// ── Labels / tones ────────────────────────────────────────────────────────────
+
+const resolveStatusLabel = (status: string) =>
+    REQUEST_STATUS_LABELS[status as RequestStatus] ?? status
+
+const resolveStatusTone = (
+    status: string,
+): 'success' | 'warning' | 'danger' | 'info' | 'neutral' => {
+    const map: Record<string, 'success' | 'warning' | 'danger' | 'info' | 'neutral'> = {
+        QUALITY_APPROVED: 'success',
+        DELIVERED_TO_SALES: 'success',
+        QUALITY_REJECTED: 'danger',
+        CANCELLED: 'danger',
+        SENT_TO_QUALITY: 'warning',
+        PENDING_DESIGN_REVIEW: 'warning',
+        ASSIGNED_TO_DESIGNER: 'info',
+        IN_DESIGN: 'info',
+        CREATED: 'neutral',
+    }
+    return map[status] ?? 'neutral'
+}
+
+const resolvePriorityLabel = (priority: string) =>
+    REQUEST_PRIORITY_LABELS[priority as RequestPriority] ?? priority
+
+const resolvePriorityTone = (
+    priority: string,
+): 'success' | 'warning' | 'danger' | 'info' | 'neutral' => {
+    const map: Record<string, 'success' | 'warning' | 'danger' | 'info' | 'neutral'> = {
+        URGENT: 'danger',
+        HIGH: 'warning',
+        MEDIUM: 'info',
+        LOW: 'neutral',
+    }
+    return map[priority] ?? 'neutral'
+}
+
+// ── Actions ───────────────────────────────────────────────────────────────────
+
+const goToCreateRequest = () => void router.push('/solicitudes/nueva')
+const goToEditRequest = (id: string) => {
+    if (id) void router.push(`/solicitudes/${id}/editar`)
+}
+
+const handleDeleteRequest = (id: string) => {
+    console.log('delete', id)
+}
+const handleDuplicateRequest = (id: string) => {
+    console.log('duplicate', id)
+}
+const handleAssignDesigner = (id: string) => {
+    console.log('assign', id)
+}
+const handleSubmitToQuality = (id: string) => {
+    console.log('submit quality', id)
+}
+const handleApproveRequest = (id: string) => {
+    console.log('approve', id)
+}
+const handleRejectRequest = (id: string) => {
+    console.log('reject', id)
+}
+
+onMounted(() => void hydrate())
 
 useHead(() => ({
     title: 'RUASA ERP - Solicitudes',
-    htmlAttrs: {
-        lang: 'es',
-    },
-    bodyAttrs: {
-        class: 'font-body-md overflow-hidden bg-deep-navy text-on-surface-variant',
-    },
+    htmlAttrs: { lang: 'es' },
+    bodyAttrs: { class: 'font-body-md overflow-hidden bg-deep-navy text-on-surface-variant' },
 }))
 </script>

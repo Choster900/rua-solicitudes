@@ -225,7 +225,7 @@ export const useRequestWorkflowStore = defineStore('request-workflow', {
                 requiredDate: request.requiredDate ?? '',
                 slaHours: toSlaHours(request.requiredDate ?? ''),
                 stage: toInitialWorkflowStage(request.status),
-                evidenceFiles: request.attachments.map((attachment) => ({
+                evidenceFiles: (request.attachments ?? []).map((attachment) => ({
                     id: attachment.id,
                     name: attachment.name,
                     extension: attachment.extension,
