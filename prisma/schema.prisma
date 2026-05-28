@@ -3,7 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider  = "postgresql"
+  url       = env("SUPABASE_DB_URL")
+  directUrl = env("SUPABASE_DB_URL")
 }
 
 /**

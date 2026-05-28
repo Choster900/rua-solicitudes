@@ -227,9 +227,9 @@ export const useRequestWorkflowStore = defineStore('request-workflow', {
                 stage: toInitialWorkflowStage(request.status),
                 evidenceFiles: (request.attachments ?? []).map((attachment) => ({
                     id: attachment.id,
-                    name: attachment.name,
-                    extension: attachment.extension,
-                    sizeKb: attachment.sizeKb,
+                    name: attachment.originalName,
+                    extension: attachment.originalName.split('.').pop() ?? '',
+                    sizeKb: Math.round(attachment.sizeBytes / 1024),
                 })),
             }
 

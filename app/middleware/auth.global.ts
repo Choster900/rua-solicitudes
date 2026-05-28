@@ -62,6 +62,19 @@ export default defineNuxtRouteMiddleware((to) => {
         return navigateTo(getRoleHomePath(roleCodes))
     }
 
+    // Roles con acceso exclusivo a una sola ruta
+    const EXCLUSIVE_ROLE_PATHS: Record<string, string> = {
+        calidad: '/requests/quality',
+    }
+    if (tokenValue) {
+        const roleCodes = getAuthTokenRoleCodes(tokenValue)
+        for (const [role, exclusivePath] of Object.entries(EXCLUSIVE_ROLE_PATHS)) {
+            if (roleCodes.includes(role) && to.path !== exclusivePath) {
+                return navigateTo(exclusivePath)
+            }
+        }
+    }
+
     // Route-level role guard (meta.allowedRoles or meta.requiresRole)
     if (tokenValue) {
         const allowedRoles = to.meta?.allowedRoles as string[] | undefined

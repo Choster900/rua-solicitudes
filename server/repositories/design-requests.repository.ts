@@ -37,6 +37,21 @@ export const getAllDesignRequests = () =>
             client: { select: { id: true, name: true, code: true } },
             seller: { select: { id: true, fullName: true, employeeCode: true } },
             currentVersion: withVersionAssignments,
+            files: {
+                where: { isActive: true },
+                orderBy: { createdAt: 'asc' },
+                select: {
+                    id: true,
+                    originalName: true,
+                    mimeType: true,
+                    sizeBytes: true,
+                    base64Content: true,
+                    origin: true,
+                    category: true,
+                    notes: true,
+                    createdAt: true,
+                },
+            },
         },
     })
 

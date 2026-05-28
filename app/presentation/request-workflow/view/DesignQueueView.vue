@@ -294,9 +294,19 @@
                                         <!-- Enviar a calidad (diseñador o jefe) -->
                                         <button
                                             v-if="canSendToQuality(row)"
-                                            class="inline-flex items-center gap-1 rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-1 text-xs text-amber-300 transition-colors hover:bg-amber-500/20"
+                                            :disabled="!allChecklistCompleted(row.id)"
+                                            class="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs transition-colors"
+                                            :class="
+                                                allChecklistCompleted(row.id)
+                                                    ? 'border-amber-500/40 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20'
+                                                    : 'cursor-not-allowed border-outline/20 bg-outline/5 text-outline-variant/40'
+                                            "
                                             type="button"
-                                            title="Enviar a calidad"
+                                            :title="
+                                                allChecklistCompleted(row.id)
+                                                    ? 'Enviar a calidad'
+                                                    : 'Completa Arte, Mecánico y Dummie para habilitar'
+                                            "
                                             @click="sendToQualityReview(row.id)"
                                         >
                                             <span class="material-symbols-outlined text-[14px]"
@@ -557,7 +567,7 @@
                         </p>
                     </section>
 
-                    <!-- Archivos adjuntos -->
+                    <!-- Archivos del vendedor -->
                     <section
                         v-if="selectedRequest?.sampleFiles?.length"
                         class="border-t border-outline/20 pt-3"
@@ -565,21 +575,89 @@
                         <h3
                             class="mb-2 text-[11px] uppercase tracking-[0.12em] text-secondary-container"
                         >
-                            Archivos ({{ selectedRequest.sampleFiles.length }})
+                            Archivos del vendedor ({{ selectedRequest.sampleFiles.length }})
                         </h3>
-                        <ul class="space-y-1">
+                        <ul class="space-y-2">
                             <li
                                 v-for="f in selectedRequest.sampleFiles"
                                 :key="f.id"
-                                class="flex items-center gap-2 text-xs text-slate-300"
+                                class="overflow-hidden rounded-md border border-outline/20"
                             >
-                                <span
-                                    class="material-symbols-outlined text-[14px] text-primary-fixed-dim"
-                                    >attach_file</span
+                                <img
+                                    v-if="f.mimeType.startsWith('image/')"
+                                    :src="`data:${f.mimeType};base64,${f.base64Content}`"
+                                    :alt="f.originalName"
+                                    class="w-full object-contain max-h-48 bg-black/20"
+                                />
+                                <div
+                                    class="flex items-center gap-2 px-2 py-1.5 text-xs text-slate-300"
                                 >
-                                <span class="truncate">{{ f.originalName }}</span>
+                                    <span
+                                        class="material-symbols-outlined text-[14px] text-primary-fixed-dim"
+                                        >attach_file</span
+                                    >
+                                    <span class="truncate">{{ f.originalName }}</span>
+                                    <span class="ml-auto shrink-0 text-outline-variant"
+                                        >{{ Math.round(f.sizeBytes / 1024) }} KB</span
+                                    >
+                                </div>
                             </li>
                         </ul>
+                    </section>
+
+                    <!-- Archivos del diseñador -->
+                    <section
+                        v-if="selectedRow && (isJefe || isDisenador)"
+                        class="border-t border-outline/20 pt-3"
+                    >
+                        <div class="mb-2 flex items-center justify-between">
+                            <h3
+                                class="text-[11px] uppercase tracking-[0.12em] text-secondary-container"
+                            >
+                                Archivos del diseñador
+                                <span v-if="selectedRequest?.attachments?.length"
+                                    >({{ selectedRequest.attachments.length }})</span
+                                >
+                            </h3>
+                            <button
+                                type="button"
+                                :disabled="isUploadingAttachment"
+                                class="inline-flex items-center gap-1 rounded-md border border-primary/40 bg-primary/10 px-2 py-0.5 text-[11px] text-primary-fixed-dim transition-colors hover:bg-primary/20 disabled:cursor-not-allowed disabled:opacity-50"
+                                @click="triggerAttachmentUpload"
+                            >
+                                <span class="material-symbols-outlined text-[13px]">
+                                    {{ isUploadingAttachment ? 'progress_activity' : 'upload' }}
+                                </span>
+                                {{ isUploadingAttachment ? 'Subiendo…' : 'Subir' }}
+                            </button>
+                        </div>
+                        <ul v-if="selectedRequest?.attachments?.length" class="space-y-2">
+                            <li
+                                v-for="f in selectedRequest.attachments"
+                                :key="f.id"
+                                class="overflow-hidden rounded-md border border-outline/20"
+                            >
+                                <img
+                                    v-if="f.mimeType.startsWith('image/')"
+                                    :src="`data:${f.mimeType};base64,${f.base64Content}`"
+                                    :alt="f.originalName"
+                                    class="w-full object-contain max-h-48 bg-black/20"
+                                />
+                                <div
+                                    class="flex items-center gap-2 px-2 py-1.5 text-xs text-slate-300"
+                                >
+                                    <span
+                                        class="material-symbols-outlined text-[14px] text-secondary-container"
+                                        >design_services</span
+                                    >
+                                    <span class="truncate">{{ f.originalName }}</span>
+                                    <span class="ml-auto shrink-0 text-outline-variant"
+                                        >{{ Math.round(f.sizeBytes / 1024) }} KB</span
+                                    >
+                                </div>
+                            </li>
+                        </ul>
+                        <p v-else class="text-xs text-outline-variant">Sin archivos aún.</p>
                     </section>
 
                     <!-- Placeholder vacío -->
@@ -619,6 +697,14 @@
             class="hidden"
             type="file"
             @change="handleImportSelection"
+        />
+        <input
+            ref="attachmentInputRef"
+            accept="image/*,.pdf,.ai,.eps,.psd,.png,.jpg,.jpeg,.svg"
+            class="hidden"
+            multiple
+            type="file"
+            @change="handleAttachmentSelection"
         />
 
         <AssignDesignerModal
@@ -693,6 +779,7 @@ const {
     findRequestById,
     currentUserId,
     toggleChecklist,
+    uploadAttachments,
     handleImportSelection,
     exportRequests,
     hydrateRequests,
@@ -809,12 +896,13 @@ const ASSIGNABLE_STATUSES: RequestStatus[] = [
 const isAssignable = (status: string) => ASSIGNABLE_STATUSES.includes(status as RequestStatus)
 
 const canSendToQuality = (row: { status: string; assignedDesigners: { designerId: string }[] }) => {
-    const sendableStatuses: RequestStatus[] = [
-        'ASSIGNED_TO_DESIGNER',
-        'IN_DESIGN',
-        'QUALITY_REJECTED',
+    const blockedStatuses: RequestStatus[] = [
+        'SENT_TO_QUALITY',
+        'QUALITY_APPROVED',
+        'DELIVERED_TO_SALES',
+        'CANCELLED',
     ]
-    if (!sendableStatuses.includes(row.status as RequestStatus)) return false
+    if (blockedStatuses.includes(row.status as RequestStatus)) return false
     if (isJefe.value) return true
     return row.assignedDesigners.some((a) => a.designerId === currentUserId.value)
 }
@@ -834,6 +922,11 @@ const canToggleChecklist = (row: { id: string; assignedDesigners: { designerId: 
     if (isJefe.value) return true
     if (!isDisenador.value) return false
     return row.assignedDesigners.some((a) => a.designerId === currentUserId.value)
+}
+
+const allChecklistCompleted = (rowId: string) => {
+    const c = getChecklist(rowId)
+    return c.artCompleted && c.mechanicalCompleted && c.dummyCompleted
 }
 
 const handleToggleChecklist = (requestId: string, item: 'art' | 'mechanical' | 'dummy') => {
@@ -856,6 +949,39 @@ const goToEditRequest = (requestId: string) => {
 }
 
 // ── Assign designer modal ─────────────────────────────────────────────────────
+
+// ── Designer file upload ──────────────────────────────────────────────────────
+
+const attachmentInputRef = ref<HTMLInputElement | null>(null)
+const isUploadingAttachment = ref(false)
+
+const triggerAttachmentUpload = () => attachmentInputRef.value?.click()
+
+const handleAttachmentSelection = async (event: Event) => {
+    const target = event.target as HTMLInputElement
+    const files = Array.from(target.files ?? [])
+    target.value = ''
+    if (!files.length || !selectedRow.value) return
+
+    isUploadingAttachment.value = true
+    const filePayloads = await Promise.all(
+        files.map(
+            (file) =>
+                new Promise<{ originalName: string; mimeType: string; base64Content: string }>(
+                    (resolve) => {
+                        const reader = new FileReader()
+                        reader.onload = () => {
+                            const base64Content = (reader.result as string).split(',')[1] ?? ''
+                            resolve({ originalName: file.name, mimeType: file.type, base64Content })
+                        }
+                        reader.readAsDataURL(file)
+                    },
+                ),
+        ),
+    )
+    await uploadAttachments(selectedRow.value.id, filePayloads)
+    isUploadingAttachment.value = false
+}
 
 const assignModalRef = ref<InstanceType<typeof AssignDesignerModal> | null>(null)
 const isAssignModalOpen = ref(false)

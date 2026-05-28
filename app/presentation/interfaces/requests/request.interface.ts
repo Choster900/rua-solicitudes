@@ -36,9 +36,12 @@ export const REQUEST_PRIORITY_LABELS: Record<RequestPriority, string> = {
 
 export interface RequestAttachment {
     id: string
-    name: string
-    extension: string
-    sizeKb: number
+    originalName: string
+    mimeType: string
+    sizeBytes: number
+    base64Content: string
+    notes: string
+    createdAt: string
 }
 
 export interface RequestSampleFile {

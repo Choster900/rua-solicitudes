@@ -202,25 +202,74 @@
                         </div>
                     </section>
 
-                    <!-- Adjuntos -->
-                    <section v-if="selectedFullRequest.attachments.length">
+                    <!-- Archivos del vendedor -->
+                    <section v-if="selectedFullRequest.sampleFiles?.length">
                         <h3
                             class="mb-2 text-[10px] uppercase tracking-[0.12em] text-secondary-container"
                         >
-                            Archivos ({{ selectedFullRequest.attachments.length }})
+                            Archivos del vendedor ({{ selectedFullRequest.sampleFiles.length }})
                         </h3>
-                        <div class="space-y-1">
-                            <div
-                                v-for="att in selectedFullRequest.attachments"
-                                :key="att.id"
-                                class="flex items-center justify-between rounded-md border border-outline/15 bg-surface-container-lowest/10 px-2 py-1.5"
+                        <ul class="space-y-2">
+                            <li
+                                v-for="f in selectedFullRequest.sampleFiles"
+                                :key="f.id"
+                                class="overflow-hidden rounded-md border border-outline/20"
                             >
-                                <span class="truncate text-[11px] text-white">{{ att.name }}</span>
-                                <span class="ml-2 shrink-0 text-[10px] text-outline-variant"
-                                    >{{ att.sizeKb }} KB</span
+                                <img
+                                    v-if="f.mimeType.startsWith('image/')"
+                                    :src="`data:${f.mimeType};base64,${f.base64Content}`"
+                                    :alt="f.originalName"
+                                    class="max-h-48 w-full bg-black/20 object-contain"
+                                />
+                                <div
+                                    class="flex items-center gap-2 px-2 py-1.5 text-xs text-slate-300"
                                 >
-                            </div>
-                        </div>
+                                    <span
+                                        class="material-symbols-outlined text-[14px] text-primary-fixed-dim"
+                                        >attach_file</span
+                                    >
+                                    <span class="truncate">{{ f.originalName }}</span>
+                                    <span class="ml-auto shrink-0 text-outline-variant"
+                                        >{{ Math.round(f.sizeBytes / 1024) }} KB</span
+                                    >
+                                </div>
+                            </li>
+                        </ul>
+                    </section>
+
+                    <!-- Archivos del diseñador -->
+                    <section v-if="selectedFullRequest.attachments?.length">
+                        <h3
+                            class="mb-2 text-[10px] uppercase tracking-[0.12em] text-secondary-container"
+                        >
+                            Archivos del diseñador ({{ selectedFullRequest.attachments.length }})
+                        </h3>
+                        <ul class="space-y-2">
+                            <li
+                                v-for="f in selectedFullRequest.attachments"
+                                :key="f.id"
+                                class="overflow-hidden rounded-md border border-outline/20"
+                            >
+                                <img
+                                    v-if="f.mimeType.startsWith('image/')"
+                                    :src="`data:${f.mimeType};base64,${f.base64Content}`"
+                                    :alt="f.originalName"
+                                    class="max-h-48 w-full bg-black/20 object-contain"
+                                />
+                                <div
+                                    class="flex items-center gap-2 px-2 py-1.5 text-xs text-slate-300"
+                                >
+                                    <span
+                                        class="material-symbols-outlined text-[14px] text-secondary-container"
+                                        >design_services</span
+                                    >
+                                    <span class="truncate">{{ f.originalName }}</span>
+                                    <span class="ml-auto shrink-0 text-outline-variant"
+                                        >{{ Math.round(f.sizeBytes / 1024) }} KB</span
+                                    >
+                                </div>
+                            </li>
+                        </ul>
                     </section>
 
                     <!-- Checklist -->
@@ -278,7 +327,7 @@
 
                 <!-- Acciones -->
                 <footer
-                    v-if="selectedFullRequest"
+                    v-if="selectedFullRequest?.status === 'SENT_TO_QUALITY'"
                     class="grid grid-cols-2 gap-2 border-t border-outline/20 px-4 py-3"
                 >
                     <AppButton
@@ -383,15 +432,7 @@ const handleApprove = async (comment: string) => {
 const handleReject = async (comment: string) => {
     rejectModalOpen.value = false
     if (!selectedRequestId.value) return
-    if (comment.trim()) {
-        workflowStore.appendObservation(
-            selectedRequestId.value,
-            comment,
-            'Equipo Calidad',
-            'Calidad',
-        )
-    }
-    const ok = await rejectQualityReview(selectedRequestId.value)
+    const ok = await rejectQualityReview(selectedRequestId.value, comment)
     if (ok) selectedRequestId.value = ''
 }
 

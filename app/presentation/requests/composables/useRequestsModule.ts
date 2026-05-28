@@ -368,13 +368,16 @@ export const useRequestsModule = () => {
             return false
         }
         try {
-            const response = await apiClient.put<DesignRequest>(`/requests/${requestId}`, {
-                status: 'APPROVED' as RequestStatus,
+            await apiClient.post(`/requests/${requestId}/quality-review`, {
+                decision: 'APPROVED',
             })
             requests.value = requests.value.map((item) =>
-                item.id === requestId ? response.data : item,
+                item.id === requestId
+                    ? { ...item, status: 'QUALITY_APPROVED' as RequestStatus }
+                    : item,
             )
-            workflowStore.upsertFromDesignRequest(response.data)
+            const updated = requests.value.find((r) => r.id === requestId)
+            if (updated) workflowStore.upsertFromDesignRequest(updated)
             toast.success(`Solicitud aprobada: ${request.requestCode}`)
             return true
         } catch (error) {
@@ -386,20 +389,24 @@ export const useRequestsModule = () => {
         }
     }
 
-    const rejectQualityReview = async (requestId: string) => {
+    const rejectQualityReview = async (requestId: string, generalObservations?: string) => {
         const request = findRequestById(requestId)
         if (!request) {
             toast.error('No se encontró la solicitud seleccionada.')
             return false
         }
         try {
-            const response = await apiClient.put<DesignRequest>(`/requests/${requestId}`, {
-                status: 'ASSIGNED' as RequestStatus,
+            await apiClient.post(`/requests/${requestId}/quality-review`, {
+                decision: 'REJECTED',
+                generalObservations: generalObservations ?? '',
             })
             requests.value = requests.value.map((item) =>
-                item.id === requestId ? response.data : item,
+                item.id === requestId
+                    ? { ...item, status: 'ASSIGNED_TO_DESIGNER' as RequestStatus }
+                    : item,
             )
-            workflowStore.upsertFromDesignRequest(response.data)
+            const updated = requests.value.find((r) => r.id === requestId)
+            if (updated) workflowStore.upsertFromDesignRequest(updated)
             toast.success(`Solicitud devuelta a diseño: ${request.requestCode}`)
             return true
         } catch (error) {
@@ -420,13 +427,12 @@ export const useRequestsModule = () => {
         }
 
         try {
-            const response = await apiClient.put<DesignRequest>(`/requests/${requestId}`, {
-                status: 'IN_QUALITY_REVIEW' as RequestStatus,
-            })
+            await apiClient.post(`/requests/${requestId}/submit-to-quality`)
             requests.value = requests.value.map((item) =>
-                item.id === requestId ? response.data : item,
+                item.id === requestId
+                    ? { ...item, status: 'SENT_TO_QUALITY' as RequestStatus }
+                    : item,
             )
-            workflowStore.upsertFromDesignRequest(response.data)
             toast.success(`Solicitud enviada a calidad: ${request.requestCode}`)
         } catch (error) {
             const httpError = error as HttpClientError
@@ -560,6 +566,38 @@ export const useRequestsModule = () => {
         }
     }
 
+    const uploadAttachments = async (
+        requestId: string,
+        files: { originalName: string; mimeType: string; base64Content: string; notes?: string }[],
+    ) => {
+        try {
+            const response = await apiClient.post<
+                {
+                    id: string
+                    originalName: string
+                    mimeType: string
+                    sizeBytes: number
+                    base64Content: string
+                    notes: string
+                    createdAt: string
+                }[]
+            >(`/requests/${requestId}/attachments`, { files })
+
+            requests.value = requests.value.map((r) => {
+                if (r.id !== requestId) return r
+                return { ...r, attachments: [...(r.attachments ?? []), ...response.data] }
+            })
+            toast.success(`${files.length} archivo(s) subido(s) correctamente.`)
+            return true
+        } catch (error) {
+            const httpError = error as HttpClientError
+            const statusMessage = (httpError.details as { statusMessage?: string } | null)
+                ?.statusMessage
+            toast.error(statusMessage || 'No se pudieron subir los archivos.')
+            return false
+        }
+    }
+
     const removeDesignerAssignment = async (requestId: string, designerId: string) => {
         const request = findRequestById(requestId)
         if (!request) {
@@ -610,6 +648,7 @@ export const useRequestsModule = () => {
         rejectQualityReview,
         assignDesigner,
         toggleChecklist,
+        uploadAttachments,
         removeDesignerAssignment,
         findRequestById,
         getFormModelById,

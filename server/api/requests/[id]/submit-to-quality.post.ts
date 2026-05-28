@@ -30,11 +30,26 @@ export default defineEventHandler(async (event) => {
         })
     }
 
-    const allowedStatuses: string[] = ['ASSIGNED_TO_DESIGNER', 'IN_DESIGN', 'QUALITY_REJECTED']
-    if (!allowedStatuses.includes(sourceRequest.status)) {
+    const blockedStatuses: string[] = [
+        'SENT_TO_QUALITY',
+        'QUALITY_APPROVED',
+        'DELIVERED_TO_SALES',
+        'CANCELLED',
+    ]
+    if (blockedStatuses.includes(sourceRequest.status)) {
         throw createError({
             statusCode: 409,
             statusMessage: `No se puede enviar a calidad desde el estado ${sourceRequest.status}.`,
+        })
+    }
+
+    const version = sourceRequest.currentVersion
+    const checklistComplete =
+        version?.artCompleted && version?.mechanicalCompleted && version?.dummyCompleted
+    if (!checklistComplete) {
+        throw createError({
+            statusCode: 409,
+            statusMessage: 'Debes completar Arte, Mecánico y Dummie antes de enviar a calidad.',
         })
     }
 

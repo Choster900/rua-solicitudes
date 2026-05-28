@@ -108,13 +108,13 @@ const allNavigationItems: AppShellNavItem[] = [
         key: 'dashboard',
         label: 'Dashboard',
         icon: 'dashboard',
-        allowedRoles: ['admin', 'calidad'],
+        allowedRoles: ['admin'],
     },
     {
         key: 'solicitudes',
         label: 'Solicitudes',
         icon: 'assignment_add',
-        allowedRoles: ['admin', 'vendedor', 'calidad'],
+        allowedRoles: ['admin', 'vendedor'],
     },
     {
         key: 'bandeja-diseno',
@@ -138,7 +138,7 @@ const allNavigationItems: AppShellNavItem[] = [
         key: 'clientes',
         label: 'Clientes',
         icon: 'badge',
-        allowedRoles: ['admin', 'vendedor', 'calidad'],
+        allowedRoles: ['admin', 'vendedor'],
     },
 ]
 

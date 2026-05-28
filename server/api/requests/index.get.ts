@@ -66,8 +66,28 @@ const serialize = (req: Awaited<ReturnType<typeof getAllDesignRequests>>[number]
             designerId: a.designerId,
             designerName: a.designer?.fullName ?? '',
         })),
-        sampleFiles: [],
-        attachments: [],
+        sampleFiles: (req.files ?? [])
+            .filter((f: any) => f.origin === 'SALES')
+            .map((f: any) => ({
+                id: f.id,
+                originalName: f.originalName,
+                mimeType: f.mimeType,
+                sizeBytes: Number(f.sizeBytes),
+                base64Content: f.base64Content,
+                notes: f.notes,
+                createdAt: dayjs(f.createdAt).toISOString(),
+            })),
+        attachments: (req.files ?? [])
+            .filter((f: any) => f.origin === 'DESIGN')
+            .map((f: any) => ({
+                id: f.id,
+                originalName: f.originalName,
+                mimeType: f.mimeType,
+                sizeBytes: Number(f.sizeBytes),
+                base64Content: f.base64Content,
+                notes: f.notes,
+                createdAt: dayjs(f.createdAt).toISOString(),
+            })),
     }
 }
 
