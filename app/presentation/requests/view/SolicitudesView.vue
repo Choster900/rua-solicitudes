@@ -44,10 +44,7 @@
                                     : 'text-outline-variant hover:text-white',
                             ]"
                             type="button"
-                            @click="
-                                activeTab = tab.key
-                                selectedId = ''
-                            "
+                            @click="selectTab(tab.key)"
                         >
                             {{ tab.label }}
                             <span
@@ -394,6 +391,11 @@ const resolvePriorityTone = (
 }
 
 // ── Actions ───────────────────────────────────────────────────────────────────
+
+const selectTab = (key: TabKey) => {
+    activeTab.value = key
+    selectedId.value = ''
+}
 
 const goToCreateRequest = () => void router.push('/solicitudes/nueva')
 const goToEditRequest = (id: string) => {
