@@ -91,11 +91,11 @@
                 </article>
 
                 <aside
-                    class="col-span-3 flex h-full flex-col gap-0 border-l border-outline/20 bg-surface-container-low/15"
+                    class="col-span-3 flex h-full flex-col gap-0 overflow-hidden border-l border-outline/20 bg-surface-container-low/15"
                 >
                     <!-- Acciones -->
                     <div
-                        class="flex items-center justify-between gap-1 border-b border-outline/20 px-3 py-2.5"
+                        class="flex shrink-0 items-center justify-between gap-1 border-b border-outline/20 px-3 py-2.5"
                     >
                         <div class="flex items-center gap-1">
                             <AppButton
@@ -118,24 +118,35 @@
                                 Eliminar
                             </AppButton>
                         </div>
-                        <AppButton size="sm" variant="primary">Historial</AppButton>
+                        <span
+                            class="inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                            :class="
+                                selectedClientRow?.isActive
+                                    ? 'bg-emerald-500/15 text-emerald-300'
+                                    : 'bg-outline/15 text-outline-variant'
+                            "
+                        >
+                            {{ selectedClientRow?.isActive ? 'Activo' : 'Inactivo' }}
+                        </span>
                     </div>
 
-                    <!-- Nombre y código -->
-                    <div class="border-b border-outline/20 px-3 py-3 text-center">
+                    <!-- Header cliente -->
+                    <div class="shrink-0 border-b border-outline/20 px-3 py-3">
                         <h2 class="truncate text-base font-semibold text-slate-100">
                             {{ selectedClientName }}
                         </h2>
-                        <p class="mt-0.5 text-xs text-outline-variant">{{ selectedClientCode }}</p>
+                        <p class="mt-0.5 font-mono text-xs text-outline-variant">
+                            {{ selectedClientCode }}
+                        </p>
                     </div>
 
-                    <!-- Stats -->
-                    <div class="grid grid-cols-3 border-b border-outline/20">
+                    <!-- Stats globales -->
+                    <div class="grid shrink-0 grid-cols-3 border-b border-outline/20">
                         <div
                             class="border-r border-outline/20 bg-surface-container-low/20 px-2 py-2 text-center"
                         >
                             <p class="text-[0.6rem] uppercase tracking-wide text-outline-variant">
-                                Clientes
+                                Total
                             </p>
                             <p class="mt-0.5 text-lg font-semibold text-slate-100">
                                 {{ totalClients }}
@@ -159,47 +170,193 @@
                         </div>
                     </div>
 
-                    <!-- Contacto -->
-                    <div class="space-y-2 border-b border-outline/20 px-3 py-3">
-                        <p
-                            class="text-[0.6rem] font-semibold uppercase tracking-wider text-primary-fixed-dim"
-                        >
-                            Contacto
-                        </p>
-                        <div class="space-y-1.5">
-                            <div>
-                                <p class="text-[0.6rem] uppercase text-outline-variant">Nombre</p>
-                                <p class="truncate text-sm text-slate-100">
-                                    {{ selectedClientContact }}
-                                </p>
-                            </div>
-                            <div>
-                                <p class="text-[0.6rem] uppercase text-outline-variant">Email</p>
-                                <p class="truncate text-sm text-slate-100">
-                                    {{ selectedClientEmail }}
-                                </p>
-                            </div>
-                            <div>
-                                <p class="text-[0.6rem] uppercase text-outline-variant">Estado</p>
-                                <p class="text-sm text-slate-100">
-                                    {{ selectedClientStatusLabel }}
-                                </p>
+                    <!-- Scroll area -->
+                    <div class="min-h-0 flex-1 overflow-y-auto">
+                        <!-- Contacto -->
+                        <div class="space-y-2 border-b border-outline/20 px-3 py-3">
+                            <p
+                                class="text-[0.6rem] font-semibold uppercase tracking-wider text-primary-fixed-dim"
+                            >
+                                Contacto
+                            </p>
+                            <div class="grid gap-1.5 text-xs">
+                                <div v-if="selectedClientContact !== 'N/A'">
+                                    <p class="text-[0.6rem] uppercase text-outline-variant">
+                                        Nombre
+                                    </p>
+                                    <p class="text-slate-100">{{ selectedClientContact }}</p>
+                                </div>
+                                <div v-if="selectedClientEmail !== 'N/A'">
+                                    <p class="text-[0.6rem] uppercase text-outline-variant">
+                                        Email
+                                    </p>
+                                    <p class="break-all text-slate-100">
+                                        {{ selectedClientEmail }}
+                                    </p>
+                                </div>
+                                <div v-if="selectedClientForm?.contactPhone">
+                                    <p class="text-[0.6rem] uppercase text-outline-variant">
+                                        Teléfono
+                                    </p>
+                                    <p class="text-slate-100">
+                                        {{ selectedClientForm.contactPhone }}
+                                    </p>
+                                </div>
+                                <div v-if="selectedClientForm?.taxId">
+                                    <p class="text-[0.6rem] uppercase text-outline-variant">
+                                        NIT / Tax ID
+                                    </p>
+                                    <p class="font-mono text-slate-100">
+                                        {{ selectedClientForm.taxId }}
+                                    </p>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Notas -->
-                    <div class="px-3 py-3">
-                        <p
-                            class="text-[0.6rem] font-semibold uppercase tracking-wider text-primary-fixed-dim"
+                        <!-- Dirección -->
+                        <div
+                            v-if="selectedClientForm?.addressLine || selectedClientForm?.city"
+                            class="space-y-2 border-b border-outline/20 px-3 py-3"
                         >
-                            Notas
-                        </p>
-                        <p
-                            class="mt-1.5 text-xs italic leading-relaxed text-slate-300 line-clamp-4"
+                            <p
+                                class="text-[0.6rem] font-semibold uppercase tracking-wider text-primary-fixed-dim"
+                            >
+                                Ubicación
+                            </p>
+                            <div class="grid gap-1.5 text-xs">
+                                <div
+                                    v-if="
+                                        selectedClientForm.country ||
+                                        selectedClientForm.department ||
+                                        selectedClientForm.city
+                                    "
+                                >
+                                    <p class="text-[0.6rem] uppercase text-outline-variant">
+                                        País / Depto / Ciudad
+                                    </p>
+                                    <p class="text-slate-100">
+                                        {{
+                                            [
+                                                selectedClientForm.city,
+                                                selectedClientForm.department,
+                                                selectedClientForm.country,
+                                            ]
+                                                .filter(Boolean)
+                                                .join(', ')
+                                        }}
+                                    </p>
+                                </div>
+                                <div v-if="selectedClientForm.addressLine">
+                                    <p class="text-[0.6rem] uppercase text-outline-variant">
+                                        Dirección
+                                    </p>
+                                    <p class="text-slate-100">
+                                        {{ selectedClientForm.addressLine }}
+                                    </p>
+                                </div>
+                                <div v-if="selectedClientForm.addressReference">
+                                    <p class="text-[0.6rem] uppercase text-outline-variant">
+                                        Referencia
+                                    </p>
+                                    <p class="italic text-outline-variant">
+                                        {{ selectedClientForm.addressReference }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Notas -->
+                        <div
+                            v-if="selectedClientForm?.notes"
+                            class="border-b border-outline/20 px-3 py-3"
                         >
-                            {{ selectedClientNotes }}
-                        </p>
+                            <p
+                                class="text-[0.6rem] font-semibold uppercase tracking-wider text-primary-fixed-dim"
+                            >
+                                Notas
+                            </p>
+                            <p class="mt-1.5 text-xs italic leading-relaxed text-slate-300">
+                                {{ selectedClientForm.notes }}
+                            </p>
+                        </div>
+
+                        <!-- Historial de solicitudes -->
+                        <div class="px-3 py-3">
+                            <div class="mb-2 flex items-center justify-between">
+                                <p
+                                    class="text-[0.6rem] font-semibold uppercase tracking-wider text-primary-fixed-dim"
+                                >
+                                    Solicitudes
+                                    <span
+                                        v-if="clientRequests.length"
+                                        class="ml-1 rounded-full bg-primary/20 px-1.5 py-0.5 text-primary-fixed-dim"
+                                    >
+                                        {{ clientRequests.length }}
+                                    </span>
+                                </p>
+                            </div>
+
+                            <div
+                                v-if="isLoadingRequests"
+                                class="flex items-center gap-2 py-4 text-xs text-outline-variant"
+                            >
+                                <span class="material-symbols-outlined animate-spin text-[16px]"
+                                    >progress_activity</span
+                                >
+                                Cargando solicitudes...
+                            </div>
+
+                            <div
+                                v-else-if="!clientRequests.length"
+                                class="py-4 text-center text-xs text-outline-variant"
+                            >
+                                Sin solicitudes registradas.
+                            </div>
+
+                            <ul v-else class="space-y-2">
+                                <li
+                                    v-for="req in clientRequests"
+                                    :key="req.id"
+                                    class="rounded-lg border border-outline/20 bg-surface-container-lowest/10 px-2.5 py-2"
+                                >
+                                    <div class="flex items-start justify-between gap-1">
+                                        <div class="min-w-0">
+                                            <div class="flex items-center gap-1.5">
+                                                <span
+                                                    class="font-mono text-[11px] font-semibold text-primary-fixed-dim"
+                                                    >{{ req.code }}</span
+                                                >
+                                                <span
+                                                    class="rounded bg-primary/15 px-1 py-0.5 font-mono text-[9px] text-primary-fixed-dim"
+                                                    >v{{ req.versionNumber }}</span
+                                                >
+                                            </div>
+                                            <p class="mt-0.5 truncate text-[11px] text-slate-300">
+                                                {{ req.title || req.productName || '—' }}
+                                            </p>
+                                            <p class="mt-0.5 text-[10px] text-outline-variant">
+                                                {{ formatDate(req.createdAt) }} ·
+                                                {{ req.sellerName }}
+                                            </p>
+                                        </div>
+                                        <div class="flex shrink-0 flex-col items-end gap-1">
+                                            <span
+                                                class="inline-flex rounded border px-1.5 py-0.5 text-[9px] font-semibold"
+                                                :class="resolveStatusClass(req.status)"
+                                            >
+                                                {{ resolveStatusLabel(req.status) }}
+                                            </span>
+                                            <span
+                                                class="inline-flex rounded border px-1.5 py-0.5 text-[9px] font-semibold"
+                                                :class="resolvePriorityClass(req.priority)"
+                                            >
+                                                {{ req.priority }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
                 </aside>
             </div>
@@ -222,12 +379,32 @@ import AppButton from '~/presentation/shared/components/ui/AppButton.vue'
 import AppSelect, { type AppSelectOption } from '~/presentation/shared/components/ui/AppSelect.vue'
 import ClientsDataTable from '~/presentation/clients/components/ClientsDataTable.vue'
 import { useClientsModule } from '~/presentation/clients/composables/useClientsModule'
+import { useApiClient } from '~/presentation/shared/composables/useApiClient'
+import {
+    REQUEST_STATUS_LABELS,
+    type RequestStatus,
+    type RequestPriority,
+} from '~/presentation/interfaces/requests/request.interface'
+
+interface ClientRequest {
+    id: string
+    code: string
+    title: string
+    productName: string
+    priority: RequestPriority
+    status: RequestStatus
+    versionNumber: number
+    sellerName: string
+    requiredDate: string | null
+    createdAt: string
+}
 
 defineOptions({
     name: 'ClientesView',
 })
 
 const router = useRouter()
+const apiClient = useApiClient()
 const {
     importInputRef,
     totalClients,
@@ -244,6 +421,8 @@ const {
 const selectedStatus = ref<string>('all')
 const selectedRegion = ref<string>('all')
 const selectedClientId = ref<string>('')
+const clientRequests = ref<ClientRequest[]>([])
+const isLoadingRequests = ref(false)
 
 const statusOptions: AppSelectOption[] = [
     { label: 'Todos', value: 'all' },
@@ -316,6 +495,53 @@ const goToEditClient = (clientId: string) => {
     void router.push(`/clientes/${clientId}/editar`)
 }
 
+const STATUS_CLASSES: Record<string, string> = {
+    CREATED: 'border-outline/40 text-outline-variant',
+    PENDING_DESIGN_REVIEW: 'border-yellow-500/40 bg-yellow-500/10 text-yellow-300',
+    ASSIGNED_TO_DESIGNER: 'border-blue-400/40 bg-blue-400/10 text-blue-300',
+    IN_DESIGN: 'border-primary/40 bg-primary/10 text-primary-fixed-dim',
+    SENT_TO_QUALITY: 'border-purple-400/40 bg-purple-400/10 text-purple-300',
+    QUALITY_REJECTED: 'border-red-400/40 bg-red-400/10 text-red-300',
+    QUALITY_APPROVED: 'border-emerald-400/40 bg-emerald-400/10 text-emerald-300',
+    DELIVERED_TO_SALES: 'border-teal-400/40 bg-teal-400/10 text-teal-300',
+    CANCELLED: 'border-outline/30 bg-outline/5 text-outline-variant',
+}
+
+const PRIORITY_CLASSES: Record<string, string> = {
+    URGENT: 'border-red-500/40 bg-red-500/10 text-red-300',
+    HIGH: 'border-amber-500/40 bg-amber-500/10 text-amber-300',
+    MEDIUM: 'border-blue-400/40 bg-blue-400/10 text-blue-300',
+    LOW: 'border-outline/40 text-outline-variant',
+}
+
+const resolveStatusClass = (status: string) =>
+    STATUS_CLASSES[status] ?? 'border-outline/40 text-outline-variant'
+const resolvePriorityClass = (priority: string) =>
+    PRIORITY_CLASSES[priority] ?? 'border-outline/40 text-outline-variant'
+const resolveStatusLabel = (status: string) =>
+    REQUEST_STATUS_LABELS[status as RequestStatus] ?? status
+
+const formatDate = (iso: string | null) => {
+    if (!iso) return '—'
+    return new Intl.DateTimeFormat('es-SV', { dateStyle: 'short' }).format(new Date(iso))
+}
+
+const loadClientRequests = async (clientId: string) => {
+    if (!clientId) {
+        clientRequests.value = []
+        return
+    }
+    isLoadingRequests.value = true
+    try {
+        const res = await apiClient.get<ClientRequest[]>(`/clients/${clientId}/requests`)
+        clientRequests.value = res.data
+    } catch {
+        clientRequests.value = []
+    } finally {
+        isLoadingRequests.value = false
+    }
+}
+
 const handleClientRowSelect = (clientId: string) => {
     selectedClientId.value = clientId
 }
@@ -357,6 +583,8 @@ watch(
     },
     { immediate: true },
 )
+
+watch(selectedClientId, (id) => void loadClientRequests(id), { immediate: true })
 
 onMounted(() => {
     void hydrateClients()

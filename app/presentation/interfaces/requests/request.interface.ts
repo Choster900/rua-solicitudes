@@ -83,6 +83,9 @@ export interface DesignRequest {
     requiredDate: string | null
     createdAt: string
 
+    // Version number of the current version
+    versionNumber: number
+
     // Version technical specs (flattened from currentVersion)
     materialType: string
     materialWeight: string

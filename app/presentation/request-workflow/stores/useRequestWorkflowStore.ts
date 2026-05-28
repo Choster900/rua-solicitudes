@@ -216,6 +216,7 @@ export const useRequestWorkflowStore = defineStore('request-workflow', {
             const nowIso = dayjs().toISOString()
             const sharedPayload = {
                 requestCode: request.requestCode,
+                versionNumber: request.versionNumber,
                 clientName: request.clientName,
                 productName: request.productName,
                 requestType: `${request.materialType} - ${request.printTechnique}`,

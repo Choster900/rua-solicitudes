@@ -1,117 +1,784 @@
 <template>
     <AppShellLayout screen-title="Dashboard">
-        <section class="space-y-5">
-            <header class="pt-1">
-                <h1
-                    class="text-xl font-headline-md font-semibold uppercase tracking-[0.02em] text-white"
-                >
-                    Panel de Control
-                </h1>
-            </header>
+        <section class="-my-6 -mr-6">
+            <div class="grid min-h-[calc(100vh-64px)] grid-cols-10 gap-0">
+                <!-- ── IZQUIERDA: filtros + lista ────────────────────────── -->
+                <article class="col-span-6 flex flex-col border-r border-outline/20">
+                    <!-- Encabezado + filtros -->
+                    <div class="shrink-0 space-y-2.5 border-b border-outline/20 px-4 py-3">
+                        <div class="flex items-center justify-between gap-2">
+                            <div>
+                                <h1 class="text-sm font-semibold text-white">
+                                    Listado de solicitudes
+                                </h1>
+                                <p class="text-[10px] text-outline-variant">
+                                    {{ filteredRequests.length }} registro(s) encontrado(s)
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                class="flex items-center gap-1.5 rounded-lg border border-outline/25 bg-surface-container-low/20 px-3 py-1.5 text-xs text-slate-300 transition-colors hover:border-outline/40 hover:bg-surface-container-low/40 active:scale-95"
+                                @click="printAll"
+                            >
+                                <span class="material-symbols-outlined text-[15px]">print</span>
+                                Imprimir todo
+                            </button>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="relative min-w-0 flex-1">
+                                <span
+                                    class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-[15px] text-outline-variant"
+                                >
+                                    search
+                                </span>
+                                <input
+                                    v-model="searchQuery"
+                                    class="w-full rounded-lg border border-outline/20 bg-surface-container-low/20 py-1.5 pl-8 pr-3 text-xs text-slate-200 placeholder:text-outline-variant focus:border-primary/50 focus:outline-none"
+                                    placeholder="Código, cliente o producto..."
+                                />
+                            </div>
+                            <div class="w-[155px] shrink-0">
+                                <AppSelect
+                                    v-model="statusFilter"
+                                    compact
+                                    :clearable="false"
+                                    :input-class="'!py-[5px] !text-xs'"
+                                    :options="statusOptions"
+                                    :searchable="false"
+                                />
+                            </div>
+                            <div class="w-[130px] shrink-0">
+                                <AppSelect
+                                    v-model="priorityFilter"
+                                    compact
+                                    :clearable="false"
+                                    :input-class="'!py-[5px] !text-xs'"
+                                    :options="priorityOptions"
+                                    :searchable="false"
+                                />
+                            </div>
+                        </div>
+                    </div>
 
-            <section class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                <article
-                    v-for="metric in metrics"
-                    :key="metric.label"
-                    class="relative overflow-hidden rounded-xl border border-outline/20 bg-surface-container-lowest/5 px-4 py-3"
-                >
-                    <span
-                        class="pointer-events-none absolute bottom-0 left-0 top-0 w-[3px]"
-                        :class="metric.accentClass"
-                    />
-                    <div class="flex items-center justify-between gap-4">
-                        <p class="text-[11px] uppercase tracking-[0.12em] text-outline-variant">
-                            {{ metric.label }}
-                        </p>
-                        <p class="text-4xl font-semibold leading-none text-white">
-                            {{ metric.value }}
-                        </p>
+                    <!-- Lista de solicitudes -->
+                    <div class="min-h-0 flex-1 divide-y divide-outline/10 overflow-y-auto">
+                        <div
+                            v-if="isLoading"
+                            class="flex items-center justify-center gap-2 py-12 text-xs text-outline-variant"
+                        >
+                            <span class="material-symbols-outlined animate-spin text-[18px]">
+                                progress_activity
+                            </span>
+                            Cargando solicitudes...
+                        </div>
+
+                        <div
+                            v-else-if="!filteredRequests.length"
+                            class="py-12 text-center text-xs text-outline-variant"
+                        >
+                            Sin solicitudes para mostrar.
+                        </div>
+
+                        <button
+                            v-for="req in filteredRequests"
+                            :key="req.id"
+                            type="button"
+                            class="w-full border-l-2 px-4 py-3 text-left transition-colors hover:bg-surface-container-low/10"
+                            :class="
+                                selectedId === req.id
+                                    ? 'border-l-primary bg-primary-container/10'
+                                    : 'border-l-transparent'
+                            "
+                            @click="selectedId = req.id"
+                        >
+                            <div class="flex items-start gap-3">
+                                <div class="min-w-0 flex-1">
+                                    <!-- Código + versión + estado -->
+                                    <div class="flex flex-wrap items-center gap-1.5">
+                                        <span
+                                            class="font-mono text-[11px] font-semibold text-primary-fixed-dim"
+                                        >
+                                            {{ req.requestCode }}
+                                        </span>
+                                        <span
+                                            class="rounded bg-primary/15 px-1 py-0.5 font-mono text-[9px] text-primary-fixed-dim"
+                                        >
+                                            v{{ req.versionNumber }}
+                                        </span>
+                                        <span
+                                            class="rounded border px-1.5 py-0.5 text-[9px] font-semibold"
+                                            :class="resolveStatusClass(req.status)"
+                                        >
+                                            {{ resolveStatusLabel(req.status) }}
+                                        </span>
+                                    </div>
+
+                                    <!-- Cliente -->
+                                    <p class="mt-0.5 truncate text-sm font-semibold text-slate-100">
+                                        {{ req.clientName }}
+                                    </p>
+
+                                    <!-- Producto -->
+                                    <p class="truncate text-[11px] text-slate-400">
+                                        {{ req.productName || req.title }}
+                                    </p>
+
+                                    <!-- Meta info -->
+                                    <div
+                                        class="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-0.5"
+                                    >
+                                        <span
+                                            class="flex items-center gap-1 text-[10px] text-outline-variant"
+                                        >
+                                            <span class="material-symbols-outlined text-[11px]"
+                                                >person</span
+                                            >
+                                            {{ req.requestedBy }}
+                                        </span>
+                                        <span
+                                            v-if="req.requiredDate"
+                                            class="flex items-center gap-1 text-[10px] text-outline-variant"
+                                        >
+                                            <span class="material-symbols-outlined text-[11px]"
+                                                >calendar_today</span
+                                            >
+                                            {{ formatDate(req.requiredDate) }}
+                                        </span>
+                                        <span
+                                            v-if="req.assignedDesigners.length"
+                                            class="flex items-center gap-1 text-[10px] text-blue-300"
+                                        >
+                                            <span class="material-symbols-outlined text-[11px]"
+                                                >brush</span
+                                            >
+                                            {{
+                                                req.assignedDesigners
+                                                    .map((d) => d.designerName)
+                                                    .join(', ')
+                                            }}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <!-- Prioridad + checklist dots -->
+                                <div class="flex shrink-0 flex-col items-end gap-2 pt-0.5">
+                                    <span
+                                        class="rounded border px-1.5 py-0.5 text-[9px] font-semibold"
+                                        :class="resolvePriorityClass(req.priority)"
+                                    >
+                                        {{ req.priority }}
+                                    </span>
+                                    <div
+                                        class="flex items-center gap-0.5"
+                                        title="Arte / Mecánico / Dummy"
+                                    >
+                                        <span
+                                            class="h-1.5 w-1.5 rounded-full"
+                                            :class="
+                                                req.artCompleted
+                                                    ? 'bg-emerald-400'
+                                                    : 'bg-outline/25'
+                                            "
+                                        />
+                                        <span
+                                            class="h-1.5 w-1.5 rounded-full"
+                                            :class="
+                                                req.mechanicalCompleted
+                                                    ? 'bg-emerald-400'
+                                                    : 'bg-outline/25'
+                                            "
+                                        />
+                                        <span
+                                            class="h-1.5 w-1.5 rounded-full"
+                                            :class="
+                                                req.dummyCompleted
+                                                    ? 'bg-emerald-400'
+                                                    : 'bg-outline/25'
+                                            "
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </button>
                     </div>
                 </article>
-            </section>
 
-            <article
-                class="overflow-hidden rounded-xl border border-outline/20 bg-surface-container-lowest/5"
-            >
-                <header class="border-b border-outline/20 px-4 py-3">
-                    <h2
-                        class="text-xl font-headline-md font-semibold uppercase tracking-[0.02em] text-white"
+                <!-- ── DERECHA: Panel de detalle ───────────────────────────── -->
+                <aside
+                    class="col-span-4 flex flex-col overflow-hidden border-l border-outline/20 bg-surface-container-low/15"
+                >
+                    <!-- Vacío -->
+                    <div
+                        v-if="!selected"
+                        class="flex flex-1 flex-col items-center justify-center gap-3 text-center"
                     >
-                        Actividad Reciente
-                    </h2>
-                </header>
+                        <span class="material-symbols-outlined text-5xl text-outline-variant/30">
+                            assignment
+                        </span>
+                        <p class="text-xs text-outline-variant">
+                            Selecciona una solicitud para ver el detalle completo
+                        </p>
+                    </div>
 
-                <div class="divide-y divide-outline/20">
-                    <article
-                        v-for="activity in recentActivities"
-                        :key="activity.id"
-                        class="grid items-center gap-3 px-4 py-3 lg:grid-cols-[minmax(0,1fr)_auto]"
-                    >
+                    <template v-else>
+                        <!-- Barra de acciones -->
                         <div
-                            class="grid min-w-0 gap-3 sm:grid-cols-[auto_auto_1fr] sm:items-center"
+                            class="flex shrink-0 items-center justify-between gap-2 border-b border-outline/20 px-3 py-2.5"
                         >
-                            <span class="material-symbols-outlined text-[18px] text-primary">
-                                draw
+                            <span
+                                class="rounded border px-2 py-0.5 text-[10px] font-semibold"
+                                :class="resolveStatusClass(selected.status)"
+                            >
+                                {{ resolveStatusLabel(selected.status) }}
                             </span>
-                            <p class="text-sm text-outline-variant">
-                                {{ activity.requestCode }}
-                            </p>
-                            <div class="min-w-0">
-                                <p class="truncate text-sm text-white">
-                                    {{ activity.clientName }}
-                                </p>
-                                <p class="truncate text-sm text-outline-variant">
-                                    {{ activity.productName }}
-                                </p>
+                            <div class="flex items-center gap-1.5">
+                                <span
+                                    class="rounded border px-2 py-0.5 text-[10px] font-semibold"
+                                    :class="resolvePriorityClass(selected.priority)"
+                                >
+                                    {{ selected.priority }}
+                                </span>
+                                <span
+                                    class="rounded bg-primary/15 px-1.5 py-0.5 font-mono text-[9px] font-semibold text-primary-fixed-dim"
+                                >
+                                    v{{ selected.versionNumber }}
+                                </span>
                             </div>
                         </div>
 
-                        <p class="text-sm uppercase tracking-[0.1em] text-primary-fixed">
-                            {{ activity.stageLabel }}
-                        </p>
-                    </article>
-                </div>
-            </article>
+                        <!-- Identidad -->
+                        <div class="shrink-0 border-b border-outline/20 px-3 py-3">
+                            <p class="font-mono text-[11px] text-primary-fixed-dim/70">
+                                {{ selected.requestCode }}
+                            </p>
+                            <p class="mt-0.5 truncate text-base font-semibold text-slate-100">
+                                {{ selected.clientName }}
+                            </p>
+                            <p class="truncate text-xs text-slate-400">
+                                {{ selected.title || selected.productName }}
+                            </p>
+                        </div>
+
+                        <!-- Checklist -->
+                        <div class="shrink-0 border-b border-outline/20 px-3 py-3">
+                            <p
+                                class="mb-2 text-[0.6rem] font-semibold uppercase tracking-wider text-primary-fixed-dim"
+                            >
+                                Checklist de diseño
+                            </p>
+                            <div class="flex gap-4">
+                                <div
+                                    v-for="item in checklistItems"
+                                    :key="item.key"
+                                    class="flex items-center gap-1.5"
+                                >
+                                    <span
+                                        class="material-symbols-outlined text-[15px]"
+                                        :class="
+                                            item.done ? 'text-emerald-400' : 'text-outline-variant'
+                                        "
+                                    >
+                                        {{ item.done ? 'check_circle' : 'radio_button_unchecked' }}
+                                    </span>
+                                    <span
+                                        class="text-[11px]"
+                                        :class="
+                                            item.done ? 'text-emerald-300' : 'text-outline-variant'
+                                        "
+                                    >
+                                        {{ item.label }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Scroll del detalle -->
+                        <div class="min-h-0 flex-1 overflow-y-auto">
+                            <!-- Información general -->
+                            <div class="border-b border-outline/20 px-3 py-3">
+                                <p
+                                    class="mb-2 text-[0.6rem] font-semibold uppercase tracking-wider text-primary-fixed-dim"
+                                >
+                                    Información
+                                </p>
+                                <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+                                    <div v-if="selected.productName">
+                                        <p class="text-[0.6rem] uppercase text-outline-variant">
+                                            Producto
+                                        </p>
+                                        <p class="text-slate-200">{{ selected.productName }}</p>
+                                    </div>
+                                    <div v-if="selected.brandName">
+                                        <p class="text-[0.6rem] uppercase text-outline-variant">
+                                            Marca
+                                        </p>
+                                        <p class="text-slate-200">{{ selected.brandName }}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-[0.6rem] uppercase text-outline-variant">
+                                            Solicitado por
+                                        </p>
+                                        <p class="text-slate-200">{{ selected.requestedBy }}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-[0.6rem] uppercase text-outline-variant">
+                                            Fecha de creación
+                                        </p>
+                                        <p class="text-slate-200">
+                                            {{ formatDate(selected.createdAt) }}
+                                        </p>
+                                    </div>
+                                    <div v-if="selected.requiredDate">
+                                        <p class="text-[0.6rem] uppercase text-outline-variant">
+                                            Entrega solicitada
+                                        </p>
+                                        <p class="text-slate-200">
+                                            {{ formatDate(selected.requiredDate) }}
+                                        </p>
+                                    </div>
+                                    <div v-if="selected.requireDieCut || selected.requireMockup">
+                                        <p class="text-[0.6rem] uppercase text-outline-variant">
+                                            Requerimientos
+                                        </p>
+                                        <div class="mt-0.5 flex flex-wrap gap-1">
+                                            <span
+                                                v-if="selected.requireDieCut"
+                                                class="rounded border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.5 text-[9px] text-amber-300"
+                                            >
+                                                Troquel
+                                            </span>
+                                            <span
+                                                v-if="selected.requireMockup"
+                                                class="rounded border border-blue-500/30 bg-blue-500/10 px-1.5 py-0.5 text-[9px] text-blue-300"
+                                            >
+                                                Maqueta
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Especificaciones técnicas -->
+                            <div v-if="hasSpecs" class="border-b border-outline/20 px-3 py-3">
+                                <p
+                                    class="mb-2 text-[0.6rem] font-semibold uppercase tracking-wider text-primary-fixed-dim"
+                                >
+                                    Especificaciones técnicas
+                                </p>
+                                <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+                                    <div v-if="selected.dimensions">
+                                        <p class="text-[0.6rem] uppercase text-outline-variant">
+                                            Dimensiones
+                                        </p>
+                                        <p class="font-mono text-slate-200">
+                                            {{ selected.dimensions }}
+                                        </p>
+                                    </div>
+                                    <div v-if="selected.quantity">
+                                        <p class="text-[0.6rem] uppercase text-outline-variant">
+                                            Cantidad
+                                        </p>
+                                        <p class="text-slate-200">
+                                            {{ selected.quantity.toLocaleString('es-SV') }}
+                                        </p>
+                                    </div>
+                                    <div v-if="selected.materialType">
+                                        <p class="text-[0.6rem] uppercase text-outline-variant">
+                                            Material
+                                        </p>
+                                        <p class="text-slate-200">{{ selected.materialType }}</p>
+                                    </div>
+                                    <div v-if="selected.closureType">
+                                        <p class="text-[0.6rem] uppercase text-outline-variant">
+                                            Cierre
+                                        </p>
+                                        <p class="text-slate-200">{{ selected.closureType }}</p>
+                                    </div>
+                                    <div v-if="selected.fluteType">
+                                        <p class="text-[0.6rem] uppercase text-outline-variant">
+                                            Flauta
+                                        </p>
+                                        <p class="text-slate-200">
+                                            {{ selected.fluteType }} {{ selected.fluteDirection }}
+                                        </p>
+                                    </div>
+                                    <div v-if="selected.colorMode">
+                                        <p class="text-[0.6rem] uppercase text-outline-variant">
+                                            Modo de color
+                                        </p>
+                                        <p class="text-slate-200">{{ selected.colorMode }}</p>
+                                    </div>
+                                    <div v-if="selected.outerLiner">
+                                        <p class="text-[0.6rem] uppercase text-outline-variant">
+                                            Liner exterior
+                                        </p>
+                                        <p class="text-slate-200">{{ selected.outerLiner }}</p>
+                                    </div>
+                                    <div v-if="selected.innerLiner">
+                                        <p class="text-[0.6rem] uppercase text-outline-variant">
+                                            Liner interior
+                                        </p>
+                                        <p class="text-slate-200">{{ selected.innerLiner }}</p>
+                                    </div>
+                                    <div v-if="selected.pantoneReferences" class="col-span-2">
+                                        <p class="text-[0.6rem] uppercase text-outline-variant">
+                                            Referencias Pantone
+                                        </p>
+                                        <p class="text-slate-200">
+                                            {{ selected.pantoneReferences }}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div v-if="selected.finishingOptions?.length" class="mt-2">
+                                    <p class="text-[0.6rem] uppercase text-outline-variant">
+                                        Acabados
+                                    </p>
+                                    <div class="mt-1 flex flex-wrap gap-1">
+                                        <span
+                                            v-for="opt in selected.finishingOptions"
+                                            :key="opt"
+                                            class="rounded border border-outline/25 bg-surface-container-low/20 px-1.5 py-0.5 text-[9px] text-slate-300"
+                                        >
+                                            {{ opt }}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div v-if="selected.deliverables?.length" class="mt-2">
+                                    <p class="text-[0.6rem] uppercase text-outline-variant">
+                                        Entregables
+                                    </p>
+                                    <div class="mt-1 flex flex-wrap gap-1">
+                                        <span
+                                            v-for="d in selected.deliverables"
+                                            :key="d"
+                                            class="rounded border border-outline/25 bg-surface-container-low/20 px-1.5 py-0.5 text-[9px] text-slate-300"
+                                        >
+                                            {{ d }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Instrucciones de diseño -->
+                            <div
+                                v-if="selected.designInstructions"
+                                class="border-b border-outline/20 px-3 py-3"
+                            >
+                                <p
+                                    class="mb-1.5 text-[0.6rem] font-semibold uppercase tracking-wider text-primary-fixed-dim"
+                                >
+                                    Instrucciones de diseño
+                                </p>
+                                <p class="text-xs leading-relaxed text-slate-300">
+                                    {{ selected.designInstructions }}
+                                </p>
+                            </div>
+
+                            <!-- Diseñadores asignados -->
+                            <div
+                                v-if="selected.assignedDesigners.length"
+                                class="border-b border-outline/20 px-3 py-3"
+                            >
+                                <p
+                                    class="mb-2 text-[0.6rem] font-semibold uppercase tracking-wider text-primary-fixed-dim"
+                                >
+                                    Diseñadores asignados
+                                </p>
+                                <div class="flex flex-wrap gap-1.5">
+                                    <span
+                                        v-for="d in selected.assignedDesigners"
+                                        :key="d.designerId"
+                                        class="flex items-center gap-1 rounded-full border border-blue-400/30 bg-blue-400/10 px-2 py-0.5 text-[10px] text-blue-300"
+                                    >
+                                        <span class="material-symbols-outlined text-[11px]"
+                                            >brush</span
+                                        >
+                                        {{ d.designerName }}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Archivos del vendedor -->
+                            <div
+                                v-if="selected.sampleFiles?.length"
+                                class="border-b border-outline/20 px-3 py-3"
+                            >
+                                <p
+                                    class="mb-2 text-[0.6rem] font-semibold uppercase tracking-wider text-primary-fixed-dim"
+                                >
+                                    Archivos del vendedor
+                                    <span
+                                        class="ml-1 rounded-full bg-primary/20 px-1.5 py-0.5 text-[9px] text-primary-fixed-dim"
+                                    >
+                                        {{ selected.sampleFiles.length }}
+                                    </span>
+                                </p>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <a
+                                        v-for="f in selected.sampleFiles"
+                                        :key="f.id"
+                                        :href="'data:' + f.mimeType + ';base64,' + f.base64Content"
+                                        target="_blank"
+                                        rel="noopener"
+                                        class="group block"
+                                    >
+                                        <img
+                                            v-if="f.mimeType.startsWith('image/')"
+                                            :src="
+                                                'data:' + f.mimeType + ';base64,' + f.base64Content
+                                            "
+                                            :alt="f.originalName"
+                                            class="h-20 w-full rounded-lg border border-outline/20 object-cover transition-opacity group-hover:opacity-80"
+                                        />
+                                        <div
+                                            v-else
+                                            class="flex h-20 flex-col items-center justify-center gap-1 rounded-lg border border-outline/20 bg-surface-container-low/20 px-2 transition-colors group-hover:bg-surface-container-low/30"
+                                        >
+                                            <span
+                                                class="material-symbols-outlined text-[20px] text-outline-variant"
+                                                >attach_file</span
+                                            >
+                                            <span
+                                                class="line-clamp-2 text-center text-[9px] text-outline-variant"
+                                                >{{ f.originalName }}</span
+                                            >
+                                        </div>
+                                        <p
+                                            v-if="f.notes"
+                                            class="mt-0.5 truncate text-[9px] italic text-outline-variant"
+                                        >
+                                            {{ f.notes }}
+                                        </p>
+                                    </a>
+                                </div>
+                            </div>
+
+                            <!-- Archivos del diseñador -->
+                            <div
+                                v-if="selected.attachments?.length"
+                                class="border-b border-outline/20 px-3 py-3"
+                            >
+                                <p
+                                    class="mb-2 text-[0.6rem] font-semibold uppercase tracking-wider text-primary-fixed-dim"
+                                >
+                                    Archivos del diseñador
+                                    <span
+                                        class="ml-1 rounded-full bg-blue-400/20 px-1.5 py-0.5 text-[9px] text-blue-300"
+                                    >
+                                        {{ selected.attachments.length }}
+                                    </span>
+                                </p>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <a
+                                        v-for="f in selected.attachments"
+                                        :key="f.id"
+                                        :href="'data:' + f.mimeType + ';base64,' + f.base64Content"
+                                        target="_blank"
+                                        rel="noopener"
+                                        class="group block"
+                                    >
+                                        <img
+                                            v-if="f.mimeType.startsWith('image/')"
+                                            :src="
+                                                'data:' + f.mimeType + ';base64,' + f.base64Content
+                                            "
+                                            :alt="f.originalName"
+                                            class="h-20 w-full rounded-lg border border-blue-400/20 object-cover transition-opacity group-hover:opacity-80"
+                                        />
+                                        <div
+                                            v-else
+                                            class="flex h-20 flex-col items-center justify-center gap-1 rounded-lg border border-blue-400/20 bg-blue-400/5 px-2 transition-colors group-hover:bg-blue-400/10"
+                                        >
+                                            <span
+                                                class="material-symbols-outlined text-[20px] text-blue-300/50"
+                                                >attach_file</span
+                                            >
+                                            <span
+                                                class="line-clamp-2 text-center text-[9px] text-outline-variant"
+                                                >{{ f.originalName }}</span
+                                            >
+                                        </div>
+                                        <p
+                                            v-if="f.notes"
+                                            class="mt-0.5 truncate text-[9px] italic text-outline-variant"
+                                        >
+                                            {{ f.notes }}
+                                        </p>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </aside>
+            </div>
         </section>
     </AppShellLayout>
 </template>
 
 <script setup lang="ts">
+import { computed, onMounted, ref, watch } from 'vue'
 import AppShellLayout from '~/presentation/shared/components/layout/AppShellLayout.vue'
+import AppSelect, { type AppSelectOption } from '~/presentation/shared/components/ui/AppSelect.vue'
+import { useApiClient } from '~/presentation/shared/composables/useApiClient'
+import {
+    REQUEST_STATUS_LABELS,
+    type DesignRequest,
+    type RequestStatus,
+} from '~/presentation/interfaces/requests/request.interface'
 
-defineOptions({
-    name: 'DashboardView',
+defineOptions({ name: 'DashboardView' })
+
+const apiClient = useApiClient()
+const allRequests = ref<DesignRequest[]>([])
+const isLoading = ref(false)
+const selectedId = ref<string>('')
+const searchQuery = ref('')
+const statusFilter = ref<string>('all')
+const priorityFilter = ref<string>('all')
+
+const findRequestById = (id: string) => allRequests.value.find((r) => r.id === id) ?? null
+
+// ─── Imprimir ─────────────────────────────────────────────────────────────────
+
+const printAll = () => {
+    window.print()
+}
+
+// ─── Opciones de filtro ────────────────────────────────────────────────────────
+
+const statusOptions: AppSelectOption[] = [
+    { label: 'Todos los estados', value: 'all' },
+    ...Object.entries(REQUEST_STATUS_LABELS).map(([value, label]) => ({ label, value })),
+]
+
+const priorityOptions: AppSelectOption[] = [
+    { label: 'Toda prioridad', value: 'all' },
+    { label: 'Urgente', value: 'URGENT' },
+    { label: 'Alta', value: 'HIGH' },
+    { label: 'Media', value: 'MEDIUM' },
+    { label: 'Baja', value: 'LOW' },
+]
+
+// ─── Solicitudes filtradas ─────────────────────────────────────────────────────
+
+const filteredRequests = computed(() => {
+    let list = allRequests.value
+
+    if (searchQuery.value.trim()) {
+        const q = searchQuery.value.trim().toLowerCase()
+        list = list.filter(
+            (r) =>
+                r.requestCode.toLowerCase().includes(q) ||
+                r.clientName.toLowerCase().includes(q) ||
+                r.productName.toLowerCase().includes(q) ||
+                r.title.toLowerCase().includes(q),
+        )
+    }
+
+    if (statusFilter.value !== 'all') {
+        list = list.filter((r) => r.status === statusFilter.value)
+    }
+
+    if (priorityFilter.value !== 'all') {
+        list = list.filter((r) => r.priority === priorityFilter.value)
+    }
+
+    return list
 })
 
-const metrics = [
-    { label: 'Artes', value: 1, accentClass: 'bg-primary' },
-    { label: 'Dummies', value: 1, accentClass: 'bg-amber-400' },
-    { label: 'Mecanicos', value: 1, accentClass: 'bg-emerald-400' },
-    { label: 'Pendientes Calidad', value: 1, accentClass: 'bg-fuchsia-400' },
-]
+// ─── Selección ────────────────────────────────────────────────────────────────
 
-const recentActivities = [
-    {
-        id: 'activity-1',
-        requestCode: 'ARTE-123',
-        clientName: 'PANADERIA BAN BAN',
-        productName: 'CAJA #8 DIA DE LAS MADRES',
-        stageLabel: 'EN DISEÑO',
+const selected = computed<DesignRequest | null>(() => findRequestById(selectedId.value))
+
+watch(
+    filteredRequests,
+    (list) => {
+        if (!list.some((r) => r.id === selectedId.value)) {
+            selectedId.value = list.at(0)?.id ?? ''
+        }
     },
-    {
-        id: 'activity-2',
-        requestCode: 'ARTE-123',
-        clientName: 'PANADERIA BAN BAN',
-        productName: 'CAJA #8 DIA DE LAS MADRES',
-        stageLabel: 'EN DISEÑO',
-    },
-]
+    { immediate: true },
+)
+
+// ─── Detalle ──────────────────────────────────────────────────────────────────
+
+const checklistItems = computed(() => {
+    if (!selected.value) return []
+    return [
+        { key: 'art', label: 'Arte', done: selected.value.artCompleted },
+        { key: 'mechanical', label: 'Mecánico', done: selected.value.mechanicalCompleted },
+        { key: 'dummy', label: 'Dummy', done: selected.value.dummyCompleted },
+    ]
+})
+
+const hasSpecs = computed(() => {
+    const s = selected.value
+    if (!s) return false
+    return !!(
+        s.dimensions ||
+        s.quantity ||
+        s.materialType ||
+        s.colorMode ||
+        s.closureType ||
+        s.fluteType ||
+        s.outerLiner ||
+        s.innerLiner ||
+        s.pantoneReferences ||
+        s.finishingOptions?.length ||
+        s.deliverables?.length
+    )
+})
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+const STATUS_CLASSES: Record<string, string> = {
+    CREATED: 'border-outline/40 text-outline-variant',
+    PENDING_DESIGN_REVIEW: 'border-yellow-500/40 bg-yellow-500/10 text-yellow-300',
+    ASSIGNED_TO_DESIGNER: 'border-blue-400/40 bg-blue-400/10 text-blue-300',
+    IN_DESIGN: 'border-primary/40 bg-primary/10 text-primary-fixed-dim',
+    SENT_TO_QUALITY: 'border-purple-400/40 bg-purple-400/10 text-purple-300',
+    QUALITY_REJECTED: 'border-red-400/40 bg-red-400/10 text-red-300',
+    QUALITY_APPROVED: 'border-emerald-400/40 bg-emerald-400/10 text-emerald-300',
+    DELIVERED_TO_SALES: 'border-teal-400/40 bg-teal-400/10 text-teal-300',
+    CANCELLED: 'border-outline/30 bg-outline/5 text-outline-variant',
+}
+
+const PRIORITY_CLASSES: Record<string, string> = {
+    URGENT: 'border-red-500/40 bg-red-500/10 text-red-300',
+    HIGH: 'border-amber-500/40 bg-amber-500/10 text-amber-300',
+    MEDIUM: 'border-blue-400/40 bg-blue-400/10 text-blue-300',
+    LOW: 'border-outline/40 text-outline-variant',
+}
+
+const resolveStatusClass = (status: string) =>
+    STATUS_CLASSES[status] ?? 'border-outline/40 text-outline-variant'
+const resolvePriorityClass = (priority: string) =>
+    PRIORITY_CLASSES[priority] ?? 'border-outline/40 text-outline-variant'
+const resolveStatusLabel = (status: string) =>
+    REQUEST_STATUS_LABELS[status as RequestStatus] ?? status
+
+const formatDate = (iso: string | null) => {
+    if (!iso) return '—'
+    return new Intl.DateTimeFormat('es-SV', { dateStyle: 'short' }).format(new Date(iso))
+}
+
+// ─── Inicialización ───────────────────────────────────────────────────────────
+
+onMounted(async () => {
+    isLoading.value = true
+    try {
+        const res = await apiClient.get<DesignRequest[]>('/requests/all')
+        allRequests.value = res.data
+    } catch (error) {
+        console.error('[Dashboard] Error cargando solicitudes:', error)
+    } finally {
+        isLoading.value = false
+    }
+})
 
 useHead(() => ({
-    title: 'RUASA ERP - Dashboard Industrial',
-    htmlAttrs: {
-        lang: 'es',
-    },
+    title: 'RUASA ERP - Dashboard',
+    htmlAttrs: { lang: 'es' },
     bodyAttrs: {
         class: 'font-body-md overflow-hidden bg-deep-navy text-on-surface-variant',
     },

@@ -38,9 +38,16 @@
                                 type="button"
                                 @click="openRequestDetail(row.id)"
                             >
-                                <p class="font-mono text-sm font-semibold text-primary-fixed">
-                                    {{ row.requestCode }}
-                                </p>
+                                <div>
+                                    <p class="font-mono text-sm font-semibold text-primary-fixed">
+                                        {{ row.requestCode }}
+                                    </p>
+                                    <span
+                                        class="mt-0.5 inline-block rounded bg-primary/15 px-1.5 py-0.5 font-mono text-[10px] text-primary-fixed-dim"
+                                    >
+                                        v{{ row.versionNumber }}
+                                    </span>
+                                </div>
                                 <div>
                                     <p class="text-sm font-medium leading-tight text-white">
                                         {{ row.clientName }}
@@ -75,11 +82,19 @@
                 class="flex h-full flex-col overflow-hidden rounded-xl border border-outline/20 bg-surface-container-lowest/5"
             >
                 <header class="border-b border-outline/20 px-4 py-3">
-                    <p
-                        class="inline-flex w-fit rounded bg-primary/10 px-2 py-0.5 font-mono text-xs text-primary-fixed-dim"
-                    >
-                        {{ selectedFullRequest?.requestCode ?? 'SOL-0000-000' }}
-                    </p>
+                    <div class="flex items-center gap-2">
+                        <p
+                            class="inline-flex w-fit rounded bg-primary/10 px-2 py-0.5 font-mono text-xs text-primary-fixed-dim"
+                        >
+                            {{ selectedFullRequest?.requestCode ?? 'SOL-0000-000' }}
+                        </p>
+                        <span
+                            v-if="selectedFullRequest"
+                            class="inline-flex rounded bg-secondary-container/20 px-2 py-0.5 font-mono text-xs text-secondary-container"
+                        >
+                            v{{ selectedFullRequest.versionNumber }}
+                        </span>
+                    </div>
                     <h2 class="mt-1 text-base font-semibold text-white">
                         {{ selectedFullRequest?.clientName ?? 'Selecciona una solicitud' }}
                     </h2>

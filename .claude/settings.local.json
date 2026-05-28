@@ -21,7 +21,8 @@
             "Bash(curl -sv http://192.168.0.67:3000/api/healthcheck)",
             "Bash(curl -s http://192.168.0.67:3000/api/auth/login -X POST -H \"Content-Type: application/json\" -d '{\"networkUser\":\"admin@ruasa.com.sv\",\"password\":\"12345678\"}')",
             "Bash(python -m json.tool)",
-            "Bash(curl -s http://192.168.0.67:3000/solicitudes)"
+            "Bash(curl -s http://192.168.0.67:3000/solicitudes)",
+            "Bash(node prisma/seed/seed-requests.mjs)"
         ]
     }
 }

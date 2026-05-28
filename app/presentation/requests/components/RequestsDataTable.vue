@@ -5,6 +5,9 @@
         empty-description="No hay solicitudes que coincidan con los filtros aplicados."
         empty-title="Sin solicitudes para mostrar"
         row-key="id"
+        :row-clickable="rowClickable"
+        :selected-row-key="selectedRowKey"
+        @row-click="emit('rowSelect', String($event.rowKeyValue))"
     >
         <template #cell-priority="{ value }">
             <AppStatusBadge :label="String(value)" :tone="resolvePriorityTone(String(value))" />
@@ -124,6 +127,8 @@ import {
 
 interface RequestsDataTableProps {
     rows: DesignRequestTableRow[]
+    rowClickable?: boolean
+    selectedRowKey?: string
     canAssignDesigner?: boolean
     canSubmitToQuality?: boolean
     canReviewQuality?: boolean
@@ -135,6 +140,8 @@ defineOptions({
 })
 
 const props = withDefaults(defineProps<RequestsDataTableProps>(), {
+    rowClickable: false,
+    selectedRowKey: '',
     canAssignDesigner: false,
     canSubmitToQuality: false,
     canReviewQuality: false,
@@ -142,6 +149,7 @@ const props = withDefaults(defineProps<RequestsDataTableProps>(), {
 })
 
 const emit = defineEmits<{
+    rowSelect: [requestId: string]
     editRequest: [requestId: string]
     duplicateRequest: [requestId: string]
     deleteRequest: [requestId: string]

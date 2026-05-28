@@ -108,7 +108,6 @@ const allNavigationItems: AppShellNavItem[] = [
         key: 'dashboard',
         label: 'Dashboard',
         icon: 'dashboard',
-        allowedRoles: ['admin'],
     },
     {
         key: 'solicitudes',

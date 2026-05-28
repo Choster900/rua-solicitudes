@@ -1,6 +1,7 @@
 export interface DesignRequestTableRow {
     id: string
     requestCode: string
+    versionNumber: number
     clientName: string
     productName: string
     materialType: string

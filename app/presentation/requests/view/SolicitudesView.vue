@@ -63,6 +63,9 @@
                     <div class="min-h-0 px-4 py-3">
                         <RequestsDataTable
                             :rows="activeRows"
+                            row-clickable
+                            :selected-row-key="selectedId"
+                            @row-select="selectedId = $event"
                             @edit-request="goToEditRequest"
                             @delete-request="handleDeleteRequest"
                             @duplicate-request="handleDuplicateRequest"
@@ -81,11 +84,19 @@
                     <header class="border-b border-outline/20 px-4 py-4">
                         <h2 class="text-xl font-semibold text-slate-200">Expediente Histórico</h2>
                         <div class="mt-2 grid gap-1.5">
-                            <p
-                                class="inline-flex w-fit rounded bg-primary/10 px-2 py-0.5 font-mono text-xs text-primary-fixed-dim"
-                            >
-                                {{ selected?.requestCode || 'SOL-0000-000' }}
-                            </p>
+                            <div class="flex items-center gap-2">
+                                <p
+                                    class="inline-flex w-fit rounded bg-primary/10 px-2 py-0.5 font-mono text-xs text-primary-fixed-dim"
+                                >
+                                    {{ selected?.requestCode || 'SOL-0000-000' }}
+                                </p>
+                                <span
+                                    v-if="selectedSummary"
+                                    class="inline-flex rounded bg-secondary-container/20 px-2 py-0.5 font-mono text-xs text-secondary-container"
+                                >
+                                    v{{ selectedSummary.versionNumber }}
+                                </span>
+                            </div>
                             <p class="text-base text-slate-300">
                                 {{ selected?.clientName || 'Selecciona una solicitud' }}
                             </p>
@@ -210,6 +221,82 @@
                             </div>
                         </section>
 
+                        <!-- Fotos del vendedor -->
+                        <section
+                            v-if="selectedSummary?.sampleFiles?.length"
+                            class="border-t border-outline/20 pt-3"
+                        >
+                            <h3
+                                class="mb-2 text-[11px] uppercase tracking-[0.12em] text-secondary-container"
+                            >
+                                Archivos del vendedor ({{ selectedSummary.sampleFiles.length }})
+                            </h3>
+                            <ul class="space-y-2">
+                                <li
+                                    v-for="f in selectedSummary.sampleFiles"
+                                    :key="f.id"
+                                    class="overflow-hidden rounded-md border border-outline/20"
+                                >
+                                    <img
+                                        v-if="f.mimeType.startsWith('image/')"
+                                        :src="`data:${f.mimeType};base64,${f.base64Content}`"
+                                        :alt="f.originalName"
+                                        class="max-h-48 w-full bg-black/20 object-contain"
+                                    />
+                                    <div
+                                        class="flex items-center gap-2 px-2 py-1.5 text-xs text-slate-300"
+                                    >
+                                        <span
+                                            class="material-symbols-outlined text-[14px] text-primary-fixed-dim"
+                                            >attach_file</span
+                                        >
+                                        <span class="truncate">{{ f.originalName }}</span>
+                                        <span class="ml-auto shrink-0 text-outline-variant"
+                                            >{{ Math.round(f.sizeBytes / 1024) }} KB</span
+                                        >
+                                    </div>
+                                </li>
+                            </ul>
+                        </section>
+
+                        <!-- Fotos del diseñador -->
+                        <section
+                            v-if="selectedSummary?.attachments?.length"
+                            class="border-t border-outline/20 pt-3"
+                        >
+                            <h3
+                                class="mb-2 text-[11px] uppercase tracking-[0.12em] text-secondary-container"
+                            >
+                                Archivos del diseñador ({{ selectedSummary.attachments.length }})
+                            </h3>
+                            <ul class="space-y-2">
+                                <li
+                                    v-for="f in selectedSummary.attachments"
+                                    :key="f.id"
+                                    class="overflow-hidden rounded-md border border-outline/20"
+                                >
+                                    <img
+                                        v-if="f.mimeType.startsWith('image/')"
+                                        :src="`data:${f.mimeType};base64,${f.base64Content}`"
+                                        :alt="f.originalName"
+                                        class="max-h-48 w-full bg-black/20 object-contain"
+                                    />
+                                    <div
+                                        class="flex items-center gap-2 px-2 py-1.5 text-xs text-slate-300"
+                                    >
+                                        <span
+                                            class="material-symbols-outlined text-[14px] text-secondary-container"
+                                            >design_services</span
+                                        >
+                                        <span class="truncate">{{ f.originalName }}</span>
+                                        <span class="ml-auto shrink-0 text-outline-variant"
+                                            >{{ Math.round(f.sizeBytes / 1024) }} KB</span
+                                        >
+                                    </div>
+                                </li>
+                            </ul>
+                        </section>
+
                         <!-- Placeholder vacío -->
                         <div
                             v-if="!selected"
@@ -319,6 +406,7 @@ const formatDate = (iso: string | null) => {
 const toTableRow = (req: RequestSummary): DesignRequestTableRow => ({
     id: req.id,
     requestCode: req.code,
+    versionNumber: req.versionNumber,
     clientName: req.clientName,
     productName: req.productName || req.brandName || '—',
     materialType: '—',
@@ -326,7 +414,7 @@ const toTableRow = (req: RequestSummary): DesignRequestTableRow => ({
     priority: req.priority,
     status: req.status,
     requiredDateLabel: formatDate(req.requiredDate),
-    attachmentsCount: '0',
+    attachmentsCount: String((req.sampleFiles?.length ?? 0) + (req.attachments?.length ?? 0)),
     requestedBy: req.sellerName,
     assignedDesigners: req.assignedDesigners.map((d) => ({
         designerId: d.designerId,

@@ -213,6 +213,7 @@ export const useRequestsModule = () => {
         return requests.value.map((request) => ({
             id: request.id,
             requestCode: request.requestCode,
+            versionNumber: request.versionNumber,
             clientName: request.clientName,
             productName: request.productName,
             materialType: request.materialType,
@@ -490,6 +491,7 @@ export const useRequestsModule = () => {
         list.map((request) => ({
             id: request.id,
             requestCode: request.requestCode,
+            versionNumber: request.versionNumber,
             clientName: request.clientName,
             productName: request.productName,
             materialType: request.materialType,

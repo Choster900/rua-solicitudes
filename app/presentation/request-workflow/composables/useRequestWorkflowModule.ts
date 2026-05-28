@@ -4,140 +4,135 @@ import dayjs from 'dayjs'
 import { useAppToast } from '~/presentation/shared/composables/useAppToast'
 import type { AppStatusBadgeTone } from '~/presentation/interfaces/request-workflow/workflow-ui.type'
 import type {
-  WorkflowChecklistState,
-  WorkflowPriority,
-  WorkflowRequest,
-  WorkflowStage,
+    WorkflowChecklistState,
+    WorkflowPriority,
+    WorkflowRequest,
+    WorkflowStage,
 } from '~/presentation/interfaces/request-workflow/workflow-request.interface'
 import type { WorkflowQueueRow } from '~/presentation/interfaces/request-workflow/workflow-queue-row.interface'
 import { useRequestWorkflowStore } from '~/presentation/request-workflow/stores/useRequestWorkflowStore'
 
 const priorityLabelMap: Record<WorkflowPriority, string> = {
-  HIGH: 'Alta',
-  MEDIUM: 'Media',
-  LOW: 'Baja',
+    HIGH: 'Alta',
+    MEDIUM: 'Media',
+    LOW: 'Baja',
 }
 
 const stageLabelMap: Record<WorkflowStage, string> = {
-  NEW: 'Nueva',
-  DESIGN_IN_PROGRESS: 'Diseño en progreso',
-  READY_FOR_QUALITY: 'Lista para calidad',
-  QUALITY_IN_REVIEW: 'Calidad en revisión',
-  REJECTED_BY_QUALITY: 'Rechazada por calidad',
-  APPROVED: 'Aprobada',
+    NEW: 'Nueva',
+    DESIGN_IN_PROGRESS: 'Diseño en progreso',
+    READY_FOR_QUALITY: 'Lista para calidad',
+    QUALITY_IN_REVIEW: 'Calidad en revisión',
+    REJECTED_BY_QUALITY: 'Rechazada por calidad',
+    APPROVED: 'Aprobada',
 }
 
 const stageToneMap: Record<WorkflowStage, AppStatusBadgeTone> = {
-  NEW: 'neutral',
-  DESIGN_IN_PROGRESS: 'warning',
-  READY_FOR_QUALITY: 'neutral',
-  QUALITY_IN_REVIEW: 'warning',
-  REJECTED_BY_QUALITY: 'danger',
-  APPROVED: 'success',
+    NEW: 'neutral',
+    DESIGN_IN_PROGRESS: 'warning',
+    READY_FOR_QUALITY: 'neutral',
+    QUALITY_IN_REVIEW: 'warning',
+    REJECTED_BY_QUALITY: 'danger',
+    APPROVED: 'success',
 }
 
 const priorityToneMap: Record<WorkflowPriority, AppStatusBadgeTone> = {
-  HIGH: 'danger',
-  MEDIUM: 'warning',
-  LOW: 'neutral',
+    HIGH: 'danger',
+    MEDIUM: 'warning',
+    LOW: 'neutral',
 }
 
 const checklistFieldLabels: Record<keyof WorkflowChecklistState, string> = {
-  briefValidated: 'Brief validado',
-  technicalSpecsValidated: 'Especificaciones técnicas',
-  assetsValidated: 'Assets y archivos fuente',
-  legalValidated: 'Revisión legal y etiquetas',
+    briefValidated: 'Brief validado',
+    technicalSpecsValidated: 'Especificaciones técnicas',
+    assetsValidated: 'Assets y archivos fuente',
+    legalValidated: 'Revisión legal y etiquetas',
 }
 
 const formatDate = (sourceDate: string) => {
-  if (!sourceDate) {
-    return 'Sin fecha'
-  }
+    if (!sourceDate) {
+        return 'Sin fecha'
+    }
 
-  const parsedDate = dayjs(sourceDate)
+    const parsedDate = dayjs(sourceDate)
 
-  if (!parsedDate.isValid()) {
-    return 'Fecha inválida'
-  }
+    if (!parsedDate.isValid()) {
+        return 'Fecha inválida'
+    }
 
-  return new Intl.DateTimeFormat('es-SV', {
-    dateStyle: 'medium',
-  }).format(parsedDate.toDate())
+    return new Intl.DateTimeFormat('es-SV', {
+        dateStyle: 'medium',
+    }).format(parsedDate.toDate())
 }
 
 const toSlaLabel = (slaHours: number) => {
-  if (slaHours <= 0) {
-    return 'Vencido'
-  }
+    if (slaHours <= 0) {
+        return 'Vencido'
+    }
 
-  return `${slaHours}h`
+    return `${slaHours}h`
 }
 
 const toQueueRows = (requests: WorkflowRequest[]): WorkflowQueueRow[] => {
-  return requests.map(request => ({
-    id: request.id,
-    requestCode: request.requestCode,
-    clientName: request.clientName,
-    productName: request.productName,
-    requestType: request.requestType,
-    requestedBy: request.requestedBy,
-    priorityLabel: priorityLabelMap[request.priority],
-    stageLabel: stageLabelMap[request.stage],
-    requiredDateLabel: formatDate(request.requiredDate),
-    slaLabel: toSlaLabel(request.slaHours),
-    observationsCount: request.observations.length.toString(),
-  }))
+    return requests.map((request) => ({
+        id: request.id,
+        requestCode: request.requestCode,
+        versionNumber: request.versionNumber,
+        clientName: request.clientName,
+        productName: request.productName,
+        requestType: request.requestType,
+        requestedBy: request.requestedBy,
+        priorityLabel: priorityLabelMap[request.priority],
+        stageLabel: stageLabelMap[request.stage],
+        requiredDateLabel: formatDate(request.requiredDate),
+        slaLabel: toSlaLabel(request.slaHours),
+        observationsCount: request.observations.length.toString(),
+    }))
 }
 
 export const useRequestWorkflowModule = () => {
-  const workflowStore = useRequestWorkflowStore()
-  const toast = useAppToast()
+    const workflowStore = useRequestWorkflowStore()
+    const toast = useAppToast()
 
-  const {
-    designQueue,
-    qualityQueue,
-    approvedRequests,
-    metrics,
-    designFilters,
-    qualityFilters,
-  } = storeToRefs(workflowStore)
+    const { designQueue, qualityQueue, approvedRequests, metrics, designFilters, qualityFilters } =
+        storeToRefs(workflowStore)
 
-  const designRows = computed(() => toQueueRows(designQueue.value))
-  const qualityRows = computed(() => toQueueRows(qualityQueue.value))
+    const designRows = computed(() => toQueueRows(designQueue.value))
+    const qualityRows = computed(() => toQueueRows(qualityQueue.value))
 
-  const priorityOptions = [
-    { label: 'Todas', value: 'ALL' },
-    { label: 'Alta', value: 'HIGH' },
-    { label: 'Media', value: 'MEDIUM' },
-    { label: 'Baja', value: 'LOW' },
-  ]
+    const priorityOptions = [
+        { label: 'Todas', value: 'ALL' },
+        { label: 'Alta', value: 'HIGH' },
+        { label: 'Media', value: 'MEDIUM' },
+        { label: 'Baja', value: 'LOW' },
+    ]
 
-  const notifyActionResult = (result: { success: boolean, message: string }) => {
-    if (result.success) {
-      toast.success(result.message)
-      return
+    const notifyActionResult = (result: { success: boolean; message: string }) => {
+        if (result.success) {
+            toast.success(result.message)
+            return
+        }
+
+        toast.warning(result.message)
     }
 
-    toast.warning(result.message)
-  }
-
-  return {
-    workflowStore,
-    designQueue,
-    qualityQueue,
-    approvedRequests,
-    metrics,
-    designRows,
-    qualityRows,
-    designFilters,
-    qualityFilters,
-    priorityOptions,
-    stageLabelMap,
-    stageToneMap,
-    priorityLabelMap,
-    priorityToneMap,
-    checklistFieldLabels,
-    formatDate,
-    notifyActionResult,
-  }
+    return {
+        workflowStore,
+        designQueue,
+        qualityQueue,
+        approvedRequests,
+        metrics,
+        designRows,
+        qualityRows,
+        designFilters,
+        qualityFilters,
+        priorityOptions,
+        stageLabelMap,
+        stageToneMap,
+        priorityLabelMap,
+        priorityToneMap,
+        checklistFieldLabels,
+        formatDate,
+        notifyActionResult,
+    }
 }

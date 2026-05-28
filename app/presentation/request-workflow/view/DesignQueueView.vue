@@ -113,8 +113,15 @@
                                 "
                                 @click="selectedRequestId = row.id"
                             >
-                                <td class="px-4 py-3 text-sm font-semibold text-white">
-                                    {{ row.requestCode }}
+                                <td class="px-4 py-3">
+                                    <p class="text-sm font-semibold text-white">
+                                        {{ row.requestCode }}
+                                    </p>
+                                    <span
+                                        class="mt-0.5 inline-block rounded bg-primary/15 px-1.5 py-0.5 font-mono text-[10px] text-primary-fixed-dim"
+                                    >
+                                        v{{ row.versionNumber }}
+                                    </span>
                                 </td>
                                 <td class="px-4 py-3 text-sm text-outline-variant">
                                     {{ row.clientName }}
@@ -350,11 +357,19 @@
                 <header class="border-b border-outline/20 px-4 py-4">
                     <h2 class="text-xl font-semibold text-slate-200">Expediente Histórico</h2>
                     <div class="mt-2 grid gap-1.5">
-                        <p
-                            class="inline-flex w-fit rounded bg-primary/10 px-2 py-0.5 font-mono text-xs text-primary-fixed-dim"
-                        >
-                            {{ selectedRow?.requestCode || 'SOL-0000-000' }}
-                        </p>
+                        <div class="flex items-center gap-2">
+                            <p
+                                class="inline-flex w-fit rounded bg-primary/10 px-2 py-0.5 font-mono text-xs text-primary-fixed-dim"
+                            >
+                                {{ selectedRow?.requestCode || 'SOL-0000-000' }}
+                            </p>
+                            <span
+                                v-if="selectedRow"
+                                class="inline-flex rounded bg-secondary-container/20 px-2 py-0.5 font-mono text-xs text-secondary-container"
+                            >
+                                v{{ selectedRow.versionNumber }}
+                            </span>
+                        </div>
                         <p class="text-base text-slate-300">
                             {{ selectedRow?.clientName || 'Selecciona una solicitud' }}
                         </p>

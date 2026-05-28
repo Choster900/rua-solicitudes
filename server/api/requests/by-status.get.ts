@@ -1,5 +1,5 @@
 import dayjs from 'dayjs'
-import { requireSessionUser } from '../../utils/auth-session.util'
+import { requireSessionUser, getSessionUser } from '../../utils/auth-session.util'
 import { prisma } from '../../database/prisma'
 
 type RequestStatus =
@@ -25,6 +25,16 @@ const ALL_STATUSES: RequestStatus[] = [
     'CANCELLED',
 ]
 
+const serializeFile = (f: any) => ({
+    id: f.id,
+    originalName: f.originalName,
+    mimeType: f.mimeType,
+    sizeBytes: Number(f.sizeBytes),
+    base64Content: f.base64Content,
+    notes: f.notes ?? '',
+    createdAt: dayjs(f.createdAt).toISOString(),
+})
+
 const serialize = (req: any) => ({
     id: req.id,
     code: req.code,
@@ -40,6 +50,7 @@ const serialize = (req: any) => ({
     status: req.status as RequestStatus,
     requiredDate: req.requiredDate ? dayjs(req.requiredDate).toISOString() : null,
     createdAt: dayjs(req.createdAt).toISOString(),
+    versionNumber: req.currentVersion?.versionNumber ?? 1,
     assignedDesigners: (req.currentVersion?.assignments ?? []).map((a: any) => ({
         designerId: a.designerId,
         designerName: a.designer?.fullName ?? '',
@@ -48,12 +59,27 @@ const serialize = (req: any) => ({
     artCompleted: Boolean(req.currentVersion?.artCompleted),
     mechanicalCompleted: Boolean(req.currentVersion?.mechanicalCompleted),
     dummyCompleted: Boolean(req.currentVersion?.dummyCompleted),
+    sampleFiles: (req.files ?? []).filter((f: any) => f.origin === 'SALES').map(serializeFile),
+    attachments: (req.files ?? []).filter((f: any) => f.origin === 'DESIGN').map(serializeFile),
 })
+
+const VENDOR_VISIBLE_STATUSES = new Set<RequestStatus>(['CREATED', 'QUALITY_APPROVED'])
 
 export default defineEventHandler(async (event) => {
     requireSessionUser(event)
+    const sessionUser = getSessionUser(event)
+
+    const isVendedor = sessionUser?.roleCodes.includes('vendedor') ?? false
+
+    const where = isVendedor
+        ? {
+              sellerId: sessionUser!.sub,
+              status: { in: ['CREATED', 'QUALITY_APPROVED'] as RequestStatus[] },
+          }
+        : {}
 
     const requests = await prisma.designRequest.findMany({
+        where,
         orderBy: { createdAt: 'desc' },
         include: {
             client: { select: { id: true, name: true, code: true } },
@@ -69,17 +95,35 @@ export default defineEventHandler(async (event) => {
                     },
                 },
             },
+            files: {
+                where: { isActive: true },
+                orderBy: { createdAt: 'asc' as const },
+                select: {
+                    id: true,
+                    originalName: true,
+                    mimeType: true,
+                    sizeBytes: true,
+                    base64Content: true,
+                    origin: true,
+                    notes: true,
+                    createdAt: true,
+                },
+            },
         },
     })
 
-    const grouped = Object.fromEntries(ALL_STATUSES.map((s) => [s, []])) as Record<
+    const visibleStatuses = isVendedor ? Array.from(VENDOR_VISIBLE_STATUSES) : ALL_STATUSES
+
+    const grouped = Object.fromEntries(visibleStatuses.map((s) => [s, []])) as Record<
         RequestStatus,
         ReturnType<typeof serialize>[]
     >
 
     for (const req of requests) {
         const status = req.status as RequestStatus
-        grouped[status]?.push(serialize(req))
+        if (grouped[status]) {
+            grouped[status].push(serialize(req))
+        }
     }
 
     return grouped

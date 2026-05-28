@@ -1,36 +1,25 @@
 import dayjs from 'dayjs'
 import { getAllDesignRequests } from '../../repositories/design-requests.repository'
-import { getSessionUser } from '../../utils/auth-session.util'
+import { requireSessionUser } from '../../utils/auth-session.util'
 
 const serialize = (req: Awaited<ReturnType<typeof getAllDesignRequests>>[number]) => {
     const v = req.currentVersion
     return {
-        // identifiers
         id: req.id,
         code: req.code,
         requestCode: req.code,
-
-        // header
         title: req.title ?? '',
         clientId: req.clientId,
         clientName: req.client?.name ?? '',
         sellerId: req.sellerId,
         requestedBy: req.seller?.fullName ?? '',
         vendorName: req.seller?.fullName ?? '',
-
-        // product
         brandName: req.brandName ?? '',
         productName: req.productName ?? '',
-
-        // status & priority
         priority: req.priority,
         status: req.status,
-
-        // dates
         requiredDate: req.requiredDate ? dayjs(req.requiredDate).toISOString() : null,
         createdAt: dayjs(req.createdAt).toISOString(),
-
-        // version — technical specs (flattened)
         versionNumber: v?.versionNumber ?? 1,
         materialType: v?.materialType ?? '',
         materialWeight: v?.materialWeight ?? '',
@@ -56,13 +45,9 @@ const serialize = (req: Awaited<ReturnType<typeof getAllDesignRequests>>[number]
         visualReferences: v?.visualReferences ?? '',
         requireDieCut: v?.requireDieCut ?? false,
         requireMockup: v?.requireMockup ?? false,
-
-        // Checklist
         artCompleted: v?.artCompleted ?? false,
         mechanicalCompleted: v?.mechanicalCompleted ?? false,
         dummyCompleted: v?.dummyCompleted ?? false,
-
-        // relations
         assignedDesigners: (v?.assignments ?? []).map((a: any) => ({
             designerId: a.designerId,
             designerName: a.designer?.fullName ?? '',
@@ -93,28 +78,13 @@ const serialize = (req: Awaited<ReturnType<typeof getAllDesignRequests>>[number]
 }
 
 export default defineEventHandler(async (event) => {
+    requireSessionUser(event)
+
     try {
-        const sessionUser = getSessionUser(event)
-        const allRequests = await getAllDesignRequests()
-
-        let filtered = allRequests
-
-        if (sessionUser?.roleCodes.includes('disenador')) {
-            filtered = allRequests.filter((r) =>
-                r.currentVersion?.assignments.some(
-                    (a: { designerId: string }) => a.designerId === sessionUser.sub,
-                ),
-            )
-        } else if (sessionUser?.roleCodes.includes('vendedor')) {
-            const VENDOR_VISIBLE_STATUSES = new Set(['CREATED', 'QUALITY_APPROVED'])
-            filtered = allRequests.filter(
-                (r) => r.sellerId === sessionUser.sub && VENDOR_VISIBLE_STATUSES.has(r.status),
-            )
-        }
-
-        return filtered.map(serialize)
+        const requests = await getAllDesignRequests()
+        return requests.map(serialize)
     } catch (error) {
-        console.error('[GET /api/requests] Error:', error)
+        console.error('[GET /api/requests/all] Error:', error)
         throw createError({
             statusCode: 500,
             statusMessage: 'Error al obtener solicitudes.',

@@ -1,4 +1,9 @@
-import type { RequestStatus, RequestPriority } from './request.interface'
+import type {
+    RequestStatus,
+    RequestPriority,
+    RequestAttachment,
+    RequestSampleFile,
+} from './request.interface'
 
 export interface RequestSummary {
     id: string
@@ -15,10 +20,13 @@ export interface RequestSummary {
     status: RequestStatus
     requiredDate: string | null
     createdAt: string
+    versionNumber: number
     assignedDesigners: { designerId: string; designerName: string; isLead: boolean }[]
     artCompleted: boolean
     mechanicalCompleted: boolean
     dummyCompleted: boolean
+    sampleFiles: RequestSampleFile[]
+    attachments: RequestAttachment[]
 }
 
 export type RequestsByStatus = Record<RequestStatus, RequestSummary[]>
