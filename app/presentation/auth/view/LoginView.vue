@@ -196,7 +196,16 @@ import { onMounted, onUnmounted, ref } from 'vue'
 import logoModoOscuro from '~/assets/logos/rua_logo_modo_oscuro_transparente.png'
 import { useApiClient } from '~/presentation/shared/composables/useApiClient'
 import { useAppToast } from '~/presentation/shared/composables/useAppToast'
+import { getAuthTokenRoleCodes } from '~/presentation/auth/utils/auth-token.util'
 import type { HttpClientError } from '~/presentation/interfaces/shared/http/http-client-error.interface'
+
+const getRoleHomePath = (roleCodes: string[]): string => {
+    if (roleCodes.includes('vendedor')) return '/solicitudes'
+    if (roleCodes.includes('disenador_jefe')) return '/requests/design'
+    if (roleCodes.includes('disenador')) return '/requests/design'
+    if (roleCodes.includes('calidad')) return '/requests/quality'
+    return '/dashboard'
+}
 
 defineOptions({
     name: 'LoginView',
@@ -288,7 +297,8 @@ const handleSubmit = async () => {
             return
         }
 
-        void router.push('/dashboard')
+        const roleCodes = getAuthTokenRoleCodes(response.data.accessToken)
+        void router.push(getRoleHomePath(roleCodes))
     } catch (error) {
         const httpError = error as HttpClientError
         const isUnauthorized = httpError.status === 401
