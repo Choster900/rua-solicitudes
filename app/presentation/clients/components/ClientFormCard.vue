@@ -31,7 +31,7 @@
         </header>
 
         <form class="space-y-4 px-5 py-5 sm:px-6" @submit.prevent="handleSubmit">
-            <section class="grid gap-4 xl:grid-cols-2">
+            <section class="grid gap-4 lg:grid-cols-2">
                 <article
                     class="rounded-xl border border-outline/20 bg-surface-container-low/10 p-4 sm:p-5"
                 >

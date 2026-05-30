@@ -1,8 +1,10 @@
 <template>
     <AppShellLayout screen-title="Bandeja Diseño">
-        <section class="grid h-full gap-0 xl:grid-cols-[minmax(0,70%),minmax(0,30%)]">
+        <section class="grid h-full gap-0 lg:grid-cols-[minmax(0,70%),minmax(0,30%)]">
             <!-- ── Lista ─────────────────────────────────────────────── -->
-            <article class="flex min-h-0 flex-col border-r border-outline/20">
+            <article
+                class="flex min-h-0 flex-col border-b border-outline/20 lg:border-b-0 lg:border-r"
+            >
                 <!-- Stats -->
                 <div
                     class="grid grid-cols-2 gap-3 border-b border-outline/20 px-4 py-3 md:grid-cols-4"
@@ -13,7 +15,9 @@
                         <p class="text-xs uppercase tracking-[0.12em] text-outline-variant">
                             Sin asignar
                         </p>
-                        <p class="mt-1 text-3xl font-semibold text-white">{{ unassignedCount }}</p>
+                        <p class="mt-1 text-3xl font-semibold text-white">
+                            {{ unassignedCount }}
+                        </p>
                     </div>
                     <div
                         class="rounded-xl border border-outline/20 bg-surface-container-lowest/5 px-4 py-3"
@@ -21,7 +25,9 @@
                         <p class="text-xs uppercase tracking-[0.12em] text-outline-variant">
                             En diseño
                         </p>
-                        <p class="mt-1 text-3xl font-semibold text-white">{{ inDesignCount }}</p>
+                        <p class="mt-1 text-3xl font-semibold text-white">
+                            {{ inDesignCount }}
+                        </p>
                     </div>
                     <div
                         class="rounded-xl border border-outline/20 bg-surface-container-lowest/5 px-4 py-3"
@@ -29,7 +35,9 @@
                         <p class="text-xs uppercase tracking-[0.12em] text-outline-variant">
                             En calidad
                         </p>
-                        <p class="mt-1 text-3xl font-semibold text-white">{{ inQualityCount }}</p>
+                        <p class="mt-1 text-3xl font-semibold text-white">
+                            {{ inQualityCount }}
+                        </p>
                     </div>
                     <div
                         class="rounded-xl border border-outline/20 bg-surface-container-lowest/5 px-4 py-3"
@@ -364,7 +372,7 @@
 
             <!-- ── Expediente Histórico ──────────────────────────────── -->
             <aside
-                class="-mr-6 -my-6 flex h-[calc(100%+3rem)] flex-col self-stretch border-l border-outline/20 bg-surface-container-lowest/5"
+                class="flex flex-col self-stretch border-t border-outline/20 bg-surface-container-lowest/5 lg:-mr-6 lg:-my-6 lg:h-[calc(100%+3rem)] lg:border-l lg:border-t-0"
             >
                 <header class="border-b border-outline/20 px-4 py-4">
                     <h2 class="text-xl font-semibold text-slate-200">Expediente Histórico</h2>
@@ -417,17 +425,23 @@
                         <div class="grid gap-2 text-sm">
                             <div v-if="selectedRequest?.title">
                                 <p class="text-[10px] uppercase text-outline-variant">Título</p>
-                                <p class="text-slate-200">{{ selectedRequest.title }}</p>
+                                <p class="text-slate-200">
+                                    {{ selectedRequest.title }}
+                                </p>
                             </div>
                             <div v-if="selectedRow.productName && selectedRow.productName !== '—'">
                                 <p class="text-[10px] uppercase text-outline-variant">Producto</p>
-                                <p class="text-slate-200">{{ selectedRow.productName }}</p>
+                                <p class="text-slate-200">
+                                    {{ selectedRow.productName }}
+                                </p>
                             </div>
                             <div v-if="selectedRow.requestedBy">
                                 <p class="text-[10px] uppercase text-outline-variant">
                                     Solicitado por
                                 </p>
-                                <p class="text-slate-200">{{ selectedRow.requestedBy }}</p>
+                                <p class="text-slate-200">
+                                    {{ selectedRow.requestedBy }}
+                                </p>
                             </div>
                             <div
                                 v-if="
@@ -438,7 +452,9 @@
                                 <p class="text-[10px] uppercase text-outline-variant">
                                     Entrega solicitada
                                 </p>
-                                <p class="text-slate-200">{{ selectedRow.requiredDateLabel }}</p>
+                                <p class="text-slate-200">
+                                    {{ selectedRow.requiredDateLabel }}
+                                </p>
                             </div>
                         </div>
                     </section>
@@ -464,7 +480,9 @@
                                 <p class="text-[10px] uppercase text-outline-variant">
                                     Tipo de cierre
                                 </p>
-                                <p class="text-slate-200">{{ selectedRequest.closureType }}</p>
+                                <p class="text-slate-200">
+                                    {{ selectedRequest.closureType }}
+                                </p>
                             </div>
                             <div v-if="selectedRequest.colorMode">
                                 <p class="text-[10px] uppercase text-outline-variant">Color</p>
@@ -650,7 +668,9 @@
                                         }}
                                     </span>
                                 </div>
-                                <p class="mt-1 text-[10px] text-slate-400">{{ qr.reviewedBy }}</p>
+                                <p class="mt-1 text-[10px] text-slate-400">
+                                    {{ qr.reviewedBy }}
+                                </p>
                                 <p
                                     v-if="qr.generalObservations"
                                     class="mt-1.5 leading-relaxed text-slate-300"

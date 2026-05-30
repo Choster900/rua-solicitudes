@@ -1,9 +1,9 @@
 <template>
     <AppShellLayout screen-title="Solicitudes">
         <section class="h-full">
-            <div class="grid h-full gap-4 xl:grid-cols-[minmax(0,70%),minmax(0,30%)]">
+            <div class="grid h-full gap-0 lg:grid-cols-[minmax(0,70%),minmax(0,30%)]">
                 <!-- ── Lista ──────────────────────────────────────────── -->
-                <article class="min-h-0 border-r border-outline/20 pr-0 xl:pr-0">
+                <article class="min-h-0 border-b border-outline/20 pr-0 lg:border-b-0 lg:border-r">
                     <header
                         class="flex flex-wrap items-start justify-between gap-4 border-b border-outline/20 px-4 py-4"
                     >
@@ -79,7 +79,7 @@
 
                 <!-- ── Expediente histórico ────────────────────────────── -->
                 <aside
-                    class="-mr-6 -my-6 flex h-[calc(100%+3rem)] flex-col self-stretch border-l border-outline/20 bg-surface-container-lowest/5"
+                    class="flex flex-col self-stretch border-t border-outline/20 bg-surface-container-lowest/5 lg:-mr-6 lg:-my-6 lg:h-[calc(100%+3rem)] lg:border-l lg:border-t-0"
                 >
                     <header class="border-b border-outline/20 px-4 py-4">
                         <h2 class="text-xl font-semibold text-slate-200">Expediente Histórico</h2>
@@ -130,19 +130,25 @@
                                     <p class="text-[10px] uppercase text-outline-variant">
                                         Producto
                                     </p>
-                                    <p class="text-slate-200">{{ selected.productName }}</p>
+                                    <p class="text-slate-200">
+                                        {{ selected.productName }}
+                                    </p>
                                 </div>
                                 <div v-if="selected.requestedBy">
                                     <p class="text-[10px] uppercase text-outline-variant">
                                         Solicitado por
                                     </p>
-                                    <p class="text-slate-200">{{ selected.requestedBy }}</p>
+                                    <p class="text-slate-200">
+                                        {{ selected.requestedBy }}
+                                    </p>
                                 </div>
                                 <div v-if="selected.requiredDateLabel !== '—'">
                                     <p class="text-[10px] uppercase text-outline-variant">
                                         Entrega solicitada
                                     </p>
-                                    <p class="text-slate-200">{{ selected.requiredDateLabel }}</p>
+                                    <p class="text-slate-200">
+                                        {{ selected.requiredDateLabel }}
+                                    </p>
                                 </div>
                             </div>
                         </section>

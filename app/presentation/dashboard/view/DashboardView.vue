@@ -1,9 +1,11 @@
 <template>
     <AppShellLayout screen-title="Dashboard">
         <section class="-my-6 -mr-6">
-            <div class="grid min-h-[calc(100vh-64px)] grid-cols-10 gap-0">
+            <div class="grid min-h-0 grid-cols-1 gap-0 lg:min-h-[calc(100vh-64px)] lg:grid-cols-10">
                 <!-- ── IZQUIERDA: filtros + lista ────────────────────────── -->
-                <article class="col-span-6 flex flex-col border-r border-outline/20">
+                <article
+                    class="col-span-1 flex flex-col border-b border-outline/20 lg:col-span-6 lg:border-b-0 lg:border-r"
+                >
                     <!-- Encabezado + filtros -->
                     <div class="shrink-0 space-y-2.5 border-b border-outline/20 px-4 py-3">
                         <div class="flex items-center justify-between gap-2">
@@ -24,7 +26,7 @@
                                 Imprimir todo
                             </button>
                         </div>
-                        <div class="flex items-center gap-2">
+                        <div class="flex flex-wrap items-center gap-2">
                             <div class="relative min-w-0 flex-1">
                                 <span
                                     class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-[15px] text-outline-variant"
@@ -37,7 +39,7 @@
                                     placeholder="Código, cliente o producto..."
                                 />
                             </div>
-                            <div class="w-[155px] shrink-0">
+                            <div class="w-full shrink-0 sm:w-[155px]">
                                 <AppSelect
                                     v-model="statusFilter"
                                     compact
@@ -47,7 +49,7 @@
                                     :searchable="false"
                                 />
                             </div>
-                            <div class="w-[130px] shrink-0">
+                            <div class="w-full shrink-0 sm:w-[130px]">
                                 <AppSelect
                                     v-model="priorityFilter"
                                     compact
@@ -61,7 +63,9 @@
                     </div>
 
                     <!-- Lista de solicitudes -->
-                    <div class="min-h-0 flex-1 divide-y divide-outline/10 overflow-y-auto">
+                    <div
+                        class="min-h-0 max-h-[45vh] flex-1 divide-y divide-outline/10 overflow-y-auto lg:max-h-none"
+                    >
                         <div
                             v-if="isLoading"
                             class="flex items-center justify-center gap-2 py-12 text-xs text-outline-variant"
@@ -205,7 +209,7 @@
 
                 <!-- ── DERECHA: Panel de detalle ───────────────────────────── -->
                 <aside
-                    class="col-span-4 flex flex-col overflow-hidden border-l border-outline/20 bg-surface-container-low/15"
+                    class="col-span-1 flex flex-col overflow-hidden border-t border-outline/20 bg-surface-container-low/15 lg:col-span-4 lg:border-l lg:border-t-0"
                 >
                     <!-- Vacío -->
                     <div
@@ -306,19 +310,25 @@
                                         <p class="text-[0.6rem] uppercase text-outline-variant">
                                             Producto
                                         </p>
-                                        <p class="text-slate-200">{{ selected.productName }}</p>
+                                        <p class="text-slate-200">
+                                            {{ selected.productName }}
+                                        </p>
                                     </div>
                                     <div v-if="selected.brandName">
                                         <p class="text-[0.6rem] uppercase text-outline-variant">
                                             Marca
                                         </p>
-                                        <p class="text-slate-200">{{ selected.brandName }}</p>
+                                        <p class="text-slate-200">
+                                            {{ selected.brandName }}
+                                        </p>
                                     </div>
                                     <div>
                                         <p class="text-[0.6rem] uppercase text-outline-variant">
                                             Solicitado por
                                         </p>
-                                        <p class="text-slate-200">{{ selected.requestedBy }}</p>
+                                        <p class="text-slate-200">
+                                            {{ selected.requestedBy }}
+                                        </p>
                                     </div>
                                     <div>
                                         <p class="text-[0.6rem] uppercase text-outline-variant">
@@ -386,13 +396,17 @@
                                         <p class="text-[0.6rem] uppercase text-outline-variant">
                                             Material
                                         </p>
-                                        <p class="text-slate-200">{{ selected.materialType }}</p>
+                                        <p class="text-slate-200">
+                                            {{ selected.materialType }}
+                                        </p>
                                     </div>
                                     <div v-if="selected.closureType">
                                         <p class="text-[0.6rem] uppercase text-outline-variant">
                                             Cierre
                                         </p>
-                                        <p class="text-slate-200">{{ selected.closureType }}</p>
+                                        <p class="text-slate-200">
+                                            {{ selected.closureType }}
+                                        </p>
                                     </div>
                                     <div v-if="selected.fluteType">
                                         <p class="text-[0.6rem] uppercase text-outline-variant">
@@ -406,19 +420,25 @@
                                         <p class="text-[0.6rem] uppercase text-outline-variant">
                                             Modo de color
                                         </p>
-                                        <p class="text-slate-200">{{ selected.colorMode }}</p>
+                                        <p class="text-slate-200">
+                                            {{ selected.colorMode }}
+                                        </p>
                                     </div>
                                     <div v-if="selected.outerLiner">
                                         <p class="text-[0.6rem] uppercase text-outline-variant">
                                             Liner exterior
                                         </p>
-                                        <p class="text-slate-200">{{ selected.outerLiner }}</p>
+                                        <p class="text-slate-200">
+                                            {{ selected.outerLiner }}
+                                        </p>
                                     </div>
                                     <div v-if="selected.innerLiner">
                                         <p class="text-[0.6rem] uppercase text-outline-variant">
                                             Liner interior
                                         </p>
-                                        <p class="text-slate-200">{{ selected.innerLiner }}</p>
+                                        <p class="text-slate-200">
+                                            {{ selected.innerLiner }}
+                                        </p>
                                     </div>
                                     <div v-if="selected.pantoneReferences" class="col-span-2">
                                         <p class="text-[0.6rem] uppercase text-outline-variant">

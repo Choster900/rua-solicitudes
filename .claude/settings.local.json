@@ -29,7 +29,8 @@
             "PowerShell(Get-ChildItem -Path \"D:\\\\Desktop-custom\\\\Others\\\\rua-solicitudes\\\\app\\\\presentation\\\\quality\" -Recurse | Where-Object { !$_.PSIsContainer } | Select-Object FullName)",
             "PowerShell(Get-ChildItem -Path \"D:\\\\Desktop-custom\\\\Others\\\\rua-solicitudes\\\\app\\\\presentation\\\\request-workflow\" -Recurse | Where-Object { !$_.PSIsContainer } | Select-Object FullName)",
             "PowerShell(Get-ChildItem \"D:\\\\Desktop-custom\\\\Others\\\\rua-solicitudes\\\\app\\\\presentation\\\\dashboard\" -Recurse | Where-Object { !$_.PSIsContainer } | Select-Object FullName)",
-            "PowerShell(Get-ChildItem \"D:\\\\Desktop-custom\\\\Others\\\\rua-solicitudes\\\\app\\\\infrastructure\\\\http\" -Recurse | Where-Object { !$_.PSIsContainer } | Select-Object FullName)"
+            "PowerShell(Get-ChildItem \"D:\\\\Desktop-custom\\\\Others\\\\rua-solicitudes\\\\app\\\\infrastructure\\\\http\" -Recurse | Where-Object { !$_.PSIsContainer } | Select-Object FullName)",
+            "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\('lint-staged','not found'\\), indent=2\\)\\)\")"
         ]
     }
 }

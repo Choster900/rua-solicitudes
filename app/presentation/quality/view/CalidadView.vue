@@ -1,7 +1,9 @@
 <template>
     <AppShellLayout screen-title="Bandeja Calidad">
-        <section class="grid min-h-[calc(100vh-112px)] grid-cols-1 gap-0 xl:grid-cols-[70%_30%]">
-            <div class="space-y-4 pr-0 xl:pr-5">
+        <section
+            class="grid min-h-0 grid-cols-1 gap-0 lg:min-h-[calc(100vh-112px)] lg:grid-cols-[70%_30%]"
+        >
+            <div class="space-y-4 pr-0 lg:pr-5">
                 <header class="flex items-start justify-between gap-4">
                     <div>
                         <h1 class="text-4xl font-semibold leading-tight text-white">
@@ -24,136 +26,145 @@
                 <article
                     class="overflow-hidden rounded-xl border border-outline/20 bg-surface-container-lowest/5"
                 >
-                    <header
-                        class="grid grid-cols-[24%_32%_18%_26%] border-b border-outline/20 bg-surface-container-low/20 px-4 py-2 text-xs uppercase tracking-[0.12em] text-secondary-container"
-                    >
-                        <p>ID Solicitud</p>
-                        <p>Cliente / Producto</p>
-                        <p>Estado</p>
-                        <p>Acciones</p>
-                    </header>
-
-                    <section class="border-l-2 border-primary">
-                        <div
-                            class="grid grid-cols-[24%_32%_18%_26%] items-center border-b border-outline/15 px-4 py-4"
+                    <div class="overflow-x-auto">
+                        <header
+                            class="grid min-w-[480px] grid-cols-[24%_32%_18%_26%] border-b border-outline/20 bg-surface-container-low/20 px-4 py-2 text-xs uppercase tracking-[0.12em] text-secondary-container"
                         >
-                            <p class="text-2xl font-semibold text-primary-fixed">SOL-2026-042</p>
-                            <div class="text-white">
-                                <p class="text-4xl">BAN BAN</p>
-                                <p class="text-3xl leading-tight text-outline-variant">
-                                    CAJA DIA DE LA MADRE
+                            <p>ID Solicitud</p>
+                            <p>Cliente / Producto</p>
+                            <p>Estado</p>
+                            <p>Acciones</p>
+                        </header>
+
+                        <section class="min-w-[480px] border-l-2 border-primary">
+                            <div
+                                class="grid grid-cols-[24%_32%_18%_26%] items-center border-b border-outline/15 px-4 py-4"
+                            >
+                                <p class="text-2xl font-semibold text-primary-fixed">
+                                    SOL-2026-042
                                 </p>
-                                <p class="text-2xl text-outline-variant">#8 2027</p>
-                            </div>
-                            <div>
-                                <span
-                                    class="inline-flex rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-amber-200"
-                                >
-                                    Pendiente
-                                </span>
-                            </div>
-                            <div class="flex justify-end">
-                                <button class="text-primary hover:text-white" type="button">
-                                    <span class="material-symbols-outlined text-[20px]"
-                                        >expand_more</span
+                                <div class="text-white">
+                                    <p class="text-4xl">BAN BAN</p>
+                                    <p class="text-3xl leading-tight text-outline-variant">
+                                        CAJA DIA DE LA MADRE
+                                    </p>
+                                    <p class="text-2xl text-outline-variant">#8 2027</p>
+                                </div>
+                                <div>
+                                    <span
+                                        class="inline-flex rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-amber-200"
                                     >
-                                </button>
+                                        Pendiente
+                                    </span>
+                                </div>
+                                <div class="flex justify-end">
+                                    <button class="text-primary hover:text-white" type="button">
+                                        <span class="material-symbols-outlined text-[20px]"
+                                            >expand_more</span
+                                        >
+                                    </button>
+                                </div>
                             </div>
-                        </div>
 
-                        <div
-                            class="grid gap-4 border-b border-outline/15 px-4 py-4 lg:grid-cols-[40%_60%]"
-                        >
-                            <div>
-                                <h3
-                                    class="mb-3 text-xs uppercase tracking-[0.12em] text-secondary-container"
-                                >
-                                    Checklist de Validación
-                                </h3>
-                                <div
-                                    class="space-y-2 rounded-lg border border-outline/15 bg-surface-container-lowest/20 p-2.5"
-                                >
-                                    <div
-                                        v-for="item in validationChecklist"
-                                        :key="item.label"
-                                        class="flex items-center justify-between rounded-md bg-surface-container-low/30 px-2.5 py-2"
+                            <div
+                                class="grid gap-4 border-b border-outline/15 px-4 py-4 lg:grid-cols-[40%_60%]"
+                            >
+                                <div>
+                                    <h3
+                                        class="mb-3 text-xs uppercase tracking-[0.12em] text-secondary-container"
                                     >
-                                        <p
-                                            class="inline-flex items-center gap-2 text-xl text-white"
+                                        Checklist de Validación
+                                    </h3>
+                                    <div
+                                        class="space-y-2 rounded-lg border border-outline/15 bg-surface-container-lowest/20 p-2.5"
+                                    >
+                                        <div
+                                            v-for="item in validationChecklist"
+                                            :key="item.label"
+                                            class="flex items-center justify-between rounded-md bg-surface-container-low/30 px-2.5 py-2"
                                         >
+                                            <p
+                                                class="inline-flex items-center gap-2 text-xl text-white"
+                                            >
+                                                <span
+                                                    class="inline-block h-2.5 w-2.5 rounded-full"
+                                                    :class="item.dotClass"
+                                                />
+                                                {{ item.label }}
+                                            </p>
                                             <span
-                                                class="inline-block h-2.5 w-2.5 rounded-full"
-                                                :class="item.dotClass"
-                                            />
-                                            {{ item.label }}
-                                        </p>
-                                        <span
-                                            class="rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em]"
-                                            :class="item.statusClass"
+                                                class="rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em]"
+                                                :class="item.statusClass"
+                                            >
+                                                {{ item.status }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <h3
+                                        class="mb-3 text-xs uppercase tracking-[0.12em] text-secondary-container"
+                                    >
+                                        Observaciones Técnicas
+                                    </h3>
+                                    <textarea
+                                        class="h-[128px] w-full rounded-lg border border-outline/25 bg-surface-container-low/35 px-3 py-2 text-sm text-white outline-none placeholder:text-outline-variant focus:border-primary/60"
+                                        placeholder="Añadir comentarios específicos para los puntos de validación..."
+                                    />
+                                    <div class="mt-3 flex flex-wrap justify-end gap-2">
+                                        <button
+                                            class="inline-flex items-center gap-2 rounded-full border border-red-500/35 bg-red-600/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.08em] text-white"
+                                            type="button"
                                         >
-                                            {{ item.status }}
-                                        </span>
+                                            <span class="material-symbols-outlined text-[16px]"
+                                                >do_not_disturb_on</span
+                                            >
+                                            Rechazar con observaciones
+                                        </button>
+                                        <button
+                                            class="inline-flex items-center gap-2 rounded-full border border-primary/35 bg-primary px-4 py-2 text-xs font-semibold uppercase tracking-[0.08em] text-white"
+                                            type="button"
+                                        >
+                                            <span class="material-symbols-outlined text-[16px]"
+                                                >task_alt</span
+                                            >
+                                            Aprobar revisión
+                                        </button>
                                     </div>
                                 </div>
                             </div>
 
-                            <div>
-                                <h3
-                                    class="mb-3 text-xs uppercase tracking-[0.12em] text-secondary-container"
-                                >
-                                    Observaciones Técnicas
-                                </h3>
-                                <textarea
-                                    class="h-[128px] w-full rounded-lg border border-outline/25 bg-surface-container-low/35 px-3 py-2 text-sm text-white outline-none placeholder:text-outline-variant focus:border-primary/60"
-                                    placeholder="Añadir comentarios específicos para los puntos de validación..."
-                                />
-                                <div class="mt-3 flex flex-wrap justify-end gap-2">
+                            <div class="grid grid-cols-[24%_32%_18%_26%] items-center px-4 py-4">
+                                <p class="text-2xl font-semibold text-primary-fixed">
+                                    SOL-2026-045
+                                </p>
+                                <div class="text-white">
+                                    <p class="text-4xl">AMERICAN TEXTILES</p>
+                                    <p class="text-3xl leading-tight text-outline-variant">
+                                        CAJA XXXX000000 2027
+                                    </p>
+                                </div>
+                                <div>
+                                    <span
+                                        class="inline-flex rounded-md border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-primary-fixed-dim"
+                                    >
+                                        En proceso
+                                    </span>
+                                </div>
+                                <div class="flex justify-end">
                                     <button
-                                        class="inline-flex items-center gap-2 rounded-full border border-red-500/35 bg-red-600/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.08em] text-white"
+                                        class="text-outline-variant hover:text-white"
                                         type="button"
                                     >
-                                        <span class="material-symbols-outlined text-[16px]"
-                                            >do_not_disturb_on</span
+                                        <span class="material-symbols-outlined text-[20px]"
+                                            >chevron_right</span
                                         >
-                                        Rechazar con observaciones
-                                    </button>
-                                    <button
-                                        class="inline-flex items-center gap-2 rounded-full border border-primary/35 bg-primary px-4 py-2 text-xs font-semibold uppercase tracking-[0.08em] text-white"
-                                        type="button"
-                                    >
-                                        <span class="material-symbols-outlined text-[16px]"
-                                            >task_alt</span
-                                        >
-                                        Aprobar revisión
                                     </button>
                                 </div>
                             </div>
-                        </div>
-
-                        <div class="grid grid-cols-[24%_32%_18%_26%] items-center px-4 py-4">
-                            <p class="text-2xl font-semibold text-primary-fixed">SOL-2026-045</p>
-                            <div class="text-white">
-                                <p class="text-4xl">AMERICAN TEXTILES</p>
-                                <p class="text-3xl leading-tight text-outline-variant">
-                                    CAJA XXXX000000 2027
-                                </p>
-                            </div>
-                            <div>
-                                <span
-                                    class="inline-flex rounded-md border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-primary-fixed-dim"
-                                >
-                                    En proceso
-                                </span>
-                            </div>
-                            <div class="flex justify-end">
-                                <button class="text-outline-variant hover:text-white" type="button">
-                                    <span class="material-symbols-outlined text-[20px]"
-                                        >chevron_right</span
-                                    >
-                                </button>
-                            </div>
-                        </div>
-                    </section>
+                        </section>
+                    </div>
                 </article>
             </div>
 
@@ -194,7 +205,9 @@
                                 {{ ticket.status }}
                             </span>
                         </div>
-                        <p class="mt-2 text-2xl leading-tight text-white">{{ ticket.title }}</p>
+                        <p class="mt-2 text-2xl leading-tight text-white">
+                            {{ ticket.title }}
+                        </p>
                         <div
                             class="mt-2 flex items-center justify-between text-xs text-outline-variant"
                         >
@@ -202,7 +215,9 @@
                                 <span class="material-symbols-outlined text-[14px]">person</span>
                                 {{ ticket.owner }}
                             </p>
-                            <p class="uppercase tracking-[0.08em]">{{ ticket.area }}</p>
+                            <p class="uppercase tracking-[0.08em]">
+                                {{ ticket.area }}
+                            </p>
                         </div>
                     </article>
                 </div>

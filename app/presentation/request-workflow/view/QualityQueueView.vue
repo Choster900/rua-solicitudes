@@ -1,6 +1,8 @@
 <template>
     <AppShellLayout screen-title="Bandeja Calidad">
-        <section class="grid min-h-[calc(100vh-112px)] grid-cols-1 gap-3 xl:grid-cols-[65%_35%]">
+        <section
+            class="grid min-h-0 grid-cols-1 gap-3 lg:min-h-[calc(100vh-112px)] lg:grid-cols-[65%_35%]"
+        >
             <!-- Lista de solicitudes -->
             <div class="space-y-3">
                 <header class="flex items-start justify-between gap-4">
@@ -17,62 +19,66 @@
                 <article
                     class="overflow-hidden rounded-xl border border-outline/20 bg-surface-container-lowest/5"
                 >
-                    <header
-                        class="grid grid-cols-[28%_36%_18%_18%] border-b border-outline/20 bg-surface-container-low/20 px-3 py-1.5 text-[10px] uppercase tracking-[0.12em] text-secondary-container"
-                    >
-                        <p>ID Solicitud</p>
-                        <p>Cliente / Producto</p>
-                        <p>Prioridad</p>
-                        <p>Estado</p>
-                    </header>
+                    <div class="overflow-x-auto">
+                        <header
+                            class="grid min-w-[480px] grid-cols-[28%_36%_18%_18%] border-b border-outline/20 bg-surface-container-low/20 px-3 py-1.5 text-[10px] uppercase tracking-[0.12em] text-secondary-container"
+                        >
+                            <p>ID Solicitud</p>
+                            <p>Cliente / Producto</p>
+                            <p>Prioridad</p>
+                            <p>Estado</p>
+                        </header>
 
-                    <div v-if="displayRows.length" class="divide-y divide-outline/15">
-                        <template v-for="row in displayRows" :key="row.id">
-                            <button
-                                class="grid w-full grid-cols-[28%_36%_18%_18%] items-center px-3 py-2.5 text-left transition-colors hover:bg-surface-container-low/20"
-                                :class="
-                                    selectedRequestId === row.id
-                                        ? 'border-l-2 border-primary bg-primary/10'
-                                        : ''
-                                "
-                                type="button"
-                                @click="openRequestDetail(row.id)"
-                            >
-                                <div>
-                                    <p class="font-mono text-sm font-semibold text-primary-fixed">
-                                        {{ row.requestCode }}
-                                    </p>
+                        <div v-if="displayRows.length" class="divide-y divide-outline/15">
+                            <template v-for="row in displayRows" :key="row.id">
+                                <button
+                                    class="grid w-full min-w-[480px] grid-cols-[28%_36%_18%_18%] items-center px-3 py-2.5 text-left transition-colors hover:bg-surface-container-low/20"
+                                    :class="
+                                        selectedRequestId === row.id
+                                            ? 'border-l-2 border-primary bg-primary/10'
+                                            : ''
+                                    "
+                                    type="button"
+                                    @click="openRequestDetail(row.id)"
+                                >
+                                    <div>
+                                        <p
+                                            class="font-mono text-sm font-semibold text-primary-fixed"
+                                        >
+                                            {{ row.requestCode }}
+                                        </p>
+                                        <span
+                                            class="mt-0.5 inline-block rounded bg-primary/15 px-1.5 py-0.5 font-mono text-[10px] text-primary-fixed-dim"
+                                        >
+                                            v{{ row.versionNumber }}
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium leading-tight text-white">
+                                            {{ row.clientName }}
+                                        </p>
+                                        <p class="text-xs leading-tight text-outline-variant">
+                                            {{ row.productName }}
+                                        </p>
+                                    </div>
                                     <span
-                                        class="mt-0.5 inline-block rounded bg-primary/15 px-1.5 py-0.5 font-mono text-[10px] text-primary-fixed-dim"
+                                        class="inline-flex w-fit rounded-md border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em]"
+                                        :class="priorityChipClass(row.id)"
                                     >
-                                        v{{ row.versionNumber }}
+                                        {{ row.priorityLabel }}
                                     </span>
-                                </div>
-                                <div>
-                                    <p class="text-sm font-medium leading-tight text-white">
-                                        {{ row.clientName }}
-                                    </p>
-                                    <p class="text-xs leading-tight text-outline-variant">
-                                        {{ row.productName }}
-                                    </p>
-                                </div>
-                                <span
-                                    class="inline-flex w-fit rounded-md border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em]"
-                                    :class="priorityChipClass(row.id)"
-                                >
-                                    {{ row.priorityLabel }}
-                                </span>
-                                <span
-                                    class="inline-flex w-fit rounded-md border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] border-primary/35 bg-primary/10 text-primary-fixed-dim"
-                                >
-                                    En revisión
-                                </span>
-                            </button>
-                        </template>
-                    </div>
+                                    <span
+                                        class="inline-flex w-fit rounded-md border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] border-primary/35 bg-primary/10 text-primary-fixed-dim"
+                                    >
+                                        En revisión
+                                    </span>
+                                </button>
+                            </template>
+                        </div>
 
-                    <div v-else class="px-3 py-8 text-center text-xs text-outline-variant">
-                        No hay solicitudes en revisión de calidad.
+                        <div v-else class="px-3 py-8 text-center text-xs text-outline-variant">
+                            No hay solicitudes en revisión de calidad.
+                        </div>
                     </div>
                 </article>
             </div>

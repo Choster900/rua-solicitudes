@@ -400,7 +400,9 @@
                                     <p class="truncate text-sm font-semibold text-white">
                                         {{ file.originalName }}
                                     </p>
-                                    <p class="text-xs text-outline-variant">{{ file.mimeType }}</p>
+                                    <p class="text-xs text-outline-variant">
+                                        {{ file.mimeType }}
+                                    </p>
                                 </div>
                                 <button
                                     class="ml-2 flex-shrink-0 text-outline-variant hover:text-rose-300"
@@ -485,7 +487,7 @@
             </section>
 
             <footer class="flex flex-wrap justify-end gap-2 border-t border-outline/20 pt-3">
-                <AppButton size="lg" variant="ghost" @click="$emit('cancel')">Cancelar</AppButton>
+                <AppButton size="lg" variant="ghost" @click="$emit('cancel')"> Cancelar </AppButton>
                 <AppButton
                     icon="send"
                     icon-position="left"

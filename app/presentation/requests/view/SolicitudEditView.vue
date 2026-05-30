@@ -1,9 +1,11 @@
 <template>
     <AppShellLayout screen-title="Solicitudes">
         <section class="h-full">
-            <div class="grid h-full gap-0 xl:grid-cols-[minmax(0,65%),minmax(0,35%)]">
+            <div class="grid h-full gap-0 lg:grid-cols-[minmax(0,65%),minmax(0,35%)]">
                 <!-- ── Formulario de edición ──────────────────────────── -->
-                <article class="min-h-0 overflow-auto border-r border-outline/20 px-6 py-4">
+                <article
+                    class="min-h-0 overflow-auto border-b border-outline/20 px-4 py-4 lg:border-b-0 lg:border-r lg:px-6"
+                >
                     <button
                         class="mb-4 inline-flex items-center gap-1 rounded-lg border border-outline/30 px-3 py-2 text-sm text-outline-variant transition-colors hover:bg-surface-container-low/10 hover:text-white"
                         type="button"
@@ -47,7 +49,7 @@
 
                 <!-- ── Expediente / Detalle ───────────────────────────── -->
                 <aside
-                    class="-mr-6 -my-6 flex h-[calc(100%+3rem)] flex-col self-stretch border-l border-outline/20 bg-surface-container-lowest/5"
+                    class="flex flex-col self-stretch border-t border-outline/20 bg-surface-container-lowest/5 lg:-mr-6 lg:-my-6 lg:h-[calc(100%+3rem)] lg:border-l lg:border-t-0"
                 >
                     <header class="border-b border-outline/20 px-4 py-4">
                         <h2 class="text-xl font-semibold text-slate-200">Expediente</h2>
@@ -98,19 +100,25 @@
                             <div class="grid gap-2 text-sm">
                                 <div v-if="request.title">
                                     <p class="text-[10px] uppercase text-outline-variant">Título</p>
-                                    <p class="text-slate-200">{{ request.title }}</p>
+                                    <p class="text-slate-200">
+                                        {{ request.title }}
+                                    </p>
                                 </div>
                                 <div v-if="request.productName">
                                     <p class="text-[10px] uppercase text-outline-variant">
                                         Producto
                                     </p>
-                                    <p class="text-slate-200">{{ request.productName }}</p>
+                                    <p class="text-slate-200">
+                                        {{ request.productName }}
+                                    </p>
                                 </div>
                                 <div v-if="request.requestedBy">
                                     <p class="text-[10px] uppercase text-outline-variant">
                                         Solicitado por
                                     </p>
-                                    <p class="text-slate-200">{{ request.requestedBy }}</p>
+                                    <p class="text-slate-200">
+                                        {{ request.requestedBy }}
+                                    </p>
                                 </div>
                                 <div v-if="request.requiredDate">
                                     <p class="text-[10px] uppercase text-outline-variant">

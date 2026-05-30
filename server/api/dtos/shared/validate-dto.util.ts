@@ -1,4 +1,4 @@
-import Joi from 'joi'
+import type Joi from 'joi'
 
 const DEFAULT_DTO_ERROR_MESSAGE = 'El payload enviado no tiene un formato válido.'
 

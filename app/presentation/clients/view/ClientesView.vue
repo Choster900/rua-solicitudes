@@ -1,8 +1,10 @@
 <template>
     <AppShellLayout screen-title="Biblioteca de Clientes">
         <section class="-my-6 -mr-6">
-            <div class="grid min-h-[calc(100vh-64px)] grid-cols-10 gap-0">
-                <article class="col-span-7 border-r border-outline/20 p-5 lg:p-6">
+            <div class="grid min-h-0 grid-cols-1 gap-0 lg:min-h-[calc(100vh-64px)] lg:grid-cols-10">
+                <article
+                    class="col-span-1 border-b border-outline/20 p-4 lg:col-span-7 lg:border-b-0 lg:border-r lg:p-5"
+                >
                     <header class="space-y-4 pb-4">
                         <div class="flex flex-wrap items-center justify-between gap-3">
                             <h1 class="text-3xl font-headline-md font-semibold text-white">
@@ -30,7 +32,7 @@
 
                         <p class="text-lg font-semibold text-slate-200">Biblioteca de Clientes</p>
 
-                        <div class="flex items-start gap-3">
+                        <div class="flex flex-col gap-3 sm:flex-row sm:items-start">
                             <div class="min-w-0 flex-1 space-y-1">
                                 <label
                                     class="text-[0.65rem] font-label-caps uppercase tracking-[0.12em] text-secondary-container"
@@ -63,7 +65,7 @@
                                 />
                             </div>
 
-                            <div class="mt-2 w-[170px] shrink-0 space-y-1">
+                            <div class="mt-0 w-full shrink-0 space-y-1 sm:mt-2 sm:w-[170px]">
                                 <label
                                     class="invisible block text-[0.65rem] font-label-caps uppercase tracking-[0.12em]"
                                 >
@@ -91,7 +93,7 @@
                 </article>
 
                 <aside
-                    class="col-span-3 flex h-full flex-col gap-0 overflow-hidden border-l border-outline/20 bg-surface-container-low/15"
+                    class="col-span-1 flex flex-col gap-0 overflow-hidden border-t border-outline/20 bg-surface-container-low/15 lg:col-span-3 lg:border-l lg:border-t-0"
                 >
                     <!-- Acciones -->
                     <div
@@ -184,7 +186,9 @@
                                     <p class="text-[0.6rem] uppercase text-outline-variant">
                                         Nombre
                                     </p>
-                                    <p class="text-slate-100">{{ selectedClientContact }}</p>
+                                    <p class="text-slate-100">
+                                        {{ selectedClientContact }}
+                                    </p>
                                 </div>
                                 <div v-if="selectedClientEmail !== 'N/A'">
                                     <p class="text-[0.6rem] uppercase text-outline-variant">
