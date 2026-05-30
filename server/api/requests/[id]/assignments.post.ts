@@ -35,6 +35,8 @@ export default defineEventHandler(async (event) => {
         'CREATED',
         'PENDING_DESIGN_REVIEW',
         'ASSIGNED_TO_DESIGNER',
+        'QUALITY_REJECTED',
+        'IN_DESIGN',
     ]
     if (!assignableStatuses.includes(request.status)) {
         throw createError({

@@ -404,7 +404,7 @@ export const useRequestsModule = () => {
             })
             requests.value = requests.value.map((item) =>
                 item.id === requestId
-                    ? { ...item, status: 'ASSIGNED_TO_DESIGNER' as RequestStatus }
+                    ? { ...item, status: 'QUALITY_REJECTED' as RequestStatus }
                     : item,
             )
             const updated = requests.value.find((r) => r.id === requestId)

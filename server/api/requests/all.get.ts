@@ -74,13 +74,21 @@ const serialize = (req: Awaited<ReturnType<typeof getAllDesignRequests>>[number]
                 notes: f.notes,
                 createdAt: dayjs(f.createdAt).toISOString(),
             })),
-        qualityReviews: (v?.qualityReviews ?? []).map((qr: any) => ({
-            id: qr.id,
-            decision: qr.decision as 'APPROVED' | 'REJECTED',
-            generalObservations: qr.generalObservations ?? '',
-            reviewedAt: dayjs(qr.reviewedAt).toISOString(),
-            reviewedBy: qr.reviewedBy?.fullName ?? '',
-        })),
+        qualityHistory: (req.versions ?? [])
+            .flatMap((ver: any) =>
+                (ver.qualityReviews ?? []).map((qr: any) => ({
+                    id: qr.id,
+                    versionNumber: ver.versionNumber,
+                    decision: qr.decision as 'APPROVED' | 'REJECTED',
+                    generalObservations: qr.generalObservations ?? '',
+                    reviewedAt: dayjs(qr.reviewedAt).toISOString(),
+                    reviewedBy: qr.reviewedBy?.fullName ?? '',
+                })),
+            )
+            .sort(
+                (a: any, b: any) =>
+                    new Date(b.reviewedAt).getTime() - new Date(a.reviewedAt).getTime(),
+            ),
     }
 }
 

@@ -175,12 +175,12 @@ export default defineEventHandler(async (event) => {
             })
         }
 
-        // 5. Actualizar la solicitud: nueva versión activa, status vuelve a diseño
+        // 5. Actualizar la solicitud: nueva versión activa, status vuelve a diseño con rechazo
         await tx.designRequest.update({
             where: { id: requestId },
             data: {
                 currentVersionId: newVersion.id,
-                status: 'ASSIGNED_TO_DESIGNER',
+                status: 'QUALITY_REJECTED',
             },
         })
 
@@ -189,7 +189,7 @@ export default defineEventHandler(async (event) => {
 
     return {
         decision: 'REJECTED',
-        requestStatus: 'ASSIGNED_TO_DESIGNER',
+        requestStatus: 'QUALITY_REJECTED',
         previousVersionId: currentVersion.id,
         previousVersionNumber: currentVersion.versionNumber,
         newVersionId: result.id,

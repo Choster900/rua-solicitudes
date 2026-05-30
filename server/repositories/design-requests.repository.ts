@@ -27,16 +27,6 @@ const withVersionAssignments = {
         assignments: {
             select: { designerId: true, designer: { select: { fullName: true } } },
         },
-        qualityReviews: {
-            orderBy: { reviewedAt: 'desc' as const },
-            select: {
-                id: true,
-                decision: true,
-                generalObservations: true,
-                reviewedAt: true,
-                reviewedBy: { select: { fullName: true } },
-            },
-        },
     },
 } as const
 
@@ -47,6 +37,24 @@ export const getAllDesignRequests = () =>
             client: { select: { id: true, name: true, code: true } },
             seller: { select: { id: true, fullName: true, employeeCode: true } },
             currentVersion: withVersionAssignments,
+            versions: {
+                orderBy: { versionNumber: 'asc' as const },
+                select: {
+                    versionNumber: true,
+                    reason: true,
+                    status: true,
+                    qualityReviews: {
+                        orderBy: { reviewedAt: 'asc' as const },
+                        select: {
+                            id: true,
+                            decision: true,
+                            generalObservations: true,
+                            reviewedAt: true,
+                            reviewedBy: { select: { fullName: true } },
+                        },
+                    },
+                },
+            },
             files: {
                 where: { isActive: true },
                 orderBy: { createdAt: 'asc' },

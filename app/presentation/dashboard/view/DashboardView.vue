@@ -553,24 +553,24 @@
                                 </div>
                             </div>
 
-                            <!-- Revisiones de calidad -->
+                            <!-- Historial de revisiones de calidad -->
                             <div
-                                v-if="selected.qualityReviews?.length"
+                                v-if="selected.qualityHistory?.length"
                                 class="border-b border-outline/20 px-3 py-3"
                             >
                                 <p
                                     class="mb-2 text-[0.6rem] font-semibold uppercase tracking-wider text-primary-fixed-dim"
                                 >
-                                    Revisiones de calidad
+                                    Historial de calidad
                                     <span
                                         class="ml-1 rounded-full bg-purple-400/20 px-1.5 py-0.5 text-[9px] text-purple-300"
                                     >
-                                        {{ selected.qualityReviews.length }}
+                                        {{ selected.qualityHistory.length }}
                                     </span>
                                 </p>
                                 <div class="space-y-2">
                                     <div
-                                        v-for="qr in selected.qualityReviews"
+                                        v-for="qr in selected.qualityHistory"
                                         :key="qr.id"
                                         class="rounded-lg border px-2.5 py-2 text-xs"
                                         :class="
@@ -580,20 +580,27 @@
                                         "
                                     >
                                         <div class="flex items-center justify-between gap-2">
-                                            <span
-                                                class="rounded border px-1.5 py-0.5 text-[9px] font-semibold"
-                                                :class="
-                                                    qr.decision === 'APPROVED'
-                                                        ? 'border-emerald-400/40 bg-emerald-400/10 text-emerald-300'
-                                                        : 'border-red-400/40 bg-red-400/10 text-red-300'
-                                                "
-                                            >
-                                                {{
-                                                    qr.decision === 'APPROVED'
-                                                        ? 'Aprobado'
-                                                        : 'Rechazado'
-                                                }}
-                                            </span>
+                                            <div class="flex items-center gap-1.5">
+                                                <span
+                                                    class="rounded border px-1.5 py-0.5 text-[9px] font-semibold"
+                                                    :class="
+                                                        qr.decision === 'APPROVED'
+                                                            ? 'border-emerald-400/40 bg-emerald-400/10 text-emerald-300'
+                                                            : 'border-red-400/40 bg-red-400/10 text-red-300'
+                                                    "
+                                                >
+                                                    {{
+                                                        qr.decision === 'APPROVED'
+                                                            ? 'Aprobado'
+                                                            : 'Rechazado'
+                                                    }}
+                                                </span>
+                                                <span
+                                                    class="rounded bg-primary/15 px-1 py-0.5 font-mono text-[9px] text-primary-fixed-dim"
+                                                >
+                                                    v{{ qr.versionNumber }}
+                                                </span>
+                                            </div>
                                             <span class="text-[9px] text-outline-variant">
                                                 {{ formatDate(qr.reviewedAt) }}
                                             </span>
@@ -699,7 +706,120 @@ const findRequestById = (id: string) => allRequests.value.find((r) => r.id === i
 // ─── Imprimir ─────────────────────────────────────────────────────────────────
 
 const printAll = () => {
-    window.print()
+    const rows = filteredRequests.value
+    if (!rows.length) return
+
+    const fmt = (iso: string | null) =>
+        iso ? new Intl.DateTimeFormat('es-SV', { dateStyle: 'short' }).format(new Date(iso)) : '—'
+
+    const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+
+    const check = (v: boolean) =>
+        v
+            ? '<span style="color:#16a34a;font-weight:bold;">✓</span>'
+            : '<span style="color:#d1d5db;">—</span>'
+
+    const tbody = rows
+        .map((req) => {
+            const designers = req.assignedDesigners.length
+                ? req.assignedDesigners.map((d) => esc(d.designerName)).join(', ')
+                : '—'
+
+            const obs = req.qualityHistory?.length
+                ? req.qualityHistory
+                      .filter((qr) => qr.generalObservations)
+                      .map(
+                          (qr) =>
+                              `<span style="color:${qr.decision === 'APPROVED' ? '#15803d' : '#b91c1c'};">[v${qr.versionNumber} ${qr.decision === 'APPROVED' ? '✓' : '✗'}]</span> ${esc(qr.generalObservations)}`,
+                      )
+                      .join('<br>')
+                : '—'
+
+            return `<tr>
+                <td><b>${esc(req.requestCode)}</b><br><small style="color:#6b7280;">v${req.versionNumber}</small></td>
+                <td>${fmt(req.createdAt)}</td>
+                <td>${esc(req.clientName)}</td>
+                <td>${esc(req.productName || req.title)}</td>
+                <td style="text-align:center;">${check(req.artCompleted)}</td>
+                <td style="text-align:center;">${check(req.mechanicalCompleted)}</td>
+                <td style="text-align:center;">${check(req.dummyCompleted)}</td>
+                <td><span style="font-size:8px;">${esc(resolveStatusLabel(req.status))}</span></td>
+                <td>${esc(req.requestedBy)}</td>
+                <td>${designers}</td>
+                <td style="font-size:8px;color:#374151;">${obs}</td>
+            </tr>`
+        })
+        .join('')
+
+    const html = `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Solicitudes de Diseño</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; font-size: 9px; color: #111; padding: 10mm; }
+  header { margin-bottom: 6mm; }
+  header h1 { font-size: 14px; font-weight: bold; }
+  header p { font-size: 9px; color: #6b7280; margin-top: 2px; }
+  table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  colgroup col:nth-child(1)  { width: 8%; }
+  colgroup col:nth-child(2)  { width: 6%; }
+  colgroup col:nth-child(3)  { width: 10%; }
+  colgroup col:nth-child(4)  { width: 10%; }
+  colgroup col:nth-child(5)  { width: 3%; }
+  colgroup col:nth-child(6)  { width: 3%; }
+  colgroup col:nth-child(7)  { width: 3%; }
+  colgroup col:nth-child(8)  { width: 9%; }
+  colgroup col:nth-child(9)  { width: 10%; }
+  colgroup col:nth-child(10) { width: 10%; }
+  colgroup col:nth-child(11) { width: 28%; }
+  thead tr { background: #1e3a5f; color: #fff; }
+  thead th { padding: 5px 4px; text-align: left; font-size: 8px; font-weight: bold; letter-spacing: 0.04em; }
+  thead th.center { text-align: center; }
+  tbody tr:nth-child(even) { background: #f8fafc; }
+  tbody tr:nth-child(odd)  { background: #ffffff; }
+  tbody tr { border-bottom: 1px solid #e2e8f0; page-break-inside: avoid; }
+  td { padding: 4px; vertical-align: top; word-break: break-word; }
+  @page { size: A4 landscape; margin: 8mm 10mm; }
+  @media print { body { padding: 0; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Solicitudes de Diseño</h1>
+  <p>Generado el ${new Date().toLocaleDateString('es-SV', { dateStyle: 'long' })} · ${rows.length} solicitud(es)</p>
+</header>
+<table>
+  <colgroup>
+    <col/><col/><col/><col/><col/><col/><col/><col/><col/><col/><col/>
+  </colgroup>
+  <thead>
+    <tr>
+      <th>Código</th>
+      <th>Fecha</th>
+      <th>Cliente</th>
+      <th>Producto</th>
+      <th class="center">A</th>
+      <th class="center">M</th>
+      <th class="center">D</th>
+      <th>Estado</th>
+      <th>Vendedor</th>
+      <th>Diseñador(es)</th>
+      <th>Observaciones de calidad</th>
+    </tr>
+  </thead>
+  <tbody>${tbody}</tbody>
+</table>
+</body>
+</html>`
+
+    const win = window.open('', '_blank', 'width=1200,height=800')
+    if (!win) return
+    win.document.write(html)
+    win.document.close()
+    win.focus()
+    setTimeout(() => win.print(), 300)
 }
 
 // ─── Opciones de filtro ────────────────────────────────────────────────────────

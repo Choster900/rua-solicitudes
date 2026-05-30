@@ -52,9 +52,15 @@
                         :key="tab.key"
                         :class="[
                             'flex shrink-0 items-center gap-1.5 rounded-t-lg px-3 py-2 text-xs font-semibold uppercase tracking-widest transition-colors',
-                            activeFilter === tab.key
-                                ? 'border-b-2 border-primary text-primary'
-                                : 'text-outline-variant hover:text-white',
+                            tab.key === 'QUALITY_REJECTED'
+                                ? activeFilter === tab.key
+                                    ? 'border-b-2 border-red-400 text-red-300'
+                                    : tab.count > 0
+                                      ? 'text-red-400 hover:text-red-300'
+                                      : 'text-outline-variant hover:text-red-400'
+                                : activeFilter === tab.key
+                                  ? 'border-b-2 border-primary text-primary'
+                                  : 'text-outline-variant hover:text-white',
                         ]"
                         type="button"
                         @click="activeFilter = tab.key"
@@ -63,9 +69,15 @@
                         <span
                             class="rounded-full px-1.5 py-0.5 text-[10px] font-bold"
                             :class="
-                                activeFilter === tab.key
-                                    ? 'bg-primary/20 text-primary'
-                                    : 'bg-outline/20 text-outline-variant'
+                                tab.key === 'QUALITY_REJECTED'
+                                    ? activeFilter === tab.key
+                                        ? 'bg-red-400/20 text-red-300'
+                                        : tab.count > 0
+                                          ? 'bg-red-400/20 text-red-400'
+                                          : 'bg-outline/20 text-outline-variant'
+                                    : activeFilter === tab.key
+                                      ? 'bg-primary/20 text-primary'
+                                      : 'bg-outline/20 text-outline-variant'
                             "
                             >{{ tab.count }}</span
                         >
@@ -582,24 +594,24 @@
                         </p>
                     </section>
 
-                    <!-- Revisiones de calidad -->
+                    <!-- Historial de revisiones de calidad -->
                     <section
-                        v-if="selectedRequest?.qualityReviews?.length"
+                        v-if="selectedRequest?.qualityHistory?.length"
                         class="border-t border-outline/20 pt-3"
                     >
                         <h3
                             class="mb-2 text-[11px] uppercase tracking-[0.12em] text-secondary-container"
                         >
-                            Revisiones de calidad
+                            Historial de calidad
                             <span
                                 class="ml-1 rounded-full bg-purple-400/20 px-1.5 py-0.5 text-[9px] text-purple-300"
                             >
-                                {{ selectedRequest.qualityReviews.length }}
+                                {{ selectedRequest.qualityHistory.length }}
                             </span>
                         </h3>
                         <div class="space-y-2">
                             <div
-                                v-for="qr in selectedRequest.qualityReviews"
+                                v-for="qr in selectedRequest.qualityHistory"
                                 :key="qr.id"
                                 class="rounded-lg border px-2.5 py-2 text-xs"
                                 :class="
@@ -609,16 +621,27 @@
                                 "
                             >
                                 <div class="flex items-center justify-between gap-2">
-                                    <span
-                                        class="rounded border px-1.5 py-0.5 text-[9px] font-semibold"
-                                        :class="
-                                            qr.decision === 'APPROVED'
-                                                ? 'border-emerald-400/40 bg-emerald-400/10 text-emerald-300'
-                                                : 'border-red-400/40 bg-red-400/10 text-red-300'
-                                        "
-                                    >
-                                        {{ qr.decision === 'APPROVED' ? 'Aprobado' : 'Rechazado' }}
-                                    </span>
+                                    <div class="flex items-center gap-1.5">
+                                        <span
+                                            class="rounded border px-1.5 py-0.5 text-[9px] font-semibold"
+                                            :class="
+                                                qr.decision === 'APPROVED'
+                                                    ? 'border-emerald-400/40 bg-emerald-400/10 text-emerald-300'
+                                                    : 'border-red-400/40 bg-red-400/10 text-red-300'
+                                            "
+                                        >
+                                            {{
+                                                qr.decision === 'APPROVED'
+                                                    ? 'Aprobado'
+                                                    : 'Rechazado'
+                                            }}
+                                        </span>
+                                        <span
+                                            class="rounded bg-primary/15 px-1 py-0.5 font-mono text-[9px] text-primary-fixed-dim"
+                                        >
+                                            v{{ qr.versionNumber }}
+                                        </span>
+                                    </div>
                                     <span class="text-[9px] text-outline-variant">
                                         {{
                                             new Intl.DateTimeFormat('es-SV', {
@@ -889,7 +912,7 @@ const statusTabs = computed(() => {
         key: status,
         label: REQUEST_STATUS_LABELS[status],
         count: sourceRows.value.filter((r) => r.status === status).length,
-    })).filter((tab) => tab.count > 0)
+    })).filter((tab) => tab.count > 0 || tab.key === 'QUALITY_REJECTED')
     return [all, ...byStatus]
 })
 
