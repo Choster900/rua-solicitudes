@@ -118,4 +118,11 @@ export interface DesignRequest {
     assignedDesigners: { designerId: string; designerName: string }[]
     sampleFiles: RequestSampleFile[]
     attachments: RequestAttachment[] // kept for backward compat
+    qualityReviews: {
+        id: string
+        decision: 'APPROVED' | 'REJECTED'
+        generalObservations: string
+        reviewedAt: string
+        reviewedBy: string
+    }[]
 }

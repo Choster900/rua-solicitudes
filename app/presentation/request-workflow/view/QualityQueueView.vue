@@ -440,7 +440,7 @@ const toggleChecklist = (key: keyof WorkflowChecklistState) => {
 const handleApprove = async (comment: string) => {
     approveModalOpen.value = false
     if (!selectedRequestId.value) return
-    const ok = await approveQualityReview(selectedRequestId.value)
+    const ok = await approveQualityReview(selectedRequestId.value, comment)
     if (ok) selectedRequestId.value = ''
 }
 

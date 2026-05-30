@@ -553,6 +553,64 @@
                                 </div>
                             </div>
 
+                            <!-- Revisiones de calidad -->
+                            <div
+                                v-if="selected.qualityReviews?.length"
+                                class="border-b border-outline/20 px-3 py-3"
+                            >
+                                <p
+                                    class="mb-2 text-[0.6rem] font-semibold uppercase tracking-wider text-primary-fixed-dim"
+                                >
+                                    Revisiones de calidad
+                                    <span
+                                        class="ml-1 rounded-full bg-purple-400/20 px-1.5 py-0.5 text-[9px] text-purple-300"
+                                    >
+                                        {{ selected.qualityReviews.length }}
+                                    </span>
+                                </p>
+                                <div class="space-y-2">
+                                    <div
+                                        v-for="qr in selected.qualityReviews"
+                                        :key="qr.id"
+                                        class="rounded-lg border px-2.5 py-2 text-xs"
+                                        :class="
+                                            qr.decision === 'APPROVED'
+                                                ? 'border-emerald-500/25 bg-emerald-500/5'
+                                                : 'border-red-400/25 bg-red-400/5'
+                                        "
+                                    >
+                                        <div class="flex items-center justify-between gap-2">
+                                            <span
+                                                class="rounded border px-1.5 py-0.5 text-[9px] font-semibold"
+                                                :class="
+                                                    qr.decision === 'APPROVED'
+                                                        ? 'border-emerald-400/40 bg-emerald-400/10 text-emerald-300'
+                                                        : 'border-red-400/40 bg-red-400/10 text-red-300'
+                                                "
+                                            >
+                                                {{
+                                                    qr.decision === 'APPROVED'
+                                                        ? 'Aprobado'
+                                                        : 'Rechazado'
+                                                }}
+                                            </span>
+                                            <span class="text-[9px] text-outline-variant">
+                                                {{ formatDate(qr.reviewedAt) }}
+                                            </span>
+                                        </div>
+                                        <p class="mt-1 text-[10px] text-slate-400">
+                                            {{ qr.reviewedBy }}
+                                        </p>
+                                        <p
+                                            v-if="qr.generalObservations"
+                                            class="mt-1.5 leading-relaxed text-slate-300"
+                                        >
+                                            {{ qr.generalObservations }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- Archivos del diseñador -->
                             <div
                                 v-if="selected.attachments?.length"

@@ -89,6 +89,13 @@ const serialize = (req: Awaited<ReturnType<typeof getAllDesignRequests>>[number]
                 notes: f.notes,
                 createdAt: dayjs(f.createdAt).toISOString(),
             })),
+        qualityReviews: (v?.qualityReviews ?? []).map((qr: any) => ({
+            id: qr.id,
+            decision: qr.decision as 'APPROVED' | 'REJECTED',
+            generalObservations: qr.generalObservations ?? '',
+            reviewedAt: dayjs(qr.reviewedAt).toISOString(),
+            reviewedBy: qr.reviewedBy?.fullName ?? '',
+        })),
     }
 }
 

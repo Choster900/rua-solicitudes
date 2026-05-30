@@ -27,6 +27,16 @@ const withVersionAssignments = {
         assignments: {
             select: { designerId: true, designer: { select: { fullName: true } } },
         },
+        qualityReviews: {
+            orderBy: { reviewedAt: 'desc' as const },
+            select: {
+                id: true,
+                decision: true,
+                generalObservations: true,
+                reviewedAt: true,
+                reviewedBy: { select: { fullName: true } },
+            },
+        },
     },
 } as const
 

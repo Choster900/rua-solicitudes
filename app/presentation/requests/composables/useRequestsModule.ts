@@ -362,7 +362,7 @@ export const useRequestsModule = () => {
         }
     }
 
-    const approveQualityReview = async (requestId: string) => {
+    const approveQualityReview = async (requestId: string, generalObservations?: string) => {
         const request = findRequestById(requestId)
         if (!request) {
             toast.error('No se encontró la solicitud seleccionada.')
@@ -371,6 +371,7 @@ export const useRequestsModule = () => {
         try {
             await apiClient.post(`/requests/${requestId}/quality-review`, {
                 decision: 'APPROVED',
+                generalObservations: generalObservations ?? '',
             })
             requests.value = requests.value.map((item) =>
                 item.id === requestId

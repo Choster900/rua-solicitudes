@@ -582,6 +582,62 @@
                         </p>
                     </section>
 
+                    <!-- Revisiones de calidad -->
+                    <section
+                        v-if="selectedRequest?.qualityReviews?.length"
+                        class="border-t border-outline/20 pt-3"
+                    >
+                        <h3
+                            class="mb-2 text-[11px] uppercase tracking-[0.12em] text-secondary-container"
+                        >
+                            Revisiones de calidad
+                            <span
+                                class="ml-1 rounded-full bg-purple-400/20 px-1.5 py-0.5 text-[9px] text-purple-300"
+                            >
+                                {{ selectedRequest.qualityReviews.length }}
+                            </span>
+                        </h3>
+                        <div class="space-y-2">
+                            <div
+                                v-for="qr in selectedRequest.qualityReviews"
+                                :key="qr.id"
+                                class="rounded-lg border px-2.5 py-2 text-xs"
+                                :class="
+                                    qr.decision === 'APPROVED'
+                                        ? 'border-emerald-500/25 bg-emerald-500/5'
+                                        : 'border-red-400/25 bg-red-400/5'
+                                "
+                            >
+                                <div class="flex items-center justify-between gap-2">
+                                    <span
+                                        class="rounded border px-1.5 py-0.5 text-[9px] font-semibold"
+                                        :class="
+                                            qr.decision === 'APPROVED'
+                                                ? 'border-emerald-400/40 bg-emerald-400/10 text-emerald-300'
+                                                : 'border-red-400/40 bg-red-400/10 text-red-300'
+                                        "
+                                    >
+                                        {{ qr.decision === 'APPROVED' ? 'Aprobado' : 'Rechazado' }}
+                                    </span>
+                                    <span class="text-[9px] text-outline-variant">
+                                        {{
+                                            new Intl.DateTimeFormat('es-SV', {
+                                                dateStyle: 'short',
+                                            }).format(new Date(qr.reviewedAt))
+                                        }}
+                                    </span>
+                                </div>
+                                <p class="mt-1 text-[10px] text-slate-400">{{ qr.reviewedBy }}</p>
+                                <p
+                                    v-if="qr.generalObservations"
+                                    class="mt-1.5 leading-relaxed text-slate-300"
+                                >
+                                    {{ qr.generalObservations }}
+                                </p>
+                            </div>
+                        </div>
+                    </section>
+
                     <!-- Archivos del vendedor -->
                     <section
                         v-if="selectedRequest?.sampleFiles?.length"
