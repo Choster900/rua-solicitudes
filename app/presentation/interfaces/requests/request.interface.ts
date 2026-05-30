@@ -39,7 +39,7 @@ export interface RequestAttachment {
     originalName: string
     mimeType: string
     sizeBytes: number
-    base64Content: string
+    base64Content?: string
     notes: string
     createdAt: string
 }
@@ -49,7 +49,7 @@ export interface RequestSampleFile {
     originalName: string
     mimeType: string
     sizeBytes: number
-    base64Content: string
+    base64Content?: string
     notes: string
     createdAt: string
 }

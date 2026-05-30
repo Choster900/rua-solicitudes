@@ -30,7 +30,6 @@ const serializeFile = (f: any) => ({
     originalName: f.originalName,
     mimeType: f.mimeType,
     sizeBytes: Number(f.sizeBytes),
-    base64Content: f.base64Content,
     notes: f.notes ?? '',
     createdAt: dayjs(f.createdAt).toISOString(),
 })
@@ -103,7 +102,6 @@ export default defineEventHandler(async (event) => {
                     originalName: true,
                     mimeType: true,
                     sizeBytes: true,
-                    base64Content: true,
                     origin: true,
                     notes: true,
                     createdAt: true,

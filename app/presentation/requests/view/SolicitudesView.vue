@@ -231,14 +231,24 @@
                             >
                                 Archivos del vendedor ({{ selectedSummary.sampleFiles.length }})
                             </h3>
-                            <ul class="space-y-2">
+                            <div
+                                v-if="filesLoading"
+                                class="flex items-center gap-1.5 py-2 text-xs text-outline-variant"
+                            >
+                                <span class="material-symbols-outlined animate-spin text-[13px]"
+                                    >progress_activity</span
+                                >
+                                Cargando archivos…
+                            </div>
+                            <ul v-else class="space-y-2">
                                 <li
-                                    v-for="f in selectedSummary.sampleFiles"
+                                    v-for="f in selectedFiles?.sampleFiles ??
+                                    selectedSummary.sampleFiles"
                                     :key="f.id"
                                     class="overflow-hidden rounded-md border border-outline/20"
                                 >
                                     <img
-                                        v-if="f.mimeType.startsWith('image/')"
+                                        v-if="f.mimeType.startsWith('image/') && f.base64Content"
                                         :src="`data:${f.mimeType};base64,${f.base64Content}`"
                                         :alt="f.originalName"
                                         class="max-h-48 w-full bg-black/20 object-contain"
@@ -269,14 +279,24 @@
                             >
                                 Archivos del diseñador ({{ selectedSummary.attachments.length }})
                             </h3>
-                            <ul class="space-y-2">
+                            <div
+                                v-if="filesLoading"
+                                class="flex items-center gap-1.5 py-2 text-xs text-outline-variant"
+                            >
+                                <span class="material-symbols-outlined animate-spin text-[13px]"
+                                    >progress_activity</span
+                                >
+                                Cargando archivos…
+                            </div>
+                            <ul v-else class="space-y-2">
                                 <li
-                                    v-for="f in selectedSummary.attachments"
+                                    v-for="f in selectedFiles?.attachments ??
+                                    selectedSummary.attachments"
                                     :key="f.id"
                                     class="overflow-hidden rounded-md border border-outline/20"
                                 >
                                     <img
-                                        v-if="f.mimeType.startsWith('image/')"
+                                        v-if="f.mimeType.startsWith('image/') && f.base64Content"
                                         :src="`data:${f.mimeType};base64,${f.base64Content}`"
                                         :alt="f.originalName"
                                         class="max-h-48 w-full bg-black/20 object-contain"
@@ -337,12 +357,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import AppShellLayout from '~/presentation/shared/components/layout/AppShellLayout.vue'
 import AppButton from '~/presentation/shared/components/ui/AppButton.vue'
 import AppStatusBadge from '~/presentation/shared/components/ui/AppStatusBadge.vue'
 import RequestsDataTable from '~/presentation/requests/components/RequestsDataTable.vue'
 import { useRequestsByStatus } from '~/presentation/requests/composables/useRequestsByStatus'
+import { useApiClient } from '~/presentation/shared/composables/useApiClient'
 import type { DesignRequestTableRow } from '~/presentation/interfaces/requests/request-table-row.interface'
 import type { RequestSummary } from '~/presentation/interfaces/requests/request-summary.interface'
 import {
@@ -350,6 +371,8 @@ import {
     REQUEST_PRIORITY_LABELS,
     type RequestStatus,
     type RequestPriority,
+    type RequestSampleFile,
+    type RequestAttachment,
 } from '~/presentation/interfaces/requests/request.interface'
 
 defineOptions({ name: 'SolicitudesView' })
@@ -440,6 +463,49 @@ const selected = computed<DesignRequestTableRow | null>(() => {
     const summary = selectedSummary.value
     return summary ? toTableRow(summary) : null
 })
+
+// ── Archivos con preview (carga diferida al seleccionar) ──────────────────────
+
+const apiClient = useApiClient()
+
+interface LoadedFiles {
+    sampleFiles: RequestSampleFile[]
+    attachments: RequestAttachment[]
+}
+
+const filesLoading = ref(false)
+const selectedFiles = ref<LoadedFiles | null>(null)
+const filesCache = new Map<string, LoadedFiles>()
+
+watch(
+    () => selectedSummary.value?.id,
+    async (id) => {
+        if (!id) {
+            selectedFiles.value = null
+            return
+        }
+        if (filesCache.has(id)) {
+            selectedFiles.value = filesCache.get(id)!
+            return
+        }
+        filesLoading.value = true
+        selectedFiles.value = null
+        try {
+            const { data } = await apiClient.get<LoadedFiles>(`/requests/${id}`)
+            const payload: LoadedFiles = {
+                sampleFiles: data.sampleFiles ?? [],
+                attachments: data.attachments ?? [],
+            }
+            filesCache.set(id, payload)
+            selectedFiles.value = payload
+        } catch {
+            selectedFiles.value = null
+        } finally {
+            filesLoading.value = false
+        }
+    },
+    { immediate: true },
+)
 
 // ── Labels / tones ────────────────────────────────────────────────────────────
 
